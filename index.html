@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sick Call — 68W ADTMC Tool</title>
+<meta name="theme-color" content="#10140f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+<header>
+  <span class="brand">Sick Call</span><span class="langsw"><button id="lEN" onclick="setLang('en')" title="English">EN</button><button id="lES" onclick="setLang('es')" title="Español">ES</button></span><span class="sub">68W · ADTMC (MEDCOM Pam 40-7-21) — tap options, the note builds itself</span>
+  <span class="spacer"></span>
+  <button onclick="setFs(-1)" title="smaller text">A−</button>
+  <button onclick="setFs(1)" title="larger text">A+</button>
+  <button onclick="resetTpl()">Clear section</button>
+  <button onclick="resetAll()" title="Clears all sections, vitals and patient">Clear all</button>
+</header>
+
+<nav id="nav"></nav>
+<main id="main"></main>
+
+<aside id="aside">
+  <div class="out-head">
+    <span class="t">Note (transcribe to slip)</span>
+    <span class="spacer"></span>
+    <button class="ghost" id="editBtn" onclick="toggleEdit()" title="Edit the note by hand before copying">✏️ Edit</button>
+    <button class="ghost" id="autoBtn" onclick="setNoteMode('auto')" style="display:none" title="Discard manual edits and rebuild the note from your answers">↺ Auto</button>
+    <button class="ghost" onclick="copyNote(this)">Copy</button>
+    <button class="ghost" onclick="exportNote()" title="Download as .txt">⬇ .txt</button>
+    <button class="ghost" onclick="printNote()" title="Print / PDF">🖨</button>
+  </div>
+  <div id="notebanner" class="note-hint" style="display:none;margin:0;border-radius:0"></div>
+  <div class="pt-row">
+    <input id="ptIn" type="text" placeholder="Soldier (Rank Last name) — optional" oninput="patient=this.value;renderNote()">
+    <button onclick="savePatient(this)" title="Saves this note and clears everything for the next Soldier">Save ➜ next</button>
+  </div>
+  <div id="note"></div>
+</aside>
+</div>
+<button id="mobileNoteBtn" onclick="document.getElementById('aside').classList.toggle('open')">View note</button>
+
+<div id="lock"><div style="font-size:2em">🔒</div><div>Sick Call locked</div><input id="pinIn" type="password" inputmode="numeric" maxlength="8" onkeydown="if(event.key==='Enter')tryUnlock()"><div id="pinMsg" style="color:var(--red);min-height:1.2em"></div><button onclick="tryUnlock()">Unlock</button></div>
+<script src="data/protocols.js"></script>
+<script src="data/meds.js"></script>
+<script src="data/plans.js"></script>
+<script src="data/es.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
