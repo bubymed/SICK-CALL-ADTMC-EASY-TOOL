@@ -1,6 +1,6 @@
 # Sick Call — 68W ADTMC documentation tool
 
-An offline, single-page tool that helps a combat medic (68W) write a short, clear sick-call note.
+An  offline, single-page tool that helps a combat medic (68W) write a short, clear sick-call note.
 Interview with **OPQRST / AMPLE**, screen for **red flags** with the **ADTMC** (MEDCOM Pam 40-7-21),
 and get a suggested plan and disposition. The note is plain English text ready to copy to a slip.
 
