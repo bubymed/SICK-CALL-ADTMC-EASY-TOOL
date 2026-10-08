@@ -1,0 +1,15 @@
+{
+ "name": "Sick Call — 68W ADTMC",
+ "short_name": "Sick Call",
+ "start_url": "./index.html",
+ "display": "standalone",
+ "background_color": "#10140f",
+ "theme_color": "#10140f",
+ "icons": [
+  {
+   "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%2310140f'/><path d='M42 18h16v24h24v16H58v24H42V58H18V42h24z' fill='%23c9a13b'/></svg>",
+   "sizes": "any",
+   "type": "image/svg+xml"
+  }
+ ]
+}
