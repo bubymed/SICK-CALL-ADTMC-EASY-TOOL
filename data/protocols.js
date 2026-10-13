@@ -197,7 +197,8 @@ P("C-1","c","Nausea / Vomiting",{pg:51,
  act:"No food handling, if working in a DFAC, until symptoms have resolved x48 hours.",
  flow:[
   DP(["Chemotherapy","BMI <18","Diabetes","Recent head trauma within 72 hours"],{d:"PN"}),
-  DP(["Greater than 72 hours","Signs of fluid depletion / orthostatic hypotension","Unable to maintain oral intake"],{d:"AEM",a:"Pregnancy screen / test (females)"}),
+  DP(["Greater than 72 hours","Signs of fluid depletion / orthostatic hypotension","Unable to maintain oral intake"],{d:"AEM"}),
+  EX("Pregnancy screen / test (females).",[]),
   DP(["Headache (migraine)","Heartburn","Dizziness","Pregnancy","Other symptoms"],{tri:["F-2","C-7","F-1","I-2"]})
  ],
  tx:["Hand-washing protocol. Special food-handler precautions.","Notify supervising NCO if DFAC food is suspected or multiple cases are identified.","Clear-liquid diet: broth, sports drinks, clear non-caffeinated soft drinks, fruit juice, ice chips to maintain calories and hydration. When vomiting is controlled, start BRAT diet (simple carbohydrates)."],
@@ -231,7 +232,8 @@ P("C-4","c","Rectal Pain / Itching / Bleeding",{pg:57,
  rf:["Toilet FULL of blood","Vomiting blood or coffee grounds","Melena","Lightheaded"],
  act:"None",
  flow:[
-  DP(["Weight loss","Night sweats","Family history of early GI cancer","Change in stool","Mucus with stool","Hemoccult positive","Unable to obtain stool sample"],{d:"PN"}),
+  EX("Hemoccult test (stool sample).",[{l:"Hemoccult positive",d:"PN"},{l:"Unable to obtain stool sample",d:"PN"},{l:"Hemoccult negative",go:"next"}]),
+  DP(["Weight loss","Night sweats","Family history of early GI cancer","Change in stool","Mucus with stool"],{d:"PN"}),
   DP(["History of anal sex","Low back problems"],{d:"AEM"})
  ],
  tx:["Sit in warm water 30 min a day. Wash area with warm water and blot dry to keep clean.","Drink 8 glasses of liquid a day and eat high-fiber foods.","Medication: polyethylene glycol (1st line) or docusate sodium (2nd line) to soften stool; hydrocortisone-pramoxine cream (3rd line) if needed for inflammation and pain."],
@@ -294,7 +296,7 @@ P("D-2","d","Chest Pain",{pg:67,
   DP(["Productive cough >7 days","Elevated temperature","Symptoms >10 days"],{d:"AEM"}),
   DP(["Cold-like symptoms","Reproducible chest pain","Heartburn","History of panic attacks"],{},{none:{d:"AEM",l:"NONE of these → AEM Now"}})
  ],
- tx:["Cold-like symptoms: A-3 protocol. Heartburn: C-7 protocol.","Panic-attack symptoms: check EKG; monitor pulse ox; supervised deep breathing; refer to provider now if oxygenation decreases or symptoms do not resolve; refer to BH after dyspnea resolved.","Musculoskeletal: ibuprofen or acetaminophen for pain, analgesic balm for muscle/tendons. Temporary profile x3 days if needed."],
+ tx:["Cold-like symptoms: A-3 protocol. Heartburn: C-7 protocol.","Panic-attack symptoms: check EKG; monitor pulse ox; supervised deep breathing; refer to provider now if oxygenation decreases or symptoms do not resolve; refer to BH after dyspnea resolved.","Musculoskeletal: ibuprofen or acetaminophen for pain, analgesic balm for muscle/tendons. Temporary profile x3 days if needed. Must discuss with the supervising privileged provider before the Soldier leaves the screening area."],
  rtc:"Return if pain increases, not improved in 4 days, shortness of breath / dizziness / new symptoms develop.",meds:["Ibuprofen","Acetaminophen","Analgesic balm"]});
 
 /* ===== E. GENITOURINARY ===== */
