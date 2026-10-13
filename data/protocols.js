@@ -1,6 +1,6 @@
 // ADTMC protocols (MEDCOM Pam 40-7-21, Appendix B) — transcribed data + tiny helpers P/DP/EX.
 /* =========================================================
-   ADTMC ENGINE — MEDCOM Pam 40-7-21 (Adult Telehealth/Minor-care protocols)
+   ADTMC ENGINE — MEDCOM Pam 40-7-21 — Algorithm-Directed Troop Medical Care (13 Nov 2019)
    Protocol data is transcribed from the pamphlet; the engine follows its flowcharts.
 ========================================================= */
 const PR=[];

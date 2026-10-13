@@ -785,9 +785,9 @@ function renderGuided(){
     inner+=`</div>`;
     if(anyPos){
       inner+=`<div class="rfbanner" style="margin-top:12px">🚩 RED FLAG — skip the rest of the interview and escalate.</div>`;
-      inner+=`<div class="algo-actions"><button style="background:var(--red);color:#fff" onclick="gEscalate()">⚠ Escalate ➜ disposition</button></div>`;
+      inner+=`<div class="algo-actions"><button style="background:var(--red);color:var(--on-red)" onclick="gEscalate()">⚠ Escalate ➜ disposition</button></div>`;
     } else {
-      inner+=`<div class="algo-actions"><button style="background:var(--green);color:#0d1408" onclick="gAllNeg()">✓ Ninguna — todas negativas, continuar</button></div>`;
+      inner+=`<div class="algo-actions"><button style="background:var(--green);color:var(--on-green)" onclick="gAllNeg()">✓ Ninguna — todas negativas, continuar</button></div>`;
     }
   } else if(step.k==='vit'){
     const v=gVitals;
@@ -824,7 +824,7 @@ function renderGuided(){
     const active=TPLS.filter(x=>tplHasContent(x,state[x.id])).length;
     inner=`<div class="fname">✅ Done</div><div class="qtxt">Note ready${active>1?' — '+active+' sections combined':''} (see it in the right panel). What's next?</div>
       <div class="algo-actions">
-        <button style="background:var(--green);color:#0d1408" onclick="savePatient(this);gExit();">💾 Save ➜ next Soldier</button>
+        <button style="background:var(--green);color:var(--on-green)" onclick="savePatient(this);gExit();">💾 Save ➜ next Soldier</button>
         <button class="ghost" onclick="gExit()">➕ Another complaint (pick another template)</button>
         <button class="ghost" onclick="gExit()">Abrir formulario</button>
       </div>`;
@@ -1086,7 +1086,7 @@ function renderMain(){
   if(view==='assess'){m.innerHTML=renderAssess();return;}
   if(guided&&view==='tpl'&&guided.tpl===cur){m.innerHTML=renderGuided();return;}
   const t=TPLS.find(x=>x.id===cur), s=state[cur];
-  let h=ad.pid?(adHeadHtml(getP(ad.pid))+'<div class="secbar">1 · History — OPQRST / AMPLE</div>'):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:#b9cf9f">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
+  let h=ad.pid?(adHeadHtml(getP(ad.pid))+'<div class="secbar">1 · History — OPQRST / AMPLE</div>'):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:var(--chipx-txt)">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
   h+=`<button class="gstart" onclick="startGuided()">▶ Guided interview — one question at a time</button>`;
   h+=`<div class="warn">${t.er}</div>`;
   if(!ad.pid)h+=adPatientCard()+adVBanner();
@@ -1765,7 +1765,7 @@ function gfTog(k){gFlags[k]=!gFlags[k];if(k==='female'&&!gFlags.female){gFlags.p
 function gfSet(k,v,noRender){gFlags[k]=v;if(!noRender)renderMain();renderNote();}
 function adVBanner(){
   const v=adVitals();let h='<div id="vbanner">';
-  if(v.abn.length)h+='<div class="rfbanner">⚠️ ABNORMAL VITALS (ADTMC global rule) → '+(ad.vovr?'<span style="color:#cfd88f">provider reviewed and cleared to continue</span>':'PROVIDER NOW')+'<br><span style="font-weight:400">'+v.abn.map(q$).join('<br>')+'</span></div>';
+  if(v.abn.length)h+='<div class="rfbanner">⚠️ ABNORMAL VITALS (ADTMC global rule) → '+(ad.vovr?'<span style="color:var(--hint-txt)">provider reviewed and cleared to continue</span>':'PROVIDER NOW')+'<br><span style="font-weight:400">'+v.abn.map(q$).join('<br>')+'</span></div>';
   v.warn.forEach(w=>h+='<div class="warn">'+q$(w)+'</div>');
   return h+'</div>';
 }
@@ -1998,8 +1998,21 @@ function adMedItems(){
 /* =========================================================
    PRIVACY / SETTINGS / EXPORT / FOLLOW-UP
 ========================================================= */
-const settings=(function(){let s={purge:true,pin:''};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
+const settings=(function(){let s={purge:true,pin:'',theme:'green',mode:'dark'};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
 function saveSettings(){try{localStorage.setItem('sc_settings',JSON.stringify(settings));}catch(e){}}
+const THEMES=[['green','Green'],['blue','Blue'],['amber','Amber'],['red','Red'],['purple','Purple'],['gray','Gray']];
+const THEME_BG={dark:{green:'#10140f',blue:'#0e1319',amber:'#16120b',red:'#170f0f',purple:'#130f19',gray:'#121212'},light:'#f3f5f1'};
+function applyTheme(){
+  const r=document.documentElement;
+  const t=THEMES.some(x=>x[0]===settings.theme)?settings.theme:'green';
+  const m=settings.mode==='light'?'light':'dark';
+  if(t==='green')r.removeAttribute('data-theme');else r.setAttribute('data-theme',t);
+  if(m==='light')r.setAttribute('data-mode','light');else r.removeAttribute('data-mode');
+  const mt=document.querySelector('meta[name="theme-color"]');
+  if(mt)mt.setAttribute('content',m==='light'?THEME_BG.light:THEME_BG.dark[t]);
+}
+function setTheme(t){settings.theme=t;saveSettings();applyTheme();renderMain();}
+function setMode(m){settings.mode=m;saveSettings();applyTheme();renderMain();}
 function purgeOld(){
   if(!settings.purge)return;
   try{const today=new Date().toDateString();
@@ -2035,13 +2048,14 @@ function togPurge(){settings.purge=!settings.purge;saveSettings();renderMain();}
 function renderSettings(){
   let h='<h2 class="tpl">⚙️ Settings / Privacy</h2><p class="tpl-sub">Everything stays on this device (localStorage). Nothing is sent to any server.</p>';
   h+='<div class="field"><div class="lab"><span class="tag">🌐</span><span class="name">Language</span></div><div class="chips"><span class="chip '+(LANG==='en'?'on':'')+'" onclick="setLang(\'en\')">English</span><span class="chip '+(LANG==='es'?'on':'')+'" onclick="setLang(\'es\')">Español</span></div><div class="fuq">Interface language. The note is always written in English.</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">🎨</span><span class="name">Theme</span></div><div class="chips">'+THEMES.map(x=>'<span class="chip '+(settings.theme===x[0]?'on':'')+'" onclick="setTheme(\''+x[0]+'\')">'+x[1]+'</span>').join('')+'</div><div class="chips" style="margin-top:8px"><span class="chip '+(settings.mode!=='light'?'on':'')+'" onclick="setMode(\'dark\')">Dark</span><span class="chip '+(settings.mode==='light'?'on':'')+'" onclick="setMode(\'light\')">Light</span></div><div class="fuq">Color and brightness of the interface. Saved on this device only. The note text is not affected.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🛡️</span><span class="name">Daily auto-delete</span></div><div class="chips"><span class="chip '+(settings.purge?'on':'')+'" onclick="togPurge()">'+(settings.purge?'ON — notes and data from previous days are deleted on open':'Off')+'</span></div><div class="fuq">Recommended: notes contain Soldier information (PII/PHI). Export what you need before the day ends.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🔒</span><span class="name">Lock PIN</span><span class="ask">'+(settings.pin?'active':'no PIN')+'</span></div>';
   h+=settings.pin?'<div class="algo-actions" style="margin-top:0"><button onclick="lockNow()">Lock now</button><button class="ghost" onclick="clearPin()">Remove PIN</button></div>':'<div class="subrow"><div class="half"><input type="password" id="pinNew" inputmode="numeric" maxlength="8" placeholder="4–8 digit PIN" style="margin-top:0"></div><div><button class="gstart" style="width:auto;padding:8px 16px;margin:0" onclick="setPin()">Save PIN</button></div></div>';
   h+='<div class="fuq">The PIN only hides the screen in this browser; it does not encrypt data. If you forget it, "Delete everything" removes it.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">💾</span><span class="name">Backup</span></div><div class="algo-actions" style="margin-top:0"><button onclick="exportBackup()">Export saved (.json)</button><button class="ghost" onclick="document.getElementById(\'impF\').click()">Import</button><input type="file" id="impF" accept=".json" style="display:none" onchange="importBackup(this)"></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">📴</span><span class="name">Offline / install on your phone</span></div><div style="font-size:.9em;line-height:1.7;color:var(--dim)">This file works without internet: save it on your phone and open it from the browser. To install it as an app (home-screen icon), upload <b>SICK_CALL_TOOL.html + manifest.json + sw.js</b> together to HTTPS hosting (e.g. GitHub Pages) and use "Add to Home Screen". Service worker status: <b id="swState">…</b></div></div>';
-  h+='<div class="field"><div class="lab"><span class="tag" style="color:var(--red)">🗑️</span><span class="name">Delete everything</span></div><div class="algo-actions" style="margin-top:0"><button style="background:var(--red);color:#fff" onclick="wipeAll()">Delete EVERYTHING on this device</button></div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag" style="color:var(--red)">🗑️</span><span class="name">Delete everything</span></div><div class="algo-actions" style="margin-top:0"><button style="background:var(--red);color:var(--on-red)" onclick="wipeAll()">Delete EVERYTHING on this device</button></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">ℹ️</span><span class="name">Source and scope</span></div><div style="font-size:.88em;line-height:1.7;color:var(--dim)">Protocols and meds transcribed from MEDCOM Pam 40-7-21 (ADTMC). The tool helps document and avoid skipping steps; it does not replace provider/AEM judgment or the current official version. Local modifications may only be more conservative (raise the level of care), never less.</div></div>';
   setTimeout(()=>{const e=document.getElementById('swState');if(e)e.textContent=('serviceWorker' in navigator&&/^https?:/.test(location.protocol))?(navigator.serviceWorker.controller?'active':'not installed'):'unavailable (local file — works offline anyway)';},0);
   return h;
@@ -2111,6 +2125,7 @@ function setLang(l){
   if(be)be.classList.toggle('on',LANG==='en');if(bs)bs.classList.toggle('on',LANG==='es');
 }
 new MutationObserver(ms=>{if(LANG!=='es')return;ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)trNode(n);else if(n.nodeType===3&&n.parentElement)trNode(n.parentElement);}));}).observe(document.body,{childList:true,subtree:true});
+applyTheme();
 purgeOld();
 restore();adRestore();
 document.body.style.fontSize=fsBase+'px';showLockIfNeeded();
