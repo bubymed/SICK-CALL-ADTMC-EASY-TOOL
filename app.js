@@ -722,8 +722,8 @@ function otcBoxHtml(t,s,tid){
 /* ---- Guided interview: the interview IS the algorithm ---- */
 let guided=null; // {tpl,i,steps}
 function buildSteps(t){
-  const st=[{k:'cc'},{k:'rf'},{k:'vit'}];
-  t.fields.forEach(f=>{st.push({k:'f',f:f.id}); if(f.id==='sx')st.push({k:'sev'});});
+  const st=hmode()==='quick'?[{k:'rf'},{k:'vit'}]:[{k:'cc'},{k:'rf'},{k:'vit'}];
+  visFields(t).forEach(f=>{st.push({k:'f',f:f.id}); if(f.id==='sx')st.push({k:'sev'});});
   st.push({k:'plan'},{k:'dispo'},{k:'done'});
   return st;
 }
@@ -1086,9 +1086,10 @@ function renderMain(){
   if(view==='assess'){m.innerHTML=renderAssess();return;}
   if(guided&&view==='tpl'&&guided.tpl===cur){m.innerHTML=renderGuided();return;}
   const t=TPLS.find(x=>x.id===cur), s=state[cur];
-  let h=ad.pid?(adHeadHtml(getP(ad.pid))+'<div class="secbar">1 · History — OPQRST / AMPLE</div>'):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:var(--chipx-txt)">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
-  h+=`<button class="gstart" onclick="startGuided()">▶ Guided interview — one question at a time</button>`;
-  h+=`<div class="warn">${t.er}</div>`;
+  let h=ad.pid?(adHeadHtml(getP(ad.pid))+'<div class="secbar">1 · '+({quick:'Reason for visit',focus:'Focused history'}[hmode()]||'History — OPQRST / AMPLE')+'</div>'):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:var(--chipx-txt)">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
+  if(hmode()!=='quick')h+=`<button class="gstart" onclick="startGuided()">▶ Guided interview — one question at a time</button>`;
+  if(hmode()!=='quick')h+=`<div class="warn">${t.er}</div>`;
+  if(hmode()!=='full')h+=`<div class="note-hint">${hmode()==='quick'?'This visit does not need a full history.':'Focused history for this complaint.'} <span class="chip" onclick="adFullHist()">+ Add full OPQRST / AMPLE</span></div>`;
   if(!ad.pid)h+=adPatientCard()+adVBanner();
 
   // Vitals (global — per patient, shared across sections)
@@ -1103,15 +1104,16 @@ function renderMain(){
   </div></div>`;
 
   // CC
-  h+=`<div class="field"><div class="lab"><span class="tag">CC</span><span class="name">Chief Complaint</span><span class="ask">"What brings you in today?"</span>${clrBtn(cur,'__cc')}</div><div class="chips">`;
+  h+=`<div class="field"><div class="lab"><span class="tag">CC</span><span class="name">${hmode()==='quick'?'Reason for visit':'Chief Complaint'}</span><span class="ask">${hmode()==='quick'?'':'"What brings you in today?"'}</span>${clrBtn(cur,'__cc')}</div>`;
+  if(hmode()!=='quick'){h+=`<div class="chips">`;
   t.ccOpts.forEach(o=>h+=chipHtml(cur,'__cc',o,s.cc.has(o)));
-  h+=`</div>`;
+  h+=`</div>`;}
   if(s.cc.size>=2)h+=`<div class="fuq">💡 ${s.cc.size} complaints in this section. If they share a mechanism (e.g. fall → knee + wrist), document them together and use "other/detail" to tell sides apart. If they are different systems, open them in separate templates — they combine on their own in the same note.</div>`;
   h+=`<input type="text" placeholder="other CC..." value="${s.ccCustom}" oninput="cust('${cur}','__cc',this.value)"></div>`;
   if(!ad.pid)h+=adSuggestHtml(t,s);
 
   // fields
-  t.fields.forEach(f=>{
+  visFields(t).forEach(f=>{
     const tagClass = 'OPQRT'.includes(f.tag)&&['o','pw','pb','q','r','rr','t'].includes(f.id)?'o':(['sx','a','m','phx','l','e','s2','m','seen','lmp'].includes(f.id)?'s2':'');
     h+=`<div class="field"><div class="lab"><span class="tag ${tagClass}">${f.tag}</span><span class="name">${f.name}</span><span class="ask">${ccAsk(t,s,f.id)||f.ask}</span>${clrBtn(cur,f.id)}</div>`;
     if(!f.customOnly){
@@ -1460,7 +1462,7 @@ function tplHasContent(t,s){
 function sectionLines(t,s){
   const L=[];
   const ccParts=[...s.cc]; if(s.ccCustom.trim())ccParts.push(s.ccCustom.trim());
-  if(ccParts.length)L.push('CC: C/o '+(t.ccPrefix||'')+ccParts.join(', ')+'.');
+  if(ccParts.length)L.push(s.ccRaw&&!s.cc.size?'CC: '+ccParts.join(', ')+'.':'CC: C/o '+(t.ccPrefix||'')+ccParts.join(', ')+'.');
   t.fields.forEach(f=>{
     const v=joinSel(f,s);
     if(v)L.push(f.tag+': '+v+'.');
@@ -1566,7 +1568,7 @@ const LV={
 const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · GU',f:'F · Neuro/BH',g:'G · General',h:'H · Eyes',i:'I · Women',j:'J · Skin',k:'K · Environment',l:'L · Misc',m:'M · Return'};
 const gFlags={female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
 let ad={pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{}};
-function adResetProto(){ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
+function adResetProto(){ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
 function adResetAll(){adResetProto();ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 function adPersist(){try{localStorage.setItem('sc_ad',JSON.stringify({ad,gFlags,day:new Date().toDateString()}));}catch(e){}}
@@ -1692,16 +1694,27 @@ function medBox(p){
 
 /* ---- views ---- */
 const CATTPL={a:'ent',b:'msk',c:'ill',d:'ill',e:'gyn',f:'ha',g:'ill',h:'ent',i:'gyn',j:'skin',k:'skin',l:'ill',m:'fu'};
+/* ---- History depth per ADTMC protocol: not every complaint needs a full OPQRST/AMPLE ---- */
+const HQUICK=['L-4','L-6','L-12','L-8','L-9','L-10','J-12','I-5','I-6','L-5']; // reason for visit + allergies/meds only
+const HFOCUS=['J-2','J-3','J-4','J-5','J-6','J-7','J-8','J-9','J-10','J-11','J-13','J-14','J-15','J-16','J-17','J-18',
+  'K-1','K-2','K-3','K-4','K-5','K-6','K-7','L-1','L-2','L-3','L-7','A-5','H-2','H-3','I-2','C-5','C-7','M-2'];
+const HFIELDS={quick:['a','m','exam'],focus:['o','r','sx','e','a','m','exam','seen','s2','lmp']};
+const HCCTXT={'L-4':'Prescription refill request','L-6':'Requests immunization','L-12':'Requests nonprescription / traveling medication','L-8':'Blood pressure check','L-9':'Medical screening for overseas PCS','L-10':'Weight reduction','J-12':'Suture removal','I-5':'Requests Pap / routine pelvic exam','I-6':'Requests contraception information','L-5':'Requests vasectomy'};
+function hmode(){if(!ad.pid||ad.hfull)return 'full';return HQUICK.includes(ad.pid)?'quick':(HFOCUS.includes(ad.pid)?'focus':'full');}
+function visFields(t){const m=hmode();return m==='full'?t.fields:t.fields.filter(f=>HFIELDS[m].includes(f.id));}
+function adFullHist(){ad.hfull=true;ccRawOff();guided=null;renderMain();renderNote();}
+function ccRawOff(){const s=state[cur];if(s&&s.ccRaw){if(s.ccCustom===s.ccRawTxt)s.ccCustom='';s.ccRaw=false;s.ccRawTxt='';}}
 function protoTpl(id){
   const p=getP(id),pref=(p&&CATTPL[p.cat])||'ill';
   const find=tid=>{const mp=CCMAP[tid]||{};const ccs=[];let hit=false;Object.keys(mp).forEach(cc=>{if(mp[cc].includes(id)){hit=true;if(cc!=='*')ccs.push(cc);}});return hit?{tid,ccs}:null;};
   return find(pref)||Object.keys(CCMAP).map(find).find(Boolean)||{tid:pref,ccs:[]};
 }
 function adOpen(id){
-  const keep=ad.prev;adResetProto();ad.pid=id;ad.prev=keep;
+  ccRawOff();const keep=ad.prev;adResetProto();ad.pid=id;ad.prev=keep;
   const m=protoTpl(id);if(guided&&guided.tpl!==m.tid)guided=null;
   cur=m.tid;view='tpl';
   if(m.ccs.length===1&&!state[cur].cc.size)state[cur].cc.add(m.ccs[0]);
+  if(HQUICK.includes(id)){const s=state[cur];if(!s.ccCustom.trim()){s.ccCustom=HCCTXT[id]||getP(id).title;s.ccRaw=true;s.ccRawTxt=s.ccCustom;}}
   renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;
 }
 
@@ -1837,7 +1850,7 @@ function adOut(i,o){ad.out[i]=o;renderMain();renderNote();}
 function adUndo(i){delete ad.dpDone[i];delete ad.out[i];delete ad.out['x'+i];renderMain();renderNote();}
 function adHeadHtml(p){
   let h='<div class="algo-actions" style="margin:0 0 10px"><button class="ghost" onclick="adBack()">← Index</button></div>';
-  h+='<h2 class="tpl"><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2><p class="tpl-sub">Step 1: OPQRST / AMPLE interview · Step 2: ADTMC screening · Step 3: decision and plan.</p>';
+  h+='<h2 class="tpl"><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2><p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>';
   return h;
 }
 function adScreenHtml(p,R){
