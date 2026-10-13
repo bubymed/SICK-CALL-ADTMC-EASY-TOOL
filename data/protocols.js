@@ -305,7 +305,8 @@ P("E-1","e","Painful / Frequent Urination",{pg:69,
  rf:["Systemic inflammatory response syndrome (SIRS)","Flank pain","Severe abdominal pain","Gross hematuria or passing blood clots"],
  act:"None",
  flow:[
-  DP(["Any red flag","Fever T >100.4","History of diabetes","Nausea and vomiting","Vaginal symptoms","Vulvar ulcer","Pain with intercourse","Cola-colored urine"],{d:"PN",a:"Pregnancy test. UA, urine culture if available"}),
+  EX("Pregnancy test.",[]),
+  DP(["Any red flag","Fever T >100.4","History of diabetes","Nausea and vomiting","Vaginal symptoms","Vulvar ulcer","Pain with intercourse","Cola-colored urine"],{d:"PN",a:"UA, urine culture if available"}),
   DP(["Male","History of kidney stones","Pregnant","3+ UTIs in 12 months","Recent urinary catheter","Red urine, not menstrual-cycle related"],{d:"AEM",a:"UA, urine culture"})
  ],
  tx:["UTI: drink 8+ glasses of water/day. Phenazopyridine as needed (counsel: turns urine orange; may stain contacts).","First-line agent: trimethoprim/sulfamethoxazole — if the MTF antibiotic resistance is >20% or patient has a sulfa allergy, use the second-line agent.","Second-line agent: nitrofurantoin — if allergic to nitrofurantoin, refer to AEM."],
@@ -328,7 +329,8 @@ P("E-3","e","Sexually Transmitted Infection (STI)",{pg:73,
  rf:["Female pelvic pain with intercourse","Pregnant","Orthostatic","Fever"],
  act:"None",
  flow:[
-  DP(["Any red flag","Worsening despite treatment","Severe illness","Vaginal symptoms"],{d:"PN",a:"Pregnancy test. STD screen and UA"}),
+  EX("Pregnancy test.",[]),
+  DP(["Any red flag","Worsening despite treatment","Severe illness","Vaginal symptoms"],{d:"PN",a:"STD screen and UA"}),
   DP(["Skin lesion","Rash"],{d:"AEM"})
  ],
  tx:["Counsel on avoiding sexual contact until diagnosis is confirmed/ruled out, safe-sex practices, and risks of high-risk sexual behavior.","STD screen. Provide treatment with ceftriaxone and azithromycin if positive or symptomatic (per provider order). Notify provider. Refer to community health."],
@@ -340,7 +342,8 @@ P("E-4","e","Problems with Voiding",{pg:75,
  act:"Incontinence: access to a restroom; no jumping.",
  flow:[
   DP(["Any red flag","Vaginal symptoms","Post-void dribbling","Weak stream","Difficulty starting to urinate"],{d:"PN",a:"Urinalysis, pregnancy test"}),
-  DP(["Pregnant","Male >40 years old"],{d:"AEM",a:"Urinalysis, pregnancy test"})
+  EX("Urinalysis, pregnancy test.",[]),
+  DP(["Pregnant","Male >40 years old"],{d:"AEM"})
  ],
  tx:["If urethral discharge is present, use protocol E-3.","If UA is leukocyte-esterase positive, 2+ WBCs, or UTI symptoms in a female, use E-1.","If leaking urine when coughing, sneezing, jumping — counsel patient on home (pelvic floor) exercises."],
  rtc:"Return if worsening symptoms, new symptoms arise, or not improved within the stated time frame.",meds:[]});
