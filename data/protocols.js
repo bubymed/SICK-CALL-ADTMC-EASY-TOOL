@@ -513,7 +513,8 @@ P("I-2","i","Suspects Pregnancy",{pg:104,
  rf:["Positive hCG AND pelvic pain","History of ectopic pregnancy","Vaginal bleeding"],
  act:"None",
  flow:[
-  DP(["Any red flag (positive hCG + pelvic pain; h/o ectopic; vaginal bleeding)"],{d:"PN",a:"Check urine hCG first"}),
+  EX("Check urine hCG.",[]),
+  DP(["Any red flag (positive hCG + pelvic pain; h/o ectopic; vaginal bleeding)"],{d:"PN"}),
   DP(["Positive hCG without other symptoms"],{d:"AEM"})
  ],
  tx:["Counsel the Soldier to avoid alcohol and NSAID medications.","Urine hCG obtained >7–8 days after conception should be positive."],
@@ -525,7 +526,9 @@ P("I-3","i","Menstrual Problems / Vaginal Bleeding",{pg:106,
  rf:["Sexual assault","Trauma","Severe pain","Pregnant"],
  act:"Aerobic exercise at own pace/distance x3 days. Must have access to a restroom every hour.",
  flow:[
-  DP(["Any red flag","Non-midline pelvic pain","Pain with intercourse","Post-menopause","Bleeding >10 days, not on birth control"],{d:"PN",a:"Check hCG first"}),
+  EX("Check hCG.",[]),
+  DP(["Any red flag","Non-midline pelvic pain","Pain with intercourse","Post-menopause","Bleeding >10 days, not on birth control"],{d:"PN"}),
+  EX("Menses history: length; severity (clots, number of pads); medications.",[]),
   DP(["New problem","Failed previous self-care","Menstrual pain onset after age 25","Progression of symptoms","Menses <21 or >35 days","Spotting >1 pad / 2 hrs","Prevents normal duties"],{d:"AEM"})
  ],
  tx:["Menstrual cramps: NSAID such as naproxen or ibuprofen as needed for pain, with food, for up to 7 days. Ketorolac (Toradol) as a one-time dose for moderate pain. Warm compress over the abdomen."],
@@ -537,7 +540,8 @@ P("I-4","i","Vaginal Discharge / Itching / Irritation / Pain",{pg:108,
  rf:["Fever","Pregnant","Non-midline pelvic pain","Pain with intercourse"],
  act:"None",
  flow:[
-  DP(["Any red flag","Recurrent vaginitis","Presence of IUD","Vaginal discharge","Genital lesion / ulcer","Vaginal lump / mass","Pelvic pain during exercise"],{d:"PN",a:"Check hCG first"}),
+  EX("Check hCG.",[]),
+  DP(["Any red flag","Recurrent vaginitis","Presence of IUD","Vaginal discharge","Genital lesion / ulcer","Vaginal lump / mass","Pelvic pain during exercise"],{d:"PN"}),
   DP(["Moderate vaginal pain","Presentation different from the treatment-protocol descriptions"],{d:"AEM"})
  ],
  tx:["Yeast infection: treat with fluconazole (per protocol/provider order).","Bacterial vaginosis: treat with metronidazole x7 days (per protocol/provider order)."],
@@ -547,7 +551,8 @@ P("I-5","i","Request for Pap / Routine Pelvic Exam",{pg:110,
  note:"If cycle is late, check pregnancy test (pregnant → AEM). Review prior pap results; if abnormal, find the clinical plan of care and check it was followed. USPSTF: first Pap at 21; ages 21–29 Pap every 3 yrs; 30+ Pap every 3 yrs, or Pap+HPV every 5 yrs if both negative; HPV vaccine up to age 26; G/C screening yearly for women <26.",
  ddx:[],rf:[],act:"None",
  flow:[
-  DP(["Pregnant","Abnormal previous Pap","Total hysterectomy"],{d:"PN",a:"Check hCG"}),
+  EX("Check hCG.",[]),
+  DP(["Pregnant","Abnormal previous Pap","Total hysterectomy"],{d:"PN"}),
   DP(["1st Pap, age 21+","Age 21–29: Pap every 3 yrs","Age 30+: Pap every 3 yrs, or Pap + HPV every 5 yrs if negative","Additional screening: HPV vaccine","G/C screening"],{d:"APPT"})
  ],
  tx:[],rtc:"",meds:[]});
@@ -556,7 +561,8 @@ P("I-6","i","Request for Information on Contraception",{pg:111,
  note:"Determine LMP; pregnancy test if late; prior contraceptive history. Long-acting methods (implant, IUD) are most effective; injectables/oral/patch/ring depend on consistent use; condoms and behavioral modification least effective. Check hCG if requesting Depo-Provera. If male: discuss vasectomy with AEM and follow local referral protocol.",
  ddx:[],rf:[],act:"None",
  flow:[
-  DP(["Pregnant","Medication side-effects","History of recent unprotected sex"],{d:"PN",a:"Screening: check hCG"}),
+  EX("Screening: check hCG.",[]),
+  DP(["Pregnant","Medication side-effects","History of recent unprotected sex"],{d:"PN"}),
   DP(["Discuss effectiveness of each type of contraceptive","Discuss contraceptive preferences","Discuss additional benefits"],{d:"APPT",a:"Schedule appointment or referral (routine for injectable/oral/patch/ring; procedural or referral for implant/IUD)"})
  ],
  tx:[],rtc:"",meds:[]});
