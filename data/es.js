@@ -23,3 +23,35 @@ Object.assign(ES_DICT,{
 });
 
 Object.assign(ES_DICT,{'📄 DD 689':'📄 DD 689'});
+
+Object.assign(ES_DICT,{
+'🧠 MACE 2 (concussion)':'🧠 MACE 2 (conmoción)',
+'🧠 Open MACE 2 tool (scoring)':'🧠 Abrir herramienta MACE 2 (puntaje)',
+'🧠 MACE 2 — Military Acute Concussion Evaluation':'🧠 MACE 2 — Evaluación Militar Aguda de Conmoción',
+'↺ New patient (clear)':'↺ Nuevo paciente (borrar)',
+'1 · Description of incident':'1 · Descripción del incidente',
+'2 · Alteration of consciousness or memory':'2 · Alteración de la conciencia o la memoria',
+'3 · Symptoms':'3 · Síntomas',
+'4 · History':'4 · Historial',
+'Neurological exam (7–14)':'Examen neurológico (7–14)',
+'17 · Vestibular / ocular-motor screening (VOMS)':'17 · Evaluación vestibular / oculomotora (VOMS)',
+'Summary':'Resumen',
+'Blow or jolt to the head?':'¿Golpe o sacudida en la cabeza?',
+'Alteration of consciousness (AOC)?':'¿Alteración de la conciencia (AOC)?',
+'Loss of consciousness (LOC)?':'¿Pérdida de la conciencia (LOC)?',
+'Post-traumatic amnesia (PTA)?':'¿Amnesia postraumática (PTA)?',
+'AOC, LOC or PTA witnessed?':'¿AOC, LOC o PTA presenciada?',
+'Symptoms after the event':'Síntomas después del evento',
+'Negative for all symptoms':'Sin ningún síntoma',
+'Orientation':'Orientación',
+'Immediate memory':'Memoria inmediata',
+'Concentration — reverse digits':'Concentración — dígitos al revés',
+'Months in reverse order':'Meses en orden inverso',
+'Delayed recall':'Recuerdo diferido',
+'VOMS result':'Resultado de VOMS',
+'Normal':'Normal','Abnormal':'Anormal','Deferred':'Diferido',
+'YES':'SÍ','NO':'NO','UNKNOWN':'DESCONOCIDO',
+'Speech fluency':'Fluidez del habla','Word finding':'Búsqueda de palabras','Grip strength':'Fuerza de agarre','Pronator drift':'Deriva del pronador','Single leg stance':'Equilibrio en una pierna','Tandem gait':'Marcha en tándem','Pupil response':'Respuesta pupilar','Eye tracking':'Seguimiento ocular',
+'Headache':'Dolor de cabeza','Dizziness':'Mareo','Memory problems':'Problemas de memoria','Balance problems':'Problemas de equilibrio','Nausea/vomiting':'Náusea/vómito','Difficulty concentrating':'Dificultad para concentrarse','Irritability':'Irritabilidad','Visual disturbances':'Alteraciones visuales','Ringing in the ears':'Zumbido de oídos',
+'Add to note':'Agregar a la nota'
+});
