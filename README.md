@@ -42,7 +42,11 @@ Clinical content changes should cite the ADTMC page.
 ## Known limits
 - ADTMC flowchart F-2 (headache) is missing from the source PDF; it was built from the printed narrative.
 - The ADTMC (2019) lists ranitidine, which was withdrawn from the US market; the tool points to famotidine / local formulary.
-- Appendices E–G and the MACE 2 questions are not coded.
+- Appendices E–G are included only as condensed read-only summaries (Settings); the pamphlet is authoritative.
+- The CMT (Concussion Management Tool) symptom-cluster treatment tables and the PRA flowchart graphic are not reproduced; the PRA rules, stages and NSI are coded from Appendix H.
+- Medication list and prescription-refill template are not included yet.
+- Printable DD 689 and DA 5181 are fill-in replicas for convenience, not official forms; the DA 5181 final-disposition mapping to the current ADTMC categories is a suggestion.
+- The MACE 2 word/digit lists were transcribed from the pamphlet; verify against your printed form.
 - Spanish interface text was machine-translated and not clinically reviewed.
 
 ## License
