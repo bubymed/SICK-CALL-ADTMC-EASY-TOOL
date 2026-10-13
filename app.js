@@ -1257,6 +1257,48 @@ function mcText(){
 function mcCopy(b){if(!mace)mcNew();copyTxt(mcText(),b);}
 function mcToNote(){if(!mace)mcNew();const t=mcText();const n=document.getElementById('note');const c0=n.textContent;const base=(c0.trim()&&!/^Pick a complaint/.test(c0))?c0.trimEnd()+'\n\n':'';setNoteMode('manual');n.textContent=base+t;renderNav();}
 function mcRow(label,key,opts,idx){const cur=idx===undefined?mace[key]:mace[key][idx];return '<div class="chips">'+opts.map(o=>`<span class="chip ${cur===o[0]?'on':''}" onclick="mcSet('${key}','${o[0]}'${idx===undefined?'':','+idx})">${o[1]}</span>`).join('')+'</div>';}
+/* ---- PRA (Progressive Return to Activity) + NSI — ADTMC Appendix H (DVBIC), pp. 267-272. Not saved. ---- */
+const PRA_ST=[['Rest','Symptom resolution'],['Light Routine Activity','Introduce and promote limited effort'],['Light Occupation-oriented Activity','Light activities needing combined physical, cognitive and/or balance skills'],['Moderate Activity','Increase intensity and complexity of physical, cognitive and balance activities'],['Intensive Activity','Duration and intensity that parallels the service member’s typical role, function and tempo'],['Unrestricted Activity','Return to pre-injury activities']];
+const NSI_Q=['Feeling dizzy','Loss of balance','Poor coordination, clumsy','Headaches','Nausea','Vision problems, blurring, trouble seeing','Sensitivity to light','Hearing difficulty','Sensitivity to noise','Numbness or tingling on parts of body','Changes in taste and/or smell','Loss of appetite or increased appetite','Poor concentration, can’t pay attention, easily distracted','Forgetfulness, can’t remember things','Difficulty making decisions','Slowed thinking, difficulty getting organized, can’t finish things','Fatigue, loss of energy, getting tired easily','Difficulty falling or staying asleep','Feeling anxious or tense','Feeling depressed or sad','Irritability, easily annoyed','Poor frustration tolerance, feeling easily overwhelmed'];
+let pra={second:null,stage:1,nsi:{},exert:null};
+function praSet(k,v){pra[k]=(pra[k]===v?null:v);if(k==='stage'&&pra.stage===null)pra.stage=1;renderMain();}
+function praNsi(i,v){pra.nsi[i]=(pra.nsi[i]===v?undefined:v);renderMain();}
+function praReset(){pra={second:null,stage:1,nsi:{},exert:null};renderMain();}
+function praEval(){
+  const vals=Object.values(pra.nsi),n=vals.length,max=n?Math.max(...vals):null,hi=NSI_Q.map((q,i)=>pra.nsi[i]>=2?q+' ('+pra.nsi[i]+')':null).filter(Boolean);
+  let rec='Complete the NSI to decide.';
+  if(n){ if(max>=2)rec='NSI ≥2 on '+hi.length+' item(s): do NOT progress — follow up with PCM/provider; if it was worse during an activity, stop and rest for the day, and the next day resume the previous stage only if the NSI is back to 0–1.';
+    else rec='All reported items 0–1 (mild)'+(n<NSI_Q.length?' ('+n+'/'+NSI_Q.length+' rated)':'')+': criteria for progression met if there are no new symptoms and ≥24 h were spent in this stage → may advance one stage per day.'+(pra.second===true&&pra.stage<=2?' 2nd concussion in 12 months: Stages 1–2 need 7 consecutive days with NSI 0–1 before Stage 3.':'');}
+  return{n,max,hi,rec};
+}
+function praText(){
+  const E=praEval(),st=PRA_ST[pra.stage-1];
+  const L2=['PROGRESSIVE RETURN TO ACTIVITY (PRA) — DVBIC / ADTMC Appendix H'];
+  L2.push('Concussion in the past 12 months (this is the 2nd): '+(pra.second===true?'YES — need 7 consecutive days with NSI 0–1 at Stages 1 and 2 before Stages 3–5':pra.second===false?'no (first)':'not recorded')+'.');
+  L2.push('Current stage: '+pra.stage+' — '+st[0]+' ('+st[1]+').');
+  if(pra.exert)L2.push('Exertional testing: '+({N:'not done',A:'asymptomatic',S:'SYMPTOMATIC — stop, consult provider'})[pra.exert]+'.');
+  L2.push('NSI: '+(E.n?(E.n+'/'+NSI_Q.length+' items rated, highest '+E.max+(E.hi.length?'; ≥2: '+E.hi.join('; '):'')):'not completed')+'.');
+  L2.push('Plan: '+E.rec);
+  L2.push('Refer to rehabilitation provider / higher level of care if recovery not progressing as anticipated, no progression in 7 days, symptoms worsening, or symptomatic on exertional testing after Stage 5.');
+  return L2.join('\n');
+}
+function praCopy(b){copyTxt(praText(),b);}
+function praToNote(){const t=praText();const n=document.getElementById('note');const c0=n.textContent;const base=(c0.trim()&&!/^Pick a complaint/.test(c0))?c0.trimEnd()+'\n\n':'';setNoteMode('manual');n.textContent=base+t;renderNav();}
+function renderPra(){
+  const E=praEval();
+  const fld=(tag,name,ask,body)=>'<div class="field"><div class="lab"><span class="tag">'+tag+'</span><span class="name">'+name+'</span>'+(ask?'<span class="ask">'+ask+'</span>':'')+'</div>'+body+'</div>';
+  const ch=(on,fn,t)=>'<span class="chip '+(on?'on':'')+'" onclick="'+fn+'">'+t+'</span>';
+  let h='<div class="secbar">PRA · Progressive return to activity (after the 24 h rest)</div>';
+  h+='<div class="note-hint">General guidance (App. H): minimum 24 h recovery; if first concussion in 12 months and asymptomatic, exertional testing can be done; if symptomatic at 24 h / after exertional testing, or it is the 2nd concussion in 12 months, enter the full PRA. Complete the NSI daily and after each stage. Stage 1 education: Acute Concussion / Return to Activity brochures (dvbic.dcoe.mil).</div>';
+  h+=fld('12 mo','Second concussion in the past 12 months?','',"<div class='chips'>"+ch(pra.second===true,"praSet('second',true)",'YES (2nd)')+ch(pra.second===false,"praSet('second',false)",'NO (1st)')+'</div>');
+  h+=fld('Stage','Current stage','one stage per day at most',"<div class='chips'>"+PRA_ST.map((x,i)=>ch(pra.stage===i+1,"praSet('stage',"+(i+1)+")",(i+1)+' · '+x[0])).join('')+'</div><div class="fuq">'+PRA_ST[pra.stage-1][1]+'</div>');
+  h+=fld('Exert','Exertional testing','65–85% of target HR (220−age), ~2 min; stop and consult the provider if symptoms or red flags',"<div class='chips'>"+ch(pra.exert==='N',"praSet('exert','N')",'Not done')+ch(pra.exert==='A',"praSet('exert','A')",'Asymptomatic')+ch(pra.exert==='S',"praSet('exert','S')",'Symptomatic')+'</div>');
+  h+='<div class="secbar">NSI · Neurobehavioral Symptom Inventory (0–4)</div><div class="fuq">0 none · 1 mild (occasional, doesn’t disrupt) · 2 moderate (often, occasionally disrupts) · 3 severe · 4 very severe. Progress only if all are 0–1.</div>';
+  NSI_Q.forEach((q,i)=>{h+='<div class="field" style="padding:6px 8px"><div class="lab"><span class="name" style="font-weight:500">'+q+'</span></div><div class="chips">'+[0,1,2,3,4].map(v=>ch(pra.nsi[i]===v,'praNsi('+i+','+v+')',String(v))).join('')+'</div></div>';});
+  h+='<div class="field"><b>'+(E.n&&E.max>=2?'⚠ HOLD / follow up':E.n?'✓ May progress':'—')+'</b><div style="margin-top:4px;font-size:.9em">'+E.rec+'</div></div>';
+  h+='<div class="field"><pre style="white-space:pre-wrap;margin:0;font-size:.85em">'+praText().replace(/</g,'&lt;')+'</pre><div class="algo-actions"><button onclick="praCopy(this)">Copy</button><button class="ghost" onclick="praToNote()">Add to note</button><button class="ghost" onclick="praReset()">↺ Clear PRA</button></div></div>';
+  return h;
+}
 function renderMace(){
   if(!mace)mcNew();const m=mace,S=mcScore();
   const YNU=[['Y','YES'],['N','NO'],['U','UNKNOWN']],YN=[['Y','YES'],['N','NO']];
@@ -1291,7 +1333,8 @@ function renderMace(){
     h+=fld('17','VOMS result','Contraindication: unstable cervical spine. Defer if overtly symptomatic or no trained provider. Record headache / dizziness / nausea / fogginess (HDNF, 0–10) before and after each task: smooth pursuits, horizontal & vertical saccades, convergence (≥5 cm near point is abnormal), horizontal & vertical VOR, visual motion sensitivity. Any score above baseline is abnormal.',`<div class="chips"><span class="chip ${m.voms==='N'?'on':''}" onclick="mcSet('voms','N')">Normal</span><span class="chip ${m.voms==='A'?'on':''}" onclick="mcSet('voms','A')">Abnormal</span><span class="chip ${m.voms==='D'?'on':''}" onclick="mcSet('voms','D')">Deferred</span></div>`);
   }
   h+='<div class="secbar">Summary</div><div class="field"><pre style="white-space:pre-wrap;margin:0;font-size:.85em">'+mcText().replace(/</g,'&lt;')+'</pre><div class="algo-actions"><button onclick="mcCopy(this)">Copy</button><button class="ghost" onclick="mcToNote()">Add to note</button></div></div>';
-  h+='<div class="fuq" style="margin-top:8px">After completing MACE 2: document in the EHR with coding (initial TBI screening code Z13.850; primary TBI diagnostic code S06.-, etc. — see DVBIC ICD-10 coding guidance); initiate 24-hour rest; use the Concussion Management Tool (CMT); after the rest period evaluate for Progressive Return to Activity (PRA). The CMT and PRA flowcharts are in Appendix H of the pamphlet and are not reproduced here. This tool does not replace provider judgment.</div>';
+  h+=renderPra();
+  h+='<div class="fuq" style="margin-top:8px">After completing MACE 2: document in the EHR with coding (initial TBI screening code Z13.850; primary TBI diagnostic code S06.-, etc. — see DVBIC ICD-10 coding guidance); initiate 24-hour rest; use the Concussion Management Tool (CMT); after the rest period evaluate for Progressive Return to Activity (PRA). The PRA guidance, NSI and stages above follow Appendix H (pp. 267–272); the CMT symptom-cluster treatment tables are not reproduced — use the pamphlet or the provider. This tool does not replace provider judgment.</div>';
   return h;
 }
 
