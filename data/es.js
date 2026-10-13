@@ -21,3 +21,5 @@ Object.assign(ES_DICT,{
 'Requests contraception information':'Solicita información de anticoncepción',
 'Requests vasectomy':'Solicita vasectomía'
 });
+
+Object.assign(ES_DICT,{'📄 DD 689':'📄 DD 689'});
