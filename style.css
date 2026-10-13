@@ -291,6 +291,7 @@ nav button.sub .pid{font-family:var(--mono);color:var(--dim);font-size:11px;min-
 #slipOv textarea{border:1px dotted #999;resize:vertical}
 #slipOv .sl-cbs{display:flex;gap:18px;font-size:10px;padding:3px 0 5px}#slipOv .sl-cbs.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 #slipOv .sl-blank.s1{height:34px}#slipOv .sl-blank.s8{height:190px}
+#slipOv .sl-row3{display:flex;gap:8px}#slipOv .sl-row3>div{flex:1}#slipOv .dacode{width:60%;display:inline-block;margin-left:6px}#slipOv .da textarea{font-size:11px}
 #slipOv .sl-foot{display:flex;justify-content:space-between;font-size:9px;padding:3px 5px}
 #slipOv .sl-bar button{padding:6px 12px}
 @media print{
