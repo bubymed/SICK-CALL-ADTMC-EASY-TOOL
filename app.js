@@ -1998,7 +1998,7 @@ function adEntry(p,R){
   }
   if(pf.length)bits.push('Positive: '+pf.join(', ')+'.');
   if(ad.ret)bits.push(ad.worse?'Return visit — worse / already seen by provider or AEM.':'Return visit for the same complaint.');
-  return{id:p.id,title:p.title,level:R.final||null,pos,sum:p.title+' ('+p.id+')'+(bits.length||R.final?': ':'')+bits.join(' ')+(R.final?' → '+({PN:'Provider now.',AEM:'AEM today.',MCP:'Minor care.',SP:'Specialty referral.',APPT:'Appointment/referral.'}[R.final]||LV[R.final].s):''),plan:R.final==='MCP'?adPlanLines(adPlanItems(p)):[]};
+  return{id:p.id,title:p.title,level:R.final||null,pos,lines:adProtoLines(p,R),sum:p.title+' ('+p.id+')'+(bits.length||R.final?': ':'')+bits.join(' ')+(R.final?' → '+({PN:'Provider now.',AEM:'AEM today.',MCP:'Minor care.',SP:'Specialty referral.',APPT:'Appointment/referral.'}[R.final]||LV[R.final].s):''),plan:R.final==='MCP'?adPlanLines(adPlanItems(p)):[]};
 }
 /* ---- suggestions inside the classic templates ---- */
 const CCMAP={
@@ -2167,6 +2167,56 @@ function slipPrint(){
   document.body.classList.add('slip-print');window.print();setTimeout(()=>document.body.classList.remove('slip-print'),400);
 }
 function slipClose(){const o=document.getElementById('slipOv');if(o)o.remove();}
+
+/* ---- DA Form 5181 (Screening Note of Acute Medical Care), prefilled ---- */
+function daData(){
+  const lines=document.getElementById('note').textContent.split('\n');
+  const ent=ad.log.slice();
+  if(ad.pid){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length)ent.push(adEntry(p,R));}
+  const cc=[];lines.forEach(l=>{const m=l.match(/^CC: (.*?)\.?$/);if(m){const t=m[1].replace(/^C\/o\s+/i,'').trim();if(t&&!cc.includes(t))cc.push(t);}});
+  let al='';lines.forEach(l=>{const m=l.match(/^(?:A:|Allergies:?)\s*(.*?)\.?$/i);if(m&&!al)al=m[1];});
+  if(!al){const m=document.getElementById('note').textContent.match(/\bNKDA\b/);if(m)al='NKDA';}
+  const hi=adHighest();
+  const sum=e=>e.title+' ('+e.id+')\n'+(e.lines||[]).join('\n');
+  const plan=[];ent.forEach(e=>(e.plan||[]).forEach(x=>{if(!plan.includes(x))plan.push(x);}));
+  const d=new Date(),ymd=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  return{ymd,cc:cc.join('; '),al,v:gVitals,ent,hi,sum,plan,firstVisit:!ad.ret,ret:ad.ret};
+}
+function daOpen(){
+  const D=daData();let org='';try{org=localStorage.getItem('sc_org')||'';}catch(e){}
+  let o=document.getElementById('slipOv');if(o)o.remove();
+  o=document.createElement('div');o.id='slipOv';
+  const E=x=>String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  const cb=(id,l,on)=>`<label class="sl-cb"><input type="checkbox" id="${id}"${on?' checked':''}><span class="bx"></span>${l}</label>`;
+  const e0=D.ent[0],e1=D.ent[1];
+  const rest=D.ent.slice(2).map(D.sum).join('\n\n');
+  const com=[D.plan.length?D.plan.map(x=>'- '+x).join('\n'):'',rest?('Additional protocols:\n'+rest):''].filter(Boolean).join('\n');
+  const dm={PN:'daD1',AEM:'daD2',MCP:'daD4',SP:'daD5',APPT:'daD5'};
+  o.innerHTML=`<div class="sl-bar"><b>DA Form 5181 — Screening Note of Acute Medical Care</b><span class="spacer"></span>
+    <button onclick="slipPrint()">🖨 Print</button><button class="ghost" onclick="slipClose()">✕ Close</button></div>
+    <div class="sl-hint">Fill-in only for printing. Patient identification (name, SSN/DoD ID, unit) is NOT saved — write it by hand or type it here before printing. Signatures stay blank. Final disposition is a suggestion mapped from the ADTMC category: check it.</div>
+    <div class="sl-form da"><div class="sl-title">SCREENING NOTE OF ACUTE MEDICAL CARE</div>
+    <div class="sl-row"><div class="sl-c w35"><label>TIME PATIENT DEPARTS UNIT <i>(From DD Form 689)</i></label><input id="daDep"></div>
+      <div class="sl-c w65"><label>SCREENER LOCATION</label><div class="sl-row3"><div><label>TIME PATIENT ARRIVES</label><input id="daArr"></div><div><label>TIME ENCOUNTER BEGINS</label><input id="daBeg"></div><div><label>TIME PATIENT LEAVES</label><input id="daLv"></div></div></div></div>
+    <div class="sl-row"><div class="sl-c" style="width:20%"><label>DATE <i>(YYYYMMDD)</i></label><input id="daDate" value="${D.ymd}"></div>
+      <div class="sl-c" style="width:25%"><label>SCREENER LOCATION</label><textarea id="daOrg" rows="2" onchange="try{localStorage.setItem('sc_org',this.value)}catch(e){}">${E(org)}</textarea></div>
+      <div class="sl-c" style="width:35%"><label>CHIEF COMPLAINT</label><textarea id="daCC" rows="2">${E(D.cc)}</textarea></div>
+      <div class="sl-c" style="width:20%"><label>DURATION</label><input id="daDur"></div></div>
+    <div class="sl-row"><div class="sl-c w50"><label>PATIENT RESIDENCE</label>${cb('daBar','BARRACKS')}${cb('daPost','POST HOUSING')}<br>${cb('daOff','OFF POST')}${cb('daTr','TRANSIENT')}</div>
+      <div class="sl-c w50"><label>VITAL SIGNS</label><div class="sl-row3"><div><label>TEMPERATURE</label><input id="daT" value="${E(D.v.temp)}"></div><div><label>ALLERGIES</label><input id="daAl" value="${E(D.al)}"></div></div>
+        <div class="sl-row3"><div><label>PULSE</label><input id="daHR" value="${E(D.v.hr)}"></div><div><label>BP</label><input id="daBP" value="${E(D.v.bp)}"></div><div><label>RESP</label><input id="daRR" value="${E(D.v.rr)}"></div></div></div></div>
+    <div class="sl-row"><div class="sl-c" style="width:100%"><label style="display:inline">FIRST VISIT FOR THIS COMPLAINT</label> ${cb('daFvY','YES',D.firstVisit)}${cb('daFvN','NO',D.ret)} &nbsp; <label style="display:inline">IF NO, WAS RETURN SCHEDULED/REQUESTED BY CARE PROVIDER?</label> ${cb('daRtY','YES')}${cb('daRtN','NO')}</div></div>
+    <div class="sl-row sl-sec"><div class="sl-c w50 ctr">ALGORITHM/CODE <input id="daC1" class="dacode" value="${E(e0?e0.id:'')}"></div><div class="sl-c w50 ctr">ALGORITHM/CODE <input id="daC2" class="dacode" value="${E(e1?e1.id:'')}"></div></div>
+    <div class="sl-row"><div class="sl-c w50"><label>ALGORITHM SUMMARY</label><textarea id="daS1" rows="14">${E(e0?D.sum(e0):'')}</textarea></div><div class="sl-c w50"><label>ALGORITHM SUMMARY</label><textarea id="daS2" rows="14">${E(e1?D.sum(e1):'')}</textarea></div></div>
+    <div class="sl-row"><div class="sl-c" style="width:100%"><label>COMMENTS <i>(Reasons for referral, method of referral, hospital appointments, self-care protocols, and patient instructions/precautions)</i></label><textarea id="daCom" rows="9">${E(com)}</textarea></div></div>
+    <div class="sl-row"><div class="sl-c w50"><label>PATIENT'S IDENTIFICATION <i>(Name, SSN, Unit, Sex, Birthdate and Duty Phone)</i></label><textarea id="daPt" rows="6" autocomplete="off"></textarea></div>
+      <div class="sl-c w50"><label>FINAL DISPOSITION</label>${cb('daD1','I - PHYSICIAN STAT',dm[D.hi]==='daD1')}${cb('daD4','IV - SELF CARE PROTOCOL',dm[D.hi]==='daD4')}<br>${cb('daD2','II - PA STAT',dm[D.hi]==='daD2')}${cb('daD5','V - HOSP CLINIC REFERRAL',dm[D.hi]==='daD5')}<br>${cb('daD3','III - PA')}
+        <div class="sl-row3" style="margin-top:14px"><div><label>AIDMAN'S SIGNATURE &amp; CODE</label><div class="sl-blank s1"></div></div><div><label>AUDITOR'S INITIALS &amp; DATE (YYYYMMDD)</label><div class="sl-blank s1"></div></div></div></div></div>
+    <div class="sl-foot"><b>DA FORM 5181, FEB 2003</b><span>DA FORM 5181-R, OCT 86, IS OBSOLETE.</span><b>Page 1 of 2</b></div></div>`;
+  document.body.appendChild(o);
+  const grp=(ids)=>ids.forEach(i=>{const el=document.getElementById(i);el.onchange=()=>{if(el.checked)ids.forEach(j=>{if(j!==i)document.getElementById(j).checked=false;});};});
+  grp(['daBar','daPost','daOff','daTr']);grp(['daFvY','daFvN']);grp(['daRtY','daRtN']);grp(['daD1','daD2','daD3','daD4','daD5']);
+}
 
 function exportBackup(){dl('sickcall_backup.json',JSON.stringify({v:1,saved:getSaved()}),'application/json');}
 function importBackup(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d&&Array.isArray(d.saved)){setSaved(d.saved.concat(getSaved()));renderNav();alert('Imported '+d.saved.length+' notes.');}}catch(e){alert('Invalid file.');}};r.readAsText(f);}
