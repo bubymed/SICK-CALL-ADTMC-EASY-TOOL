@@ -2320,6 +2320,15 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
+const APP_VER='v10';
+function updateApp(b){
+  if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
+  const go=()=>{location.href=location.pathname+'?u='+Date.now();};
+  const ps=[];
+  try{if('serviceWorker' in navigator)ps.push(navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))));}catch(e){}
+  try{if(window.caches)ps.push(caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))));}catch(e){}
+  Promise.all(ps).then(go,go);
+}
 function wipeAll(){
   if(!confirm('Delete EVERYTHING on this device (saved notes, current note, protocols, settings)?'))return;
   try{['sc_state','sc_saved','sc_ad','sc_settings','sc_fs'].forEach(k=>localStorage.removeItem(k));}catch(e){}
@@ -2373,6 +2382,7 @@ function renderSettings(){
   h+='<div class="fuq">The PIN only hides the screen in this browser; it does not encrypt data. If you forget it, "Delete everything" removes it.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">💾</span><span class="name">Backup</span></div><div class="algo-actions" style="margin-top:0"><button onclick="exportBackup()">Export saved (.json)</button><button class="ghost" onclick="document.getElementById(\'impF\').click()">Import</button><input type="file" id="impF" accept=".json" style="display:none" onchange="importBackup(this)"></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">📴</span><span class="name">Offline / install on your phone</span></div><div style="font-size:.9em;line-height:1.7;color:var(--dim)">This file works without internet: save it on your phone and open it from the browser. To install it as an app (home-screen icon), upload <b>SICK_CALL_TOOL.html + manifest.json + sw.js</b> together to HTTPS hosting (e.g. GitHub Pages) and use "Add to Home Screen". Service worker status: <b id="swState">…</b></div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">🔄</span><span class="name">'+L('App version','Versión de la app')+' '+APP_VER+'</span></div><div class="algo-actions" style="margin-top:0"><button onclick="updateApp(this)">'+L('Update app (load latest version)','Actualizar app (cargar la última versión)')+'</button></div><div class="fuq">'+L('Needs internet. Clears the offline copy and reloads the newest files; your saved notes and settings are NOT deleted.','Requiere internet. Borra la copia offline y recarga los archivos más recientes; tus notas y ajustes guardados NO se borran.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag" style="color:var(--red)">🗑️</span><span class="name">Delete everything</span></div><div class="algo-actions" style="margin-top:0"><button style="background:var(--red);color:var(--on-red)" onclick="wipeAll()">Delete EVERYTHING on this device</button></div></div>';
   h+=appxRef();
   h+='<div class="field"><div class="lab"><span class="tag">ℹ️</span><span class="name">Source and scope</span></div><div style="font-size:.88em;line-height:1.7;color:var(--dim)">Protocols and meds transcribed from MEDCOM Pam 40-7-21 (ADTMC). The tool helps document and avoid skipping steps; it does not replace provider/AEM judgment or the current official version. Local modifications may only be more conservative (raise the level of care), never less.</div></div>';
