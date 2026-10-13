@@ -2126,6 +2126,48 @@ function renderSettings(){
 function dl(name,txt,type){const b=new Blob([txt],{type:type||'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 function exportNote(){const t=document.getElementById('note').textContent;if(!t.trim())return;const d=new Date();dl('sickcall_'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'.txt',t);}
 function printNote(){window.print();}
+/* DD Form 689 (Individual Sick Slip) — printable replica, prefilled from the note. Name/DoD ID are typed only, never stored. */
+function slipData(){
+  const lines=document.getElementById('note').textContent.split('\n');
+  const cc=[];lines.forEach(l=>{const m=l.match(/^CC: (.*?)\.?$/);if(m){const t=m[1].replace(/^C\/o\s+/i,'').trim();if(t&&!cc.includes(t))cc.push(t);}});
+  const i=lines.findIndex(l=>/^ASSESSMENT:|^PLAN:|^DISPO/.test(l));
+  const rem=i<0?'':lines.slice(i).join('\n').replace(/\n{2,}/g,'\n').trim();
+  const d=new Date(),ymd=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  return{cond:cc.join('; '),ymd,name:patient.trim(),rem,full:lines.join('\n').trim()};
+}
+function slipOpen(){
+  const D=slipData();let org='';try{org=localStorage.getItem('sc_org')||'';}catch(e){}
+  let o=document.getElementById('slipOv');if(o)o.remove();
+  o=document.createElement('div');o.id='slipOv';
+  const cb=(id,l)=>`<label class="sl-cb"><input type="checkbox" id="${id}"><span class="bx"></span>${l}</label>`;
+  o.innerHTML=`<div class="sl-bar"><b>DD Form 689 — Individual Sick Slip</b><span class="spacer"></span>
+    <button onclick="slipRem(this)" id="slipRemBtn">Remarks: A/P/Dispo</button><button onclick="slipPrint()">🖨 Print</button><button class="ghost" onclick="slipClose()">✕ Close</button></div>
+    <div class="sl-hint">Fill-in only for printing. Name, DoD ID and rank are NOT saved. Signatures, blocks 7–11 stay blank for the Commander / provider.</div>
+    <div class="sl-form"><div class="sl-title">INDIVIDUAL SICK SLIP</div>
+    <div class="sl-row"><div class="sl-c w65"><label>1. MEDICAL CONDITION <i>(Brief Description)</i></label>${cb('slIll','ILLNESS')}${cb('slInj','INJURY')}<textarea id="slCond" rows="2">${D.cond.replace(/</g,'&lt;')}</textarea></div>
+      <div class="sl-c w35"><label>2. DATE <i>(YYYYMMDD)</i></label><input id="slDate" value="${D.ymd}"></div></div>
+    <div class="sl-row"><div class="sl-c w65"><label>3. PATIENT'S NAME <i>(Last, First, Middle Initial)</i></label><input id="slName" value="${D.name.replace(/"/g,'&quot;')}"></div>
+      <div class="sl-c w35 tall" style="grid-row:span 2"><label>6. ORGANIZATION AND STATION</label><textarea id="slOrg" rows="3" onchange="try{localStorage.setItem('sc_org',this.value)}catch(e){}">${org.replace(/</g,'&lt;')}</textarea></div></div>
+    <div class="sl-row"><div class="sl-c w35"><label>4. DoD ID NUMBER</label><input id="slId" inputmode="numeric" autocomplete="off"></div><div class="sl-c w30"><label>5. GRADE / RANK</label><input id="slRk"></div></div>
+    <div class="sl-row sl-sec"><div class="sl-c w50 ctr">UNIT COMMANDER'S SECTION</div><div class="sl-c w50 ctr">MEDICAL OFFICER'S SECTION</div></div>
+    <div class="sl-row"><div class="sl-c w50"><label>7. IN LINE OF DUTY</label><div class="sl-blank s1"></div><label>8. REMARKS</label><div class="sl-blank s8"></div><label>9. SIGNATURE OF UNIT COMMANDER</label><div class="sl-blank s1"></div></div>
+      <div class="sl-c w50"><label>10. IN LINE OF DUTY</label><div class="sl-cbs"><span><span class="bx"></span>No (EPTS)</span><span><span class="bx"></span>Yes (EPTS)</span></div>
+        <label>11. DISPOSITION OF PATIENT</label><div class="sl-cbs g3"><span><span class="bx"></span>DUTY</span><span><span class="bx"></span>QUARTERS</span><span><span class="bx"></span>SICK BAY</span><span><span class="bx"></span>HOSPITAL</span><span><span class="bx"></span>NOT EXAMINED</span><span><span class="bx"></span>OTHER <i>(Specify:)</i></span></div>
+        <label>12. REMARKS</label><textarea id="slRem" rows="8">${D.rem.replace(/</g,'&lt;')}</textarea><label>13. SIGNATURE OF MEDICAL OFFICER</label><div class="sl-blank s1"></div></div></div>
+    <div class="sl-foot"><b>DD FORM 689, AUG 2017</b><span>PREVIOUS EDITION IS OBSOLETE.</span><b>Page 1 of 1</b></div></div>`;
+  o._d=D;document.body.appendChild(o);
+  const ill=document.getElementById('slIll'),inj=document.getElementById('slInj');
+  ill.onchange=()=>{if(ill.checked)inj.checked=false;};inj.onchange=()=>{if(inj.checked)ill.checked=false;};
+}
+function slipRem(b){const o=document.getElementById('slipOv'),r=document.getElementById('slRem');o._full=!o._full;r.value=o._full?o._d.full:o._d.rem;b.textContent=o._full?'Remarks: full note':'Remarks: A/P/Dispo';}
+function slipPrint(){
+  // inputs print as text: mirror values into attributes so print shows them
+  document.querySelectorAll('#slipOv input[type=text],#slipOv input:not([type])').forEach(i=>i.setAttribute('value',i.value));
+  document.querySelectorAll('#slipOv input[type=checkbox]').forEach(i=>{if(i.checked)i.setAttribute('checked','');else i.removeAttribute('checked');});
+  document.body.classList.add('slip-print');window.print();setTimeout(()=>document.body.classList.remove('slip-print'),400);
+}
+function slipClose(){const o=document.getElementById('slipOv');if(o)o.remove();}
+
 function exportBackup(){dl('sickcall_backup.json',JSON.stringify({v:1,saved:getSaved()}),'application/json');}
 function importBackup(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d&&Array.isArray(d.saved)){setSaved(d.saved.concat(getSaved()));renderNav();alert('Imported '+d.saved.length+' notes.');}}catch(e){alert('Invalid file.');}};r.readAsText(f);}
 /* follow-up: reopen a saved patient as a return visit */
