@@ -1959,32 +1959,40 @@ function adSuggestHtml(t,s){
   ids.forEach(id=>{const p=getP(id);if(p)h+='<span class="chip on" onclick="adOpen(\''+id+'\')">'+id+' · '+q$(p.title)+'</span>';});
   return h+'</div><div class="fuq">Abnormal vitals (if taken), red flags or pain ≥7 → Provider Now. The ADTMC screening decides the category; the chips below document the interview.</div></div>';
 }
-/* ---- ADTMC meds reference + daily max calculator ---- */
+/* ---- ADTMC meds reference: one search bar -> info + daily-max check ---- */
 let medQ='';
+const dcUsed={}; // doses already taken today, per med (memory only)
+function L(en,es){return LANG==='es'?es:en;}
 function renderADMeds(){
-  let h='<h2 class="tpl">💊 ADTMC Meds — Appendix C</h2><p class="tpl-sub">Doses, contraindications, pregnancy and lactation as they appear in the ADTMC. <span class="rxb">Rx</span> = requires a privileged-provider prescription.</p>';
-  h+=calcHtml();
-  h+='<div class="field"><input type="text" style="margin-top:0" placeholder="Search medication, brand or protocol (e.g. ibuprofen, K-6)…" value="'+q$(medQ)+'" oninput="medQ=this.value;document.getElementById(\'medlist\').innerHTML=adMedItems()"></div><div id="medlist">'+adMedItems()+'</div>';
+  let h='<h2 class="tpl">💊 ADTMC Meds — Appendix C</h2><p class="tpl-sub">Type a medication, brand or protocol: dose, contraindications, pregnancy, lactation and a daily-max check. <span class="rxb">Rx</span> = requires a privileged-provider prescription.</p>';
+  h+='<div class="field"><input type="text" id="medSearch" style="margin-top:0;font-size:1.05em" placeholder="Search medication, brand or protocol (e.g. ibuprofen, Motrin, K-6)…" value="'+q$(medQ)+'" oninput="medQ=this.value;document.getElementById(\'medlist\').innerHTML=adMedItems()" autocomplete="off"></div><div id="medlist">'+adMedItems()+'</div>';
   return h;
+}
+function dcHtml(m){
+  const c=DCALC[m.k];
+  if(!c)return '<div class="dim" style="font-size:.82em;margin-top:6px">'+L('No numeric daily maximum in the ADTMC for this medication — follow the dose above.','El ADTMC no da un máximo diario numérico para este medicamento — sigue la dosis indicada arriba.')+'</div>';
+  const v=dcUsed[m.k]||0;
+  return '<div class="dcbox"><div class="mini"><span>'+L('Daily max check','Verificación del máximo diario')+'</span> — <b>'+q$(c.i)+'</b> <span>'+L('already given today','ya administrada(s) hoy')+'</span></div><div class="dcrow"><button onclick="dcStep(\''+m.k+'\',-1)">−</button><input type="text" inputmode="numeric" id="dc_'+m.k+'" value="'+v+'" oninput="dcSet(\''+m.k+'\',this.value)"><button onclick="dcStep(\''+m.k+'\',1)">+</button></div><div id="dco_'+m.k+'">'+dcOut(m.k)+'</div></div>';
+}
+function dcSet(k,val){dcUsed[k]=Math.max(0,parseInt(val,10)||0);const o=document.getElementById('dco_'+k);if(o)o.innerHTML=dcOut(k);}
+function dcStep(k,d){dcSet(k,(dcUsed[k]||0)+d);const i=document.getElementById('dc_'+k);if(i)i.value=dcUsed[k];}
+function dcOut(k){
+  const c=DCALC[k],n=dcUsed[k]||0,tot=n*c.q,left=c.max-tot,more=Math.floor(left/c.q);
+  let msg;
+  const u=L(c.u,{mg:'mg',tbsp:'cda',doses:'dosis'}[c.u]||c.u);
+  if(left<0)msg=L('EXCEEDS the ADTMC max by '+(-left)+' '+c.u+' — do NOT give more','EXCEDE el máximo del ADTMC por '+(-left)+' '+u+' — NO dar más');
+  else if(more<1)msg=L('at the ADTMC max — no room for another dose','en el máximo del ADTMC — no hay margen para otra dosis');
+  else msg=L('room for '+more+' more ('+c.q+' '+c.u+' each'+(c.hrs?', q'+c.hrs+'h interval':'')+')','margen para '+more+' más ('+c.q+' '+u+' c/u'+(c.hrs?', intervalo q'+c.hrs+'h':'')+')');
+  return '<div class="'+(left<0||more<1?'rfbanner':'note-hint')+'" style="margin:6px 0 0">'+L('Total today: ','Total hoy: ')+'<b>'+tot+' '+u+'</b> · '+L('ADTMC max ','Máx. ADTMC ')+c.max+' '+u+'/24 h · '+msg+'</div>'+(c.n?'<div class="dim" style="font-size:.8em;margin-top:4px">'+q$(c.n)+'</div>':'');
 }
 function adMedItems(){
   const q=medQ.trim().toLowerCase();
-  return ADMEDS.filter(m=>!q||(m.n+' '+m.t+' '+m.alg).toLowerCase().includes(q)).map(m=>{
+  const list=ADMEDS.filter(m=>!q||(m.n+' '+m.t+' '+m.alg+' '+m.k).toLowerCase().includes(q));
+  if(!list.length)return '<div class="dim" style="padding:10px">'+L('No medication matches','Ningún medicamento coincide con')+' "'+q$(medQ)+'".</div>';
+  return list.map(m=>{
     const s=medSafety(m);
-    return '<div class="medcard'+(s.w.length?' bad':'')+'"><div class="mh"><b>'+q$(m.n)+'</b> <span class="dim">'+q$(m.t)+'</span>'+(m.rx?' <span class="rxb">Rx</span>':'')+'<span class="ppg dim">p.'+m.pg+'</span></div><div>'+q$(m.dose)+(m.max?' · <b>max '+q$(m.max)+'</b>':'')+'</div><div class="dim" style="font-size:.85em">Protocols: '+q$(m.alg)+'</div><details class="dd"><summary>Contraindications / pregnancy</summary><div style="padding:6px 10px 10px;font-size:.88em;line-height:1.6">'+m.ci.map(c=>'• '+q$(c)).join('<br>')+'<br><b>Pregnancy:</b> '+q$(m.preg)+' · <b>Lactation:</b> '+q$(m.lac)+(m.note?'<br><b>⚠️</b> '+q$(m.note):'')+'</div></details>'+s.w.map(x=>'<div class="mw">⚠️ '+q$(x)+'</div>').join('')+'</div>';
+    return '<div class="medcard'+(s.w.length?' bad':'')+'"><div class="mh"><b>'+q$(m.n)+'</b> <span class="dim">'+q$(m.t)+'</span>'+(m.rx?' <span class="rxb">Rx</span>':'')+'<span class="ppg dim">p.'+m.pg+'</span></div><div>'+q$(m.dose)+(m.max?' · <b>max '+q$(m.max)+'</b>':'')+'</div><div class="dim" style="font-size:.85em">Protocols: '+q$(m.alg)+'</div><details class="dd"><summary>Contraindications / pregnancy</summary><div style="padding:6px 10px 10px;font-size:.88em;line-height:1.6">'+m.ci.map(c=>'• '+q$(c)).join('<br>')+'<br><b>Pregnancy:</b> '+q$(m.preg)+' · <b>Lactation:</b> '+q$(m.lac)+(m.note?'<br><b>⚠️</b> '+q$(m.note):'')+'</div></details>'+dcHtml(m)+s.w.map(x=>'<div class="mw">⚠️ '+q$(x)+'</div>').join('')+'</div>';
   }).join('');
-}
-let calc={k:'ibuprofen',n:0};
-function calcHtml(){
-  const m=ADMEDS.find(x=>x.k===calc.k),tot=calc.n*m.mg*m.per,left=m.maxmg-tot;
-  let h='<div class="field"><div class="lab"><span class="tag">Σ</span><span class="name">Daily max dose calculator</span><span class="ask">ADTMC doses already taken today</span></div><div class="chips">';
-  ADMEDS.filter(x=>x.maxmg).forEach(x=>h+='<span class="chip '+(calc.k===x.k?'on':'')+'" onclick="calc.k=\''+x.k+'\';renderMain()">'+q$(x.n)+'</span>');
-  h+='</div><div class="subrow"><div class="half"><div class="mini">Doses of '+m.per+' tab ('+m.per*m.mg+' mg) already today</div><input type="text" value="'+calc.n+'" oninput="calc.n=+this.value||0;document.getElementById(\'calcout\').innerHTML=calcOut()"></div></div><div id="calcout">'+calcOut()+'</div></div>';
-  return h;
-}
-function calcOut(){
-  const m=ADMEDS.find(x=>x.k===calc.k),tot=calc.n*m.mg*m.per,left=m.maxmg-tot;
-  return '<div class="'+(left<0?'rfbanner':'note-hint')+'" style="margin:8px 0 0">Total today: <b>'+tot+' mg</b> · ADTMC max '+m.maxmg+' mg/24 h · '+(left<0?'EXCEEDS by '+(-left)+' mg — do NOT give more':(left<m.mg*m.per?'no room for another full dose ('+left+' mg left)':'room for '+Math.floor(left/(m.mg*m.per))+' more dose(s) ('+m.per*m.mg+' mg each, q'+m.hrs+'h interval)'))+'</div>';
 }
 
 /* =========================================================

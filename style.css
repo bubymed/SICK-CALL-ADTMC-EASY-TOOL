@@ -265,3 +265,9 @@ nav button.sub .pid{font-family:var(--mono);color:var(--dim);font-size:11px;min-
 }
 .dpq .fname,.exq .fname{font-size:.78em;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
 @media(max-width:600px){header .spacer+button,header button:nth-of-type(3){display:none}}
+
+.dcbox{margin-top:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:8px}
+.dcrow{display:flex;gap:6px;align-items:center;margin-top:4px}
+.dcrow button{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:6px;width:34px;height:32px;font-size:1.1em;cursor:pointer}
+.dcrow input{width:64px;text-align:center;margin:0}
+.dcbox .mini{color:var(--dim);font-size:12px}
