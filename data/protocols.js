@@ -573,7 +573,8 @@ P("J-2","j","Acne",{pg:114,
  ddx:["Acne vulgaris","Pseudofolliculitis barbae","Folliculitis","Acne rosacea","Hyperandrogenism"],
  rf:["None"],act:"None",
  flow:[
-  DP(["Requesting birth control","Positive hCG","Hyperandrogenism signs","Draining lesion","Acute onset","Requiring limitations in protective equipment"],{d:"PN",a:"Check hCG first"}),
+  EX("Check hCG.",[]),
+  DP(["Requesting birth control","Positive hCG","Hyperandrogenism signs","Draining lesion","Acute onset","Requiring limitations in protective equipment"],{d:"PN"}),
   DP(["Acne interferes with wearing equipment","Moderate–severe inflammatory acne","Scarring or hyperpigmentation","Failed initial treatment","Appears very self-conscious"],{d:"AEM"})
  ],
  tx:["Comedones: confirm negative pregnancy test (if female) and no fish allergy. Topical retinoid, pea-size, to affected dry-face area at night; decrease to every other night if irritation / dry skin occurs.","Mild–moderate inflammation: add topical combination of benzoyl peroxide + antibiotic in the morning (retinoid at night)."],
@@ -646,7 +647,7 @@ P("J-9","j","Boils / Abscess",{pg:128,
  act:"Keep area clean and dry.",
  flow:[
   DP(["Fever","Rapid progression","Cellulitis","Indwelling medical device"],{d:"PN",a:"Prepare informed consent, timeout and I&D set-up if provider requests."}),
-  DP(["Fluctuant mass","Multiple abscesses","Drained abscess >5 cm"],{d:"AEM"})
+  DP(["Fluctuant mass","Multiple abscesses","Drained abscess >5 cm"],{d:"AEM",a:"Prepare informed consent, timeout and I&D set-up if provider requests."})
  ],
  tx:["Warm moist compress 20 minutes every 4 hours."],
  rtc:"Return if fever/chills, re-accumulation, red streaks, increased swelling, or not improving in 3 days.",meds:[]});
@@ -730,6 +731,7 @@ P("J-17","j","Cutaneous Warts",{pg:144,
  ddx:["Common wart","Plantar wart","Flat wart"],
  rf:["None"],act:"None",
  flow:[
+  EX("Skin exam.",[]),
   DP(["Bleeding","Sensitive area",">10 warts","Upcoming mission limiting treatment","Signs of infection / inflammation","Treatment >12 weeks"],{d:"PN"}),
   DP([">3 warts","Treatment >4 weeks","Medic not trained","Complication from treatment"],{d:"AEM"})
  ],
@@ -741,6 +743,7 @@ P("J-18","j","Ingrown Toenail",{pg:146,
  rf:["Red streaks up the foot","Gangrene","Black eschar"],
  act:"No running or rucking; walk at own pace.",
  flow:[
+  EX("Foot exam.",[]),
   DP(["Cellulitis","Immunocompromised","Diabetic","Severe infection","Recurrent ingrown nail","Severe pain / limping"],{d:"PN"}),
   DP(["Moderate infection","Limitations to duty"],{d:"AEM"})
  ],
