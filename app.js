@@ -2410,7 +2410,7 @@ function slipOpen(){
   const cb=(id,l)=>`<label class="sl-cb"><input type="checkbox" id="${id}"><span class="bx"></span>${l}</label>`;
   o.innerHTML=`<div class="sl-bar"><b>DD Form 689 — Individual Sick Slip</b><span class="spacer"></span>
     <button onclick="slipRem(this)" id="slipRemBtn">Remarks: A/P/Dispo</button><button onclick="slipPrint()">🖨 Print</button><button class="ghost" onclick="slipClose()">✕ Close</button></div>
-    <div class="sl-hint">Fill-in only for printing. Name, DoD ID and rank are NOT saved. Signatures, blocks 7–11 stay blank for the Commander / provider.</div>
+    <div class="sl-hint">Fill-in only for printing. Name, DoD ID, rank and signature are NOT saved. Tick the boxes in blocks 10–11 and draw your signature in block 13 with your finger if your SOP authorizes you to sign. Blocks 7–9 stay blank for the Commander.</div>
     <div class="sl-form"><div class="sl-title">INDIVIDUAL SICK SLIP</div>
     <div class="sl-row"><div class="sl-c w65"><label>1. MEDICAL CONDITION <i>(Brief Description)</i></label>${cb('slIll','ILLNESS')}${cb('slInj','INJURY')}<textarea id="slCond" rows="2">${D.cond.replace(/</g,'&lt;')}</textarea></div>
       <div class="sl-c w35"><label>2. DATE <i>(YYYYMMDD)</i></label><input id="slDate" value="${D.ymd}"></div></div>
@@ -2419,15 +2419,29 @@ function slipOpen(){
     <div class="sl-row"><div class="sl-c w35"><label>4. DoD ID NUMBER</label><input id="slId" inputmode="numeric" autocomplete="off"></div><div class="sl-c w30"><label>5. GRADE / RANK</label><input id="slRk"></div></div>
     <div class="sl-row sl-sec"><div class="sl-c w50 ctr">UNIT COMMANDER'S SECTION</div><div class="sl-c w50 ctr">MEDICAL OFFICER'S SECTION</div></div>
     <div class="sl-row"><div class="sl-c w50"><label>7. IN LINE OF DUTY</label><div class="sl-blank s1"></div><label>8. REMARKS</label><div class="sl-blank s8"></div><label>9. SIGNATURE OF UNIT COMMANDER</label><div class="sl-blank s1"></div></div>
-      <div class="sl-c w50"><label>10. IN LINE OF DUTY</label><div class="sl-cbs"><span><span class="bx"></span>No (EPTS)</span><span><span class="bx"></span>Yes (EPTS)</span></div>
-        <label>11. DISPOSITION OF PATIENT</label><div class="sl-cbs g3"><span><span class="bx"></span>DUTY</span><span><span class="bx"></span>QUARTERS</span><span><span class="bx"></span>SICK BAY</span><span><span class="bx"></span>HOSPITAL</span><span><span class="bx"></span>NOT EXAMINED</span><span><span class="bx"></span>OTHER <i>(Specify:)</i></span></div>
-        <label>12. REMARKS</label><textarea id="slRem" rows="3" oninput="slFitAll()">${D.rem.replace(/</g,'&lt;')}</textarea><div id="slWarn" class="sl-warn" style="display:none">Long remarks: may not fit on one page. Shorten them or print the full note separately.</div><label>13. SIGNATURE OF MEDICAL OFFICER</label><div class="sl-blank s1"></div></div></div>
+      <div class="sl-c w50"><label>10. IN LINE OF DUTY</label><div class="sl-cbs">${cb('slL1','No (EPTS)')}${cb('slL2','Yes (EPTS)')}</div>
+        <label>11. DISPOSITION OF PATIENT</label><div class="sl-cbs g3">${cb('slD1','DUTY')}${cb('slD2','QUARTERS')}${cb('slD3','SICK BAY')}${cb('slD4','HOSPITAL')}${cb('slD5','NOT EXAMINED')}${cb('slD6','OTHER <i>(Specify:)</i>')}</div><input id="slOth" placeholder="Other (specify)" autocomplete="off">
+        <label>12. REMARKS</label><textarea id="slRem" rows="3" oninput="slFitAll()">${D.rem.replace(/</g,'&lt;')}</textarea><div id="slWarn" class="sl-warn" style="display:none">Long remarks: may not fit on one page. Shorten them or print the full note separately.</div><label>13. SIGNATURE OF MEDICAL OFFICER</label><div class="sl-sigwrap"><canvas id="slSig" class="sl-sig"></canvas><button type="button" class="sl-noprint sl-sigclr" onclick="slSigClear()">Clear signature</button></div><input id="slSigName" placeholder="Printed name, rank, title (optional)" autocomplete="off"></div></div>
     <div class="sl-foot"><b>DD FORM 689, AUG 2017</b><span>PREVIOUS EDITION IS OBSOLETE.</span><b>Page 1 of 1</b></div></div>`;
   o._d=D;document.body.appendChild(o);
   const ill=document.getElementById('slIll'),inj=document.getElementById('slInj');
   ill.onchange=()=>{if(ill.checked)inj.checked=false;};inj.onchange=()=>{if(inj.checked)ill.checked=false;};
-  slFitAll();
+  const grp=(ids)=>ids.forEach(i=>{const el=document.getElementById(i);el.addEventListener('change',()=>{if(el.checked)ids.forEach(j=>{if(j!==i)document.getElementById(j).checked=false;});});});
+  grp(['slL1','slL2']);grp(['slD1','slD2','slD3','slD4','slD5','slD6']);
+  slSigInit();document.body.classList.add('slip-print');slFitAll();
 }
+let _sigCtx=null;
+function slSigInit(){
+  const c=document.getElementById('slSig');if(!c)return;
+  const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=Math.max(200,r.width)*dpr;c.height=70*dpr;
+  const x=c.getContext('2d');x.scale(dpr,dpr);x.lineWidth=2;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#000';_sigCtx=x;
+  let d=false,lx=0,ly=0;
+  const pt=e=>{const b=c.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top];};
+  c.onpointerdown=e=>{d=true;[lx,ly]=pt(e);c.setPointerCapture(e.pointerId);e.preventDefault();};
+  c.onpointermove=e=>{if(!d)return;const[px,py]=pt(e);x.beginPath();x.moveTo(lx,ly);x.lineTo(px,py);x.stroke();lx=px;ly=py;e.preventDefault();};
+  c.onpointerup=c.onpointercancel=()=>{d=false;};
+}
+function slSigClear(){const c=document.getElementById('slSig');if(c&&_sigCtx){_sigCtx.save();_sigCtx.setTransform(1,0,0,1,0,0);_sigCtx.clearRect(0,0,c.width,c.height);_sigCtx.restore();}}
 function slFit(el){if(!el)return;el.style.height='auto';el.style.overflow='hidden';el.style.height=(el.scrollHeight+2)+'px';}
 function slFitAll(){const o=document.getElementById('slipOv');if(!o)return;const r=document.getElementById('slRem');if(r){const n=r.value.length;r.style.fontSize=n>1500?'9px':n>900?'10px':n>500?'11px':'';}o.querySelectorAll('textarea').forEach(slFit);const w=document.getElementById('slWarn');if(w&&r){w.style.display=r.value.length>1800?'block':'none';}}
 function slipRem(b){const o=document.getElementById('slipOv'),r=document.getElementById('slRem');o._full=!o._full;r.value=o._full?o._d.full:o._d.rem;b.textContent=o._full?'Remarks: full note':'Remarks: A/P/Dispo';slFitAll();}
@@ -2436,9 +2450,9 @@ function slipPrint(){
   // inputs print as text: mirror values into attributes so print shows them
   document.querySelectorAll('#slipOv input[type=text],#slipOv input:not([type])').forEach(i=>i.setAttribute('value',i.value));
   document.querySelectorAll('#slipOv input[type=checkbox]').forEach(i=>{if(i.checked)i.setAttribute('checked','');else i.removeAttribute('checked');});
-  document.body.classList.add('slip-print');window.print();setTimeout(()=>document.body.classList.remove('slip-print'),400);
+  document.body.classList.add('slip-print');window.print();
 }
-function slipClose(){const o=document.getElementById('slipOv');if(o)o.remove();}
+function slipClose(){const o=document.getElementById('slipOv');if(o)o.remove();document.body.classList.remove('slip-print');_sigCtx=null;}
 
 /* ---- DA Form 5181 (Screening Note of Acute Medical Care), prefilled ---- */
 function daData(){
@@ -2488,7 +2502,7 @@ function daOpen(){
   document.body.appendChild(o);
   const grp=(ids)=>ids.forEach(i=>{const el=document.getElementById(i);el.onchange=()=>{if(el.checked)ids.forEach(j=>{if(j!==i)document.getElementById(j).checked=false;});};});
   grp(['daBar','daPost','daOff','daTr']);grp(['daFvY','daFvN']);grp(['daRtY','daRtN']);grp(['daD1','daD2','daD3','daD4','daD5']);
-  o.querySelectorAll('textarea').forEach(t=>{t.oninput=()=>slFit(t);});slFitAll();
+  o.querySelectorAll('textarea').forEach(t=>{t.oninput=()=>slFit(t);});document.body.classList.add('slip-print');slFitAll();
 }
 
 function exportBackup(){dl('sickcall_backup.json',JSON.stringify({v:1,saved:getSaved()}),'application/json');}
