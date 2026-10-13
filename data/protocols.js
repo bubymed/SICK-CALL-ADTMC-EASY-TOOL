@@ -516,7 +516,7 @@ P("I-3","i","Menstrual Problems / Vaginal Bleeding",{pg:106,
  rf:["Sexual assault","Trauma","Severe pain","Pregnant"],
  act:"Aerobic exercise at own pace/distance x3 days. Must have access to a restroom every hour.",
  flow:[
-  DP(["Any red flag","Non-midline pelvic pain","Pain with intercourse","Post-menopause","Bleeding >10 days, not on birth control"],{d:"PN"}),
+  DP(["Any red flag","Non-midline pelvic pain","Pain with intercourse","Post-menopause","Bleeding >10 days, not on birth control"],{d:"PN",a:"Check hCG first"}),
   DP(["New problem","Failed previous self-care","Menstrual pain onset after age 25","Progression of symptoms","Menses <21 or >35 days","Spotting >1 pad / 2 hrs","Prevents normal duties"],{d:"AEM"})
  ],
  tx:["Menstrual cramps: NSAID such as naproxen or ibuprofen as needed for pain, with food, for up to 7 days. Ketorolac (Toradol) as a one-time dose for moderate pain. Warm compress over the abdomen."],
@@ -569,7 +569,7 @@ P("J-2","j","Acne",{pg:114,
  rf:["None"],act:"None",
  flow:[
   EX("Check hCG.",[]),
-  DP(["Requesting birth control","Positive hCG","Hyperandrogenism signs","Draining lesion","Acute onset","Requiring limitations in protective equipment"],{d:"PN",a:"Check hCG first"}),
+  DP(["Requesting birth control","Positive hCG","Hyperandrogenism signs","Draining lesion","Acute onset","Requiring limitations in protective equipment"],{d:"PN"}),
   DP(["Acne interferes with wearing equipment","Moderate–severe inflammatory acne","Scarring or hyperpigmentation","Failed initial treatment","Appears very self-conscious"],{d:"AEM"})
  ],
  tx:["Comedones: confirm negative pregnancy test (if female) and no fish allergy. Topical retinoid, pea-size, to affected dry-face area at night; decrease to every other night if irritation / dry skin occurs.","Mild–moderate inflammation: add topical combination of benzoyl peroxide + antibiotic in the morning (retinoid at night)."],
