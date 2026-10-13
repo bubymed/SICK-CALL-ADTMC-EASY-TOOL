@@ -516,7 +516,7 @@ P("I-3","i","Menstrual Problems / Vaginal Bleeding",{pg:106,
  rf:["Sexual assault","Trauma","Severe pain","Pregnant"],
  act:"Aerobic exercise at own pace/distance x3 days. Must have access to a restroom every hour.",
  flow:[
-  DP(["Any red flag","Non-midline pelvic pain","Pain with intercourse","Post-menopause","Bleeding >10 days, not on birth control"],{d:"PN",a:"Check hCG first"}),
+  DP(["Any red flag","Non-midline pelvic pain","Pain with intercourse","Post-menopause","Bleeding >10 days, not on birth control"],{d:"PN"}),
   DP(["New problem","Failed previous self-care","Menstrual pain onset after age 25","Progression of symptoms","Menses <21 or >35 days","Spotting >1 pad / 2 hrs","Prevents normal duties"],{d:"AEM"})
  ],
  tx:["Menstrual cramps: NSAID such as naproxen or ibuprofen as needed for pain, with food, for up to 7 days. Ketorolac (Toradol) as a one-time dose for moderate pain. Warm compress over the abdomen."],
@@ -568,6 +568,7 @@ P("J-2","j","Acne",{pg:114,
  ddx:["Acne vulgaris","Pseudofolliculitis barbae","Folliculitis","Acne rosacea","Hyperandrogenism"],
  rf:["None"],act:"None",
  flow:[
+  EX("Check hCG.",[]),
   DP(["Requesting birth control","Positive hCG","Hyperandrogenism signs","Draining lesion","Acute onset","Requiring limitations in protective equipment"],{d:"PN",a:"Check hCG first"}),
   DP(["Acne interferes with wearing equipment","Moderate–severe inflammatory acne","Scarring or hyperpigmentation","Failed initial treatment","Appears very self-conscious"],{d:"AEM"})
  ],
@@ -641,7 +642,7 @@ P("J-9","j","Boils / Abscess",{pg:128,
  act:"Keep area clean and dry.",
  flow:[
   DP(["Fever","Rapid progression","Cellulitis","Indwelling medical device"],{d:"PN",a:"Prepare informed consent, timeout and I&D set-up if provider requests."}),
-  DP(["Fluctuant mass","Multiple abscesses","Drained abscess >5 cm"],{d:"AEM"})
+  DP(["Fluctuant mass","Multiple abscesses","Drained abscess >5 cm"],{d:"AEM",a:"Prepare informed consent, timeout and I&D set-up if provider requests."})
  ],
  tx:["Warm moist compress 20 minutes every 4 hours."],
  rtc:"Return if fever/chills, re-accumulation, red streaks, increased swelling, or not improving in 3 days.",meds:[]});
@@ -725,6 +726,7 @@ P("J-17","j","Cutaneous Warts",{pg:144,
  ddx:["Common wart","Plantar wart","Flat wart"],
  rf:["None"],act:"None",
  flow:[
+  EX("Skin exam.",[]),
   DP(["Bleeding","Sensitive area",">10 warts","Upcoming mission limiting treatment","Signs of infection / inflammation","Treatment >12 weeks"],{d:"PN"}),
   DP([">3 warts","Treatment >4 weeks","Medic not trained","Complication from treatment"],{d:"AEM"})
  ],
@@ -736,6 +738,7 @@ P("J-18","j","Ingrown Toenail",{pg:146,
  rf:["Red streaks up the foot","Gangrene","Black eschar"],
  act:"No running or rucking; walk at own pace.",
  flow:[
+  EX("Foot exam.",[]),
   DP(["Cellulitis","Immunocompromised","Diabetic","Severe infection","Recurrent ingrown nail","Severe pain / limping"],{d:"PN"}),
   DP(["Moderate infection","Limitations to duty"],{d:"AEM"})
  ],
