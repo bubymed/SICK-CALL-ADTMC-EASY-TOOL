@@ -48,3 +48,19 @@ const ADMEDS=[
 {k:"analpram",n:"Hydrocortisone 2.5% + pramoxine 1%",t:"Analpram-HC",rx:1,pg:223,alg:"C4",dose:"Per package / provider",preg:"Class C",lac:"Unknown",ci:["Hypersensitivity"]},
 {k:"adapalene",n:"Adapalene 1% retinoid cream",t:"Differin",rx:1,pg:224,alg:"J2,3",dose:"Pea-size to affected area at night",preg:"AVOID – confirm negative pregnancy test",lac:"Unknown",ci:["Pregnancy","Fish allergy (per J-2)"]}
 ];
+
+/* Daily-maximum check. ONLY medications whose ADTMC App. C entry states a numeric max per 24 h.
+   i: what the medic counts · q: amount of the max-unit in one counted item · u: unit · max: ADTMC max/24 h
+   hrs: dosing interval (if stated) · n: ADTMC note. Nothing here is invented; others show no calculator. */
+const DCALC={
+ acetaminophen:{i:'dose (2 tabs = 650 mg)',q:650,u:'mg',max:2600,hrs:6},
+ ibuprofen:{i:'dose (2 tabs = 400 mg)',q:400,u:'mg',max:1600,hrs:6},
+ naproxen:{i:'dose (1 tab = 250 mg)',q:250,u:'mg',max:500,hrs:12},
+ phenazopyridine:{i:'dose (2 tabs = 200 mg)',q:200,u:'mg',max:600,hrs:8,n:'ADTMC: use with an antibiotic, max 2 days.'},
+ guaifenesin:{i:'dose (1 tbsp = 15 mL)',q:1,u:'tbsp',max:8,hrs:6},
+ loperamide:{i:'tablet (2 mg)',q:2,u:'mg',max:8,n:'ADTMC: 2 tabs first, then 1 tab after each loose stool. Max 8 mg/4 tabs (the additional-info row allows 16 mg/8 tabs).'},
+ bismuth:{i:'dose (30 mL)',q:1,u:'doses',max:8,hrs:1,n:'ADTMC: up to 2 days.'},
+ lidocaine:{i:'gargle dose (15 mL)',q:1,u:'doses',max:4,hrs:6,n:'ADTMC: sore throat max 4 doses/24 h (mouth sores: every 3 h, max 8 doses). Swish and spit, do not swallow.'},
+ oxymetazoline:{i:'dose (2-3 sprays per side)',q:1,u:'doses',max:2,hrs:12,n:'ADTMC nosebleed row: max 2 doses/24 h, up to 3 days.'},
+ ketorolac:{i:'dose (30 mg)',q:30,u:'mg',max:120,hrs:6,n:'ADTMC: max 120 mg/day, 5 days total. Provider order only.'}
+};
