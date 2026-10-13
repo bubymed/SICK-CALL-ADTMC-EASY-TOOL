@@ -767,7 +767,8 @@ P("K-2","k","Hypothermia",{pg:150,
  rf:["T <96°F","Altered mental status","Abnormal vital signs","Frostbite","Trauma"],
  act:"Limit exposure to cold environments.",
  flow:[
-  DP(["Red flags","Neurologic symptoms","Infection"],{d:"PN",a:"Take rectal temp. Support ABCs, IVs, transport horizontal on stretcher, start warming."}),
+  EX("Rectal temp.",[]),
+  DP(["Red flags","Neurologic symptoms","Infection"],{d:"PN",a:"Support ABCs, IVs, transport horizontal on stretcher, start warming."}),
   DP(["History of psych meds or narcotics","History of alcohol abuse","Severe pain"],{d:"AEM"}),
   DP(["Immersion foot"],{tri:["K-3"]})
  ],
@@ -780,6 +781,7 @@ P("K-3","k","Immersion Foot (Non-Freezing Cold Injury)",{pg:152,
  rf:["Gangrene / necrosis","Hemorrhagic blisters","Hypothermia","Frostbite","Trauma"],
  act:"Limit activities for 3 days; elevate affected extremity x 3 days.",
  flow:[
+  EX("Extremity exam.",[]),
   DP(["Red flags","Severe pain","Signs of infection"],{d:"PN",a:"Remove wet clothes; rewarm the Soldier if hypothermic."}),
   DP(["Unable to perform duties","Symptoms >1 week","Pain not controlled"],{d:"AEM"})
  ],
