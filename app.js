@@ -2421,14 +2421,18 @@ function slipOpen(){
     <div class="sl-row"><div class="sl-c w50"><label>7. IN LINE OF DUTY</label><div class="sl-blank s1"></div><label>8. REMARKS</label><div class="sl-blank s8"></div><label>9. SIGNATURE OF UNIT COMMANDER</label><div class="sl-blank s1"></div></div>
       <div class="sl-c w50"><label>10. IN LINE OF DUTY</label><div class="sl-cbs"><span><span class="bx"></span>No (EPTS)</span><span><span class="bx"></span>Yes (EPTS)</span></div>
         <label>11. DISPOSITION OF PATIENT</label><div class="sl-cbs g3"><span><span class="bx"></span>DUTY</span><span><span class="bx"></span>QUARTERS</span><span><span class="bx"></span>SICK BAY</span><span><span class="bx"></span>HOSPITAL</span><span><span class="bx"></span>NOT EXAMINED</span><span><span class="bx"></span>OTHER <i>(Specify:)</i></span></div>
-        <label>12. REMARKS</label><textarea id="slRem" rows="8">${D.rem.replace(/</g,'&lt;')}</textarea><label>13. SIGNATURE OF MEDICAL OFFICER</label><div class="sl-blank s1"></div></div></div>
+        <label>12. REMARKS</label><textarea id="slRem" rows="3" oninput="slFitAll()">${D.rem.replace(/</g,'&lt;')}</textarea><div id="slWarn" class="sl-warn" style="display:none">Long remarks: may not fit on one page. Shorten them or print the full note separately.</div><label>13. SIGNATURE OF MEDICAL OFFICER</label><div class="sl-blank s1"></div></div></div>
     <div class="sl-foot"><b>DD FORM 689, AUG 2017</b><span>PREVIOUS EDITION IS OBSOLETE.</span><b>Page 1 of 1</b></div></div>`;
   o._d=D;document.body.appendChild(o);
   const ill=document.getElementById('slIll'),inj=document.getElementById('slInj');
   ill.onchange=()=>{if(ill.checked)inj.checked=false;};inj.onchange=()=>{if(inj.checked)ill.checked=false;};
+  slFitAll();
 }
-function slipRem(b){const o=document.getElementById('slipOv'),r=document.getElementById('slRem');o._full=!o._full;r.value=o._full?o._d.full:o._d.rem;b.textContent=o._full?'Remarks: full note':'Remarks: A/P/Dispo';}
+function slFit(el){if(!el)return;el.style.height='auto';el.style.overflow='hidden';el.style.height=(el.scrollHeight+2)+'px';}
+function slFitAll(){const o=document.getElementById('slipOv');if(!o)return;const r=document.getElementById('slRem');if(r){const n=r.value.length;r.style.fontSize=n>1500?'9px':n>900?'10px':n>500?'11px':'';}o.querySelectorAll('textarea').forEach(slFit);const w=document.getElementById('slWarn');if(w&&r){w.style.display=r.value.length>1800?'block':'none';}}
+function slipRem(b){const o=document.getElementById('slipOv'),r=document.getElementById('slRem');o._full=!o._full;r.value=o._full?o._d.full:o._d.rem;b.textContent=o._full?'Remarks: full note':'Remarks: A/P/Dispo';slFitAll();}
 function slipPrint(){
+  slFitAll();
   // inputs print as text: mirror values into attributes so print shows them
   document.querySelectorAll('#slipOv input[type=text],#slipOv input:not([type])').forEach(i=>i.setAttribute('value',i.value));
   document.querySelectorAll('#slipOv input[type=checkbox]').forEach(i=>{if(i.checked)i.setAttribute('checked','');else i.removeAttribute('checked');});
@@ -2484,6 +2488,7 @@ function daOpen(){
   document.body.appendChild(o);
   const grp=(ids)=>ids.forEach(i=>{const el=document.getElementById(i);el.onchange=()=>{if(el.checked)ids.forEach(j=>{if(j!==i)document.getElementById(j).checked=false;});};});
   grp(['daBar','daPost','daOff','daTr']);grp(['daFvY','daFvN']);grp(['daRtY','daRtN']);grp(['daD1','daD2','daD3','daD4','daD5']);
+  o.querySelectorAll('textarea').forEach(t=>{t.oninput=()=>slFit(t);});slFitAll();
 }
 
 function exportBackup(){dl('sickcall_backup.json',JSON.stringify({v:1,saved:getSaved()}),'application/json');}
