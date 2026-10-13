@@ -2229,8 +2229,26 @@ function adSuggestHtml(t,s){
 let medQ='';
 const dcUsed={}; // doses already taken today, per med (memory only)
 function L(en,es){return LANG==='es'?es:en;}
+/* Medication refill request: fill-and-copy only. Name / DoD ID / DOB are kept in memory, never stored. */
+let rfq={n:'',id:'',dob:'',med:''};
+function rfqDob(){const m=(rfq.dob||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return rfq.dob||'';return m[3]+' '+['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][+m[2]-1]+' '+m[1];}
+function rfqText(){return ['MEDICATION REFILL REQUEST','Full name: '+(rfq.n.trim()||'________'),'DoD ID: '+(rfq.id.trim()||'________'),'Date of birth: '+(rfqDob()||'________'),'Medication: '+(rfq.med.trim()||'________')].join('\n');}
+function rfqUp(k,v){rfq[k]=v;const p=document.getElementById('rfqPrev');if(p)p.textContent=rfqText();}
+function rfqCopy(b){copyTxt(rfqText(),b);}
+function rfqClear(){rfq={n:'',id:'',dob:'',med:''};renderMain();}
+function rfqHtml(){
+  const f=(lab,k,type,extra)=>'<label style="display:block;margin-top:6px;font-size:.85em">'+lab+'<input type="'+type+'" value="'+q$(rfq[k])+'" oninput="rfqUp(\''+k+'\',this.value)" autocomplete="off" '+(extra||'')+' style="margin-top:2px"></label>';
+  return '<details class="dd" '+(openDD.has('rfq')?'open':'')+' ontoggle="dd(\'rfq\',this.open)"><summary>'+L('📝 Medication refill request (fill and copy)','📝 Solicitud de resurtido de medicamento (llenar y copiar)')+'</summary><div class="field">'
+   +'<div class="fuq">'+L('Name, DoD ID and date of birth are NOT saved — they stay on this screen only until you clear or leave it.','Nombre, DoD ID y fecha de nacimiento NO se guardan — solo están en esta pantalla hasta que la limpies o salgas.')+'</div>'
+   +f(L('Full name','Nombre completo'),'n','text','')+f('DoD ID','id','text','inputmode="numeric"')+f(L('Date of birth','Fecha de nacimiento'),'dob','date','')
+   +f(L('Medication name','Nombre del medicamento'),'med','text','list="rfqMeds"')
+   +'<datalist id="rfqMeds">'+ADMEDS.map(m=>'<option value="'+q$(m.n)+'">').join('')+'</datalist>'
+   +'<pre id="rfqPrev" style="white-space:pre-wrap;margin:8px 0 0;font-size:.85em">'+q$(rfqText())+'</pre>'
+   +'<div class="algo-actions"><button onclick="rfqCopy(this)">'+L('Copy','Copiar')+'</button><button class="ghost" onclick="rfqClear()">'+L('↺ Clear','↺ Limpiar')+'</button></div></div></details>';
+}
 function renderADMeds(){
   let h='<h2 class="tpl">💊 ADTMC Meds — Appendix C</h2><p class="tpl-sub">Type a medication, brand or protocol: dose, contraindications, pregnancy, lactation and a daily-max check. <span class="rxb">Rx</span> = requires a privileged-provider prescription.</p>';
+  h+=rfqHtml();
   h+='<div class="field"><input type="text" id="medSearch" style="margin-top:0;font-size:1.05em" placeholder="Search medication, brand or protocol (e.g. ibuprofen, Motrin, K-6)…" value="'+q$(medQ)+'" oninput="medQ=this.value;document.getElementById(\'medlist\').innerHTML=adMedItems()" autocomplete="off"></div><div id="medlist">'+adMedItems()+'</div>';
   return h;
 }
