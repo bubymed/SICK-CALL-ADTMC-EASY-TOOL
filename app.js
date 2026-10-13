@@ -1476,9 +1476,76 @@ function sectionLines(t,s){
   if(rfNeg.length)L.push('Red flags: denies '+rfNeg.join(', ')+'.');
   return L;
 }
+/* ===== SOAP-D note (MEDCOM Pam 40-7-21, Appendix D: Screening Note) =====
+   Subjective / Objective / Assessment / Plan / Disposition. Same data as the compact note. */
+const SD_HPI=['o','pw','pb','q','r','rr','t','sx','e','seen','s2'];
+const SD_AMPLE={a:'Allergies',m:'Meds',phx:'PMH',l:'Last oral intake'};
+const SD_CAT={PN:'I — Provider Now',AEM:'II — AEM Now',MCP:'III — Minor Care Protocol (MCP)',SP:'IV — Specialty referral',APPT:'Appointment / referral requested'};
+function soapdNote(stamp){
+  const entries=ad.log.map(e=>e);
+  if(ad.pid){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length)entries.push(adEntry(p,R));}
+  const active=TPLS.filter(t=>tplHasContent(t,state[t.id]));
+  const v=gVitals,anyV=Object.values(v).some(x=>String(x).trim());
+  if(!active.length&&!entries.length&&!anyV&&!patient.trim())return '';
+  const L=[];
+  L.push((patient.trim()?('PT: '+patient.trim()+' — '):'')+stamp);
+  L.push('');L.push('S — SUBJECTIVE');
+  const ccAll=[];active.forEach(t=>{const s=state[t.id];const parts=[...s.cc];if(s.ccCustom.trim())parts.push(s.ccCustom.trim());if(parts.length)ccAll.push(s.ccRaw&&!s.cc.size?'CC: '+parts.join(', ')+'.':'CC: C/o '+(t.ccPrefix||'')+parts.join(', ')+'.');});
+  if(ccAll.length)ccAll.forEach(x=>L.push(x));else if(entries.length)L.push('CC: '+entries.map(e=>e.title).join('; ')+'.');
+  const prot=entries.map(e=>e.title+' ('+e.id+')');
+  if(prot.length)L.push('HPI — protocol: '+prot.join('; ')+'.');
+  const ample=[];
+  active.forEach(t=>{const s=state[t.id];t.fields.forEach(f=>{const val=joinSel(f,s);if(!val)return;
+    if(SD_HPI.includes(f.id))L.push((prot.length?'':'HPI ')+f.tag+': '+val+'.');
+    else if(SD_AMPLE[f.id])ample.push(SD_AMPLE[f.id]+': '+val+'.');
+    else if(f.id==='lmp'||f.id==='exam'){/* handled below */}
+    else L.push(f.tag+': '+val+'.');});
+    if(s.sev!==null||s.duty){let line='Severity: '+(s.sev!==null?s.sev+'/10':'__/10');if(s.duty)line+='. Interferes w/ duty/PT: '+s.duty;L.push(line+'.');}});
+  ample.forEach(x=>L.push(x));
+  if(gFlags.female){const ld=lmpDays();L.push('LMP: '+(gFlags.lmp?(new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)'):'not documented')+(gFlags.preg?' — possible pregnancy':'')+(gFlags.lact?' — lactating':'')+'.');}
+  active.forEach(t=>{const f=t.fields.find(x=>x.id==='lmp');if(f&&!gFlags.female){const val=joinSel(f,state[t.id]);if(val)L.push('LMP: '+val+'.');}});
+  L.push('MRC status / delinquent readiness: '+(gFlags.mrc.trim()||'not documented')+'.');
+  if(gFlags.aviation)L.push('Flight/dive status.');
+  L.push('');L.push('O — OBJECTIVE');
+  const vl=[['T',v.temp],['HR',v.hr],['BP',v.bp],['RR',v.rr],['SpO2',v.spo2],['Pain',v.pain]].map(x=>x[0]+' '+(String(x[1]).trim()||'__'));
+  L.push('VS: '+vl.join(', ')+'.');
+  active.forEach(t=>{const s=state[t.id];t.fields.filter(f=>f.id==='exam').forEach(f=>{const val=joinSel(f,s);if(val)L.push('EX: '+val+'.');});});
+  L.push('');L.push('A — ASSESSMENT');
+  if(entries.length){L.push('Algorithm / code: '+entries.map(e=>e.title+' ('+e.id+')').join('; ')+'.');
+    L.push('Protocol summary:');
+    entries.forEach(e=>{if(entries.length>1)L.push(' '+e.title+' ('+e.id+'):');(e.lines||[]).forEach(x=>L.push('  '+x));});
+    const pos=[];entries.forEach(e=>(e.pos||[]).forEach(x=>{if(!pos.includes(x))pos.push(x);}));
+    if(pos.length)L.push('*** RED FLAG: '+pos.join('; ')+' ***');
+  }else L.push('No ADTMC protocol screened.');
+  active.forEach(t=>{const rn=(t.redFlags||[]).filter(f=>state[t.id].rf[f]==='pos');if(rn.length)L.push('*** RED FLAG PRESENT: '+rn.join('; ')+' — ESCALATED to provider/ER. ***');});
+  L.push('');L.push('P — PLAN');
+  const plans=[];active.forEach(t=>[...state[t.id].plan].forEach(p=>{if(!plans.includes(p))plans.push(p);}));
+  const A=adNoteParts();
+  plans.forEach(p=>L.push('- Recommend '+p+'.'));A.plan.forEach(p=>L.push('- '+p));
+  if(plans.some(p=>p.includes('— Mendoza Pharmacy')))L.push('Meds are recommendations; pick up at Mendoza Pharmacy (not a prescription).');
+  if(!plans.length&&!A.plan.length)L.push('- Per protocol endpoint / provider direction.');
+  L.push('');L.push('D — DISPOSITION');
+  const hi=adHighest();
+  L.push('Care category: '+(hi?SD_CAT[hi]||LV[hi].s:'not yet determined')+(entries.length>1&&hi?' (higher of the protocols screened)':'')+'.');
+  const mcp=entries.filter(e=>e.level==='MCP').map(e=>e.id);
+  if(mcp.length)L.push('MCP protocol(s): '+mcp.join(', ')+'.');
+  if(ad.prov.trim())L.push('Provider / AEM notified: '+ad.prov.trim()+'.');
+  const dt=active.filter(t=>state[t.id].dispoTxt.trim());
+  dt.forEach(t=>L.push('Disposition / counseling'+(dt.length>1?' ('+t.title.split('/')[0].trim()+')':'')+': '+state[t.id].dispoTxt.trim()));
+  return L.join('\n');
+}
+function toggleFmt(){settings.noteFmt=settings.noteFmt==='soapd'?'compact':'soapd';saveSettings();syncFmtBtn();renderNote();}
+function syncFmtBtn(){const b=document.getElementById('fmtBtn');if(b){b.textContent=settings.noteFmt==='soapd'?'SOAP-D ✓':'SOAP-D';b.classList.toggle('copied',settings.noteFmt==='soapd');}}
+
 function renderNote(){
   persist();adPersist();
   if(editMode||manualNote){renderNav();return;}
+  if(settings.noteFmt==='soapd'){
+    const _n=new Date(),_M=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const _st=String(_n.getDate()).padStart(2,'0')+' '+_M[_n.getMonth()]+' '+String(_n.getFullYear()).slice(2)+', '+String(_n.getHours()).padStart(2,'0')+String(_n.getMinutes()).padStart(2,'0');
+    const _t=soapdNote(_st);
+    if(_t){document.getElementById('note').textContent=_t;renderNav();return;}
+  }
   const L=[];const A=adNoteParts();
   // header: date/time + patient
   const now=new Date();
@@ -1998,7 +2065,7 @@ function adEntry(p,R){
   }
   if(pf.length)bits.push('Positive: '+pf.join(', ')+'.');
   if(ad.ret)bits.push(ad.worse?'Return visit — worse / already seen by provider or AEM.':'Return visit for the same complaint.');
-  return{id:p.id,title:p.title,level:R.final||null,pos,sum:p.title+' ('+p.id+')'+(bits.length||R.final?': ':'')+bits.join(' ')+(R.final?' → '+({PN:'Provider now.',AEM:'AEM today.',MCP:'Minor care.',SP:'Specialty referral.',APPT:'Appointment/referral.'}[R.final]||LV[R.final].s):''),plan:R.final==='MCP'?adPlanLines(adPlanItems(p)):[]};
+  return{id:p.id,title:p.title,level:R.final||null,pos,lines:adProtoLines(p,R),sum:p.title+' ('+p.id+')'+(bits.length||R.final?': ':'')+bits.join(' ')+(R.final?' → '+({PN:'Provider now.',AEM:'AEM today.',MCP:'Minor care.',SP:'Specialty referral.',APPT:'Appointment/referral.'}[R.final]||LV[R.final].s):''),plan:R.final==='MCP'?adPlanLines(adPlanItems(p)):[]};
 }
 /* ---- suggestions inside the classic templates ---- */
 const CCMAP={
@@ -2061,7 +2128,7 @@ function adMedItems(){
 /* =========================================================
    PRIVACY / SETTINGS / EXPORT / FOLLOW-UP
 ========================================================= */
-const settings=(function(){let s={purge:true,pin:'',theme:'green',mode:'dark'};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
+const settings=(function(){let s={purge:true,pin:'',theme:'green',mode:'dark',noteFmt:'compact'};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
 function saveSettings(){try{localStorage.setItem('sc_settings',JSON.stringify(settings));}catch(e){}}
 const THEMES=[['green','Green'],['blue','Blue'],['amber','Amber'],['red','Red'],['purple','Purple'],['gray','Gray']];
 const THEME_BG={dark:{green:'#10140f',blue:'#0e1319',amber:'#16120b',red:'#170f0f',purple:'#130f19',gray:'#121212'},light:'#f3f5f1'};
@@ -2130,7 +2197,7 @@ function printNote(){window.print();}
 function slipData(){
   const lines=document.getElementById('note').textContent.split('\n');
   const cc=[];lines.forEach(l=>{const m=l.match(/^CC: (.*?)\.?$/);if(m){const t=m[1].replace(/^C\/o\s+/i,'').trim();if(t&&!cc.includes(t))cc.push(t);}});
-  const i=lines.findIndex(l=>/^ASSESSMENT:|^PLAN:|^DISPO/.test(l));
+  const i=lines.findIndex(l=>/^ASSESSMENT:|^PLAN:|^DISPO|^A — ASSESSMENT|^P — PLAN|^D — DISPOSITION/.test(l));
   const rem=i<0?'':lines.slice(i).join('\n').replace(/\n{2,}/g,'\n').trim();
   const d=new Date(),ymd=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
   return{cond:cc.join('; '),ymd,name:patient.trim(),rem,full:lines.join('\n').trim()};
@@ -2230,7 +2297,7 @@ function setLang(l){
   if(be)be.classList.toggle('on',LANG==='en');if(bs)bs.classList.toggle('on',LANG==='es');
 }
 new MutationObserver(ms=>{if(LANG!=='es')return;ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)trNode(n);else if(n.nodeType===3&&n.parentElement)trNode(n.parentElement);}));}).observe(document.body,{childList:true,subtree:true});
-applyTheme();
+applyTheme();syncFmtBtn();
 purgeOld();
 restore();adRestore();
 document.body.style.fontSize=fsBase+'px';showLockIfNeeded();
