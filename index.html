@@ -32,10 +32,14 @@
     <button class="ghost" id="autoBtn" onclick="setNoteMode('auto')" style="display:none" title="Discard manual edits and rebuild the note from your answers">↺ Auto</button>
     <button class="ghost" onclick="copyNote(this)">Copy</button>
     <button class="ghost" id="fmtBtn" onclick="toggleFmt()" title="Note format: compact or SOAP-D (ADTMC Appendix D)">SOAP-D</button>
-    <button class="ghost" onclick="exportNote()" title="Download as .txt">⬇ .txt</button>
-    <button class="ghost" onclick="printNote()" title="Print / PDF">🖨</button>
-    <button class="ghost" onclick="daOpen()" title="Open DA Form 5181 (Screening Note of Acute Medical Care), prefilled, to print">📄 DA 5181</button>
-    <button class="ghost" onclick="slipOpen()" title="Open the DD Form 689 sick slip, prefilled, to print">📄 DD 689</button>
+    <details class="menu" id="moreMenu"><summary class="ghost">⋯ More</summary>
+      <div class="menu-list">
+        <button onclick="exportNote();menuClose()" title="Download as .txt">⬇ Download .txt</button>
+        <button onclick="printNote();menuClose()" title="Print / PDF">🖨 Print note</button>
+        <button onclick="daOpen();menuClose()" title="Open DA Form 5181 (Screening Note of Acute Medical Care), prefilled, to print">📄 DA Form 5181</button>
+        <button onclick="slipOpen();menuClose()" title="Open the DD Form 689 sick slip, prefilled, to print">📄 DD Form 689</button>
+      </div>
+    </details>
   </div>
   <div id="notebanner" class="note-hint" style="display:none;margin:0;border-radius:0"></div>
   <div class="pt-row">

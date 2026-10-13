@@ -127,6 +127,13 @@ aside .out-head .spacer{display:none}
 aside .out-head button{white-space:nowrap;background:var(--accent);color:var(--accent-txt);border:none;border-radius:6px;padding:6px 12px;font-weight:700;font-size:12px;cursor:pointer}
 aside .out-head button.ghost{background:none;border:1px solid var(--line);color:var(--dim)}
 aside .out-head button.ghost:hover{color:var(--txt)}
+aside .out-head .menu{position:relative}
+aside .out-head .menu summary{list-style:none;cursor:pointer;background:none;border:1px solid var(--line);color:var(--dim);border-radius:6px;padding:6px 12px;font-weight:700;font-size:12px;white-space:nowrap}
+aside .out-head .menu summary::-webkit-details-marker{display:none}
+aside .out-head .menu[open] summary{color:var(--txt)}
+aside .out-head .menu-list{position:absolute;right:0;top:calc(100% + 4px);z-index:30;display:flex;flex-direction:column;min-width:190px;background:var(--panel,var(--bg));border:1px solid var(--line);border-radius:8px;padding:4px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
+aside .out-head .menu-list button{background:none;border:none;color:var(--txt);text-align:left;padding:10px 12px;font-size:13px;font-weight:600;border-radius:6px}
+aside .out-head .menu-list button:hover{background:var(--line)}
 #note{flex:1;overflow-y:auto;padding:12px;font-family:var(--mono);font-size:.92em;line-height:1.7;white-space:pre-wrap;color:var(--note-txt);outline:none}
 #note[contenteditable="true"]{background:var(--edit-bg);border:1px dashed var(--accent)}
 #note .dimline{color:var(--dim)}
