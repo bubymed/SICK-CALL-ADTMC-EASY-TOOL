@@ -1287,11 +1287,61 @@ function renderProfiles(){
 /* =========================================================
    ACTIONS
 ========================================================= */
+/* ---- Mutually exclusive options: the LAST tap wins and the contradicting chip is cleared ---- */
+const EXC_NONE=new Set(['NKDA','none','no relevant hx','no hx','no radiation','no clear trigger','no new events','NKDA (confirmed)']);
+const EXC_SETS=[ // within one field, pick at most one of each set
+  ['today','yesterday','2–3d ago','1 week ago','2–3d','1w','recurring for weeks'],
+  ['gradual onset','sudden onset'],
+  ['right','left','bilateral','midline'],
+  ['right side','left side','bilateral'],
+  ['one-sided (right)','one-sided (left)','whole head'],
+  ['one nostril','both nostrils'],['one eye','both eyes'],
+  ['constant','intermittent','episodic','recurrent episodes','daily'],
+  ['constant','only during activity','only at rest','only during menses','cyclical'],
+  ['only during activity','only at rest'],
+  ['getting worse','getting better','same since onset','worsening','improving'],
+  ['worse AM','worse PM'],['worse nights','worse mornings'],['lasts hours','lasts all day'],
+  ['productive cough','dry cough'],
+  ['gait normal','antalgic gait'],
+  ['improved on exam','unchanged on exam','worse on exam'],
+  ['NKDA (confirmed)','new allergy (note below)'],
+  ['better','same','worse']
+];
+const EXC_SIDES=[ // [good group, bad group] — cannot pick from both
+  [['ate chow, tolerating PO','ate chow, hydrated','normal PO intake','eating normally'],
+   ['↓ PO intake','fluids only','not tolerating PO','skipped meals','skipping meals','↓ appetite/intake','↓ fluid intake today']]
+];
+const EXC_CROSS=[ // [field,option] pairs in different fields of the same template
+  [['sx','fever'],['exam','afebrile']],
+  [['sx','swelling'],['exam','no swelling']]
+];
+function excOverlap(a,b){a=String(a).toLowerCase();b=String(b).toLowerCase();return a===b||(a.length>3&&b.includes(a))||(b.length>3&&a.includes(b));}
+function excApply(s,fid,opt,deny){
+  const set=fid==='__cc'?s.cc:s.fields[fid];if(!set)return;
+  const key=deny?'DENY::'+opt:opt;
+  const drop=o=>{set.delete(o);};
+  if(deny){
+    drop(opt);                                   // deny X clears positive X in the same field
+    [...s.cc].forEach(c=>{if(excOverlap(c,opt))s.cc.delete(c);});
+    return;
+  }
+  drop('DENY::'+opt);                            // positive X clears "denies X"
+  Object.keys(s.fields).forEach(f=>[...s.fields[f]].forEach(k=>{if(k.indexOf('DENY::')===0&&excOverlap(k.slice(6),opt)&&(fid==='__cc'||f===fid))s.fields[f].delete(k);}));
+  if(EXC_NONE.has(opt)){[...set].forEach(o=>{if(o!==opt&&o.indexOf('DENY::')!==0)set.delete(o);});}
+  else EXC_NONE.forEach(n=>drop(n));
+  EXC_SETS.forEach(g=>{if(g.includes(opt))g.forEach(o=>{if(o!==opt)drop(o);});});
+  EXC_SIDES.forEach(([x,y])=>{if(x.includes(opt))y.forEach(drop);else if(y.includes(opt))x.forEach(drop);});
+  if(fid!=='__cc')EXC_CROSS.forEach(([A,B])=>{
+    const me=A[0]===fid&&A[1]===opt?B:(B[0]===fid&&B[1]===opt?A:null);
+    if(me&&s.fields[me[0]])s.fields[me[0]].delete(me[1]);
+  });
+}
 function tog(tid,fid,opt,deny){
   const s=state[tid];
   const key=deny?'DENY::'+opt:opt;
   const set = fid==='__cc'?s.cc:s.fields[fid];
-  set.has(key)?set.delete(key):set.add(key);
+  if(set.has(key))set.delete(key);
+  else{set.add(key);excApply(s,fid,opt,deny);}
   renderMain();renderNote();
 }
 function cust(tid,fid,val){
