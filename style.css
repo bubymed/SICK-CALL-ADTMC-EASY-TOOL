@@ -299,6 +299,7 @@ nav button.sub .pid{font-family:var(--mono);color:var(--dim);font-size:11px;min-
 #slipOv textarea{border:1px dotted #999;resize:vertical;overflow:hidden;min-height:2.2em}
 #slipOv .sl-warn{color:#b00020;font-size:11px;font-weight:700;margin:4px 0}
 #slipOv .sl-cbs{display:flex;gap:18px;font-size:10px;padding:3px 0 5px}#slipOv .sl-cbs.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+#slipOv .sl-sigwrap{position:relative;border-bottom:1px solid #000;margin:4px 0}#slipOv .sl-sig{width:100%;height:70px;display:block;touch-action:none;background:#fff;border:1px dashed #bbb}#slipOv .sl-sigclr{position:absolute;right:2px;top:2px;font-size:10px;padding:2px 6px;background:#eee;color:#000;border:1px solid #999;border-radius:4px}
 #slipOv .sl-blank.s1{height:34px}#slipOv .sl-blank.s8{height:190px}
 #slipOv .sl-row3{display:flex;gap:8px}#slipOv .sl-row3>div{flex:1}#slipOv .dacode{width:60%;display:inline-block;margin-left:6px}#slipOv .da textarea{font-size:11px}
 #slipOv .sl-foot{display:flex;justify-content:space-between;font-size:9px;padding:3px 5px}
@@ -306,7 +307,7 @@ nav button.sub .pid{font-family:var(--mono);color:var(--dim);font-size:11px;min-
 @media print{
   body.slip-print>*:not(#slipOv){display:none!important}
   body.slip-print #slipOv{position:static;overflow:visible;background:#fff;padding:0}
-  body.slip-print #slipOv .sl-bar,body.slip-print #slipOv .sl-hint,body.slip-print #slipOv .sl-warn{display:none!important}
+  body.slip-print #slipOv .sl-bar,body.slip-print #slipOv .sl-sig{border:none!important}body.slip-print #slipOv .sl-noprint,body.slip-print #slipOv .sl-hint,body.slip-print #slipOv .sl-warn{display:none!important}
   body.slip-print #slipOv .sl-form{max-width:none;margin:0}
   body.slip-print #slipOv textarea,body.slip-print #slipOv input{border:none!important;resize:none}
   @page{size:letter;margin:.5in}
