@@ -55,3 +55,4 @@ Object.assign(ES_DICT,{
 'Headache':'Dolor de cabeza','Dizziness':'Mareo','Memory problems':'Problemas de memoria','Balance problems':'Problemas de equilibrio','Nausea/vomiting':'Náusea/vómito','Difficulty concentrating':'Dificultad para concentrarse','Irritability':'Irritabilidad','Visual disturbances':'Alteraciones visuales','Ringing in the ears':'Zumbido de oídos',
 'Add to note':'Agregar a la nota'
 });
+Object.assign(ES_DICT,{'⋯ More':'⋯ Más','⬇ Download .txt':'⬇ Descargar .txt','🖨 Print note':'🖨 Imprimir nota','📄 DA Form 5181':'📄 Formulario DA 5181','📄 DD Form 689':'📄 Formulario DD 689'});

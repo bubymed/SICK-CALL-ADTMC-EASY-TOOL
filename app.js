@@ -1669,6 +1669,8 @@ function soapdNote(stamp){
   dt.forEach(t=>L.push('Disposition / counseling'+(dt.length>1?' ('+t.title.split('/')[0].trim()+')':'')+': '+state[t.id].dispoTxt.trim()));
   return L.join('\n');
 }
+function menuClose(){const m=document.getElementById('moreMenu');if(m)m.open=false;}
+document.addEventListener('click',e=>{const m=document.getElementById('moreMenu');if(m&&m.open&&!m.contains(e.target))m.open=false;});
 function toggleFmt(){settings.noteFmt=settings.noteFmt==='soapd'?'compact':'soapd';saveSettings();syncFmtBtn();renderNote();}
 function syncFmtBtn(){const b=document.getElementById('fmtBtn');if(b){b.textContent=settings.noteFmt==='soapd'?'SOAP-D ✓':'SOAP-D';b.classList.toggle('copied',settings.noteFmt==='soapd');}}
 
