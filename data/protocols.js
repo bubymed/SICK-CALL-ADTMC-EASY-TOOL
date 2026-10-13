@@ -448,7 +448,8 @@ P("H-1","h","Eye Pain / Redness / Discharge / Itching / Injury",{pg:94,
  rf:["Fixed, abnormal pupil","Visual acuity change","Observed foreign body","Penetration, rupture","Chemical exposure","Fluid level over iris, pupil"],
  act:"None",
  flow:[
-  DP(["Any red flag","Contact lens wearer","Fluorescein uptake","Recent eye surgery","Associated head trauma","Double vision"],{d:"PN",a:"Eye exam + fluorescein*. Chemical → irrigation. Foreign body → Fox shield. Head trauma → stabilize neck. Other → cover eye"}),
+  EX("Eye exam + fluorescein. *Do NOT perform the fluorescein exam if there is concern for an open globe or ruptured eye.",[]),
+  DP(["Any red flag","Contact lens wearer","Fluorescein uptake","Recent eye surgery","Associated head trauma","Double vision"],{d:"PN",a:"Chemical → irrigation. Foreign body → Fox shield. Head trauma → stabilize neck. Other → cover eye"}),
   DP(["Thick yellow or green discharge","Painful","Light sensitivity","Inability to keep eye open","Trauma","History of foreign body, getting better"],{d:"AEM"})
  ],
  tx:["Stye: warm compress x15 min, 4x/day, followed by massaging the area.","Blepharitis: warm compresses (like stye), avoid make-up, wash with warm water and tear-free shampoo.","Dry eyes: artificial tears / lubricating drops as needed.","Viral/allergic conjunctivitis: warm or cool compresses, topical antihistamine/decongestant drops, contagion precautions.","Subconjunctival hemorrhage: demarcated area of blood outside the iris with normal vision, no discharge, light sensitivity or foreign-body sensation; typically resolves in 1–2 weeks."],
@@ -459,7 +460,8 @@ P("H-2","h","Eyelid Problem",{pg:96,
  rf:["Open globe","High-risk laceration","Decreased visual acuity","Double vision"],
  act:"None",
  flow:[
-  DP(["Any red flag","Fixed pupil","Moderate–severe pain"],{d:"PN",a:"Eye exam (visual). Fox shield / protective cover. Head trauma → stabilize neck"}),
+  EX("Eye exam (visual).",[]),
+  DP(["Any red flag","Fixed pupil","Moderate–severe pain"],{d:"PN",a:"Fox shield / protective cover. Head trauma → stabilize neck"}),
   DP(["Significant redness, swelling","Rash >1 week"],{d:"AEM"})
  ],
  tx:["Stye / chalazion: warm compress x15 min, 4x/day, followed by massaging the area.","Blepharitis: warm compresses (like stye), avoid make-up, wash with warm water and tear-free shampoo.","Contact dermatitis: avoid the exposure; hydrocortisone ointment 1% twice a day for 1 week."],
@@ -470,7 +472,8 @@ P("H-3","h","Decreased Vision / Seeing Spots / Request for Glasses",{pg:98,
  rf:["Trauma","Recent surgery","Chemical exposure","Fluid level over iris, pupil","Neurologic deficits"],
  act:"None",
  flow:[
-  DP(["Any red flag","Observed foreign body","Partial visual field affected"],{d:"PN",a:"Eye exam. Fox shield / protective cover. Head trauma → stabilize neck"}),
+  EX("Eye exam.",[]),
+  DP(["Any red flag","Observed foreign body","Partial visual field affected"],{d:"PN",a:"Fox shield / protective cover. Head trauma → stabilize neck"}),
   DP(["Contact wearer","Onset within 7 days","Painful","Red","Headache"],{d:"AEM"})
  ],
  tx:["Decreased visual acuity worse than 20/40, gradual onset: refer to optometry for evaluation for glasses.","Floaters are common and benign — provide reassurance."],
@@ -481,7 +484,8 @@ P("H-4","h","Seeing Double (Diplopia)",{pg:100,
  rf:["Trauma","Neurologic deficits"],
  act:"No driving. No firing weapon. No duties requiring depth perception.",
  flow:[
-  DP(["Any red flag","Red eye","Associated pain"],{d:"PN",a:"Visual acuity. Head trauma → stabilize neck"}),
+  EX("Visual acuity.",[]),
+  DP(["Any red flag","Red eye","Associated pain"],{d:"PN",a:"Head trauma → stabilize neck"}),
   DP(["Appears intoxicated","Diplopia resolves with 1 eye shut"],{d:"AEM"})
  ],
  tx:["Long-standing history or started with new eyeglasses: refer to optometry and patch the eye for symptomatic relief. No driving a vehicle, firing a weapon, or other duties requiring depth perception until evaluated by an optometrist."],
