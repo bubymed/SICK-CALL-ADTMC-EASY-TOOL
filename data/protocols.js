@@ -864,7 +864,8 @@ P("L-3","l","Sores in the Mouth",{pg:164,
  ddx:["Aphthous ulcers","Herpes simplex virus","Hand, foot and mouth disease","Stevens-Johnson syndrome"],
  rf:["Diffuse lesions","Bloody diarrhea"],act:"None",
  flow:[
-  DP(["Red flags","Painless lesion","Also located in groin","History of bloody diarrhea","Diffuse rash","Present >2 weeks"],{d:"PN",a:"Oral exam."}),
+  EX("Oral exam.",[]),
+  DP(["Red flags","Painless lesion","Also located in groin","History of bloody diarrhea","Diffuse rash","Present >2 weeks"],{d:"PN"}),
   DP(["Cluster of ulcers","Ulcer >5 mm"],{d:"AEM"})
  ],
  tx:["Aphthous ulcer: apply ¼ inch of triamcinolone acetate oral paste to the ulcer at bedtime; resolves in 10–14 days.","Hand, foot and mouth disease: acetaminophen (or Toradol) every 6 h for fever, ibuprofen every 6 h for malaise, lozenges or lidocaine gargle for sore throat; salt-water gargles."],
@@ -883,7 +884,8 @@ P("L-4","l","Prescription Refill",{pg:166,
 P("L-5","l","Requests a Vasectomy",{pg:167,
  ddx:["Request for permanent contraception"],rf:["None"],act:"None",
  flow:[
-  DP(["Not in a stable relationship","No children","Under 30 years old","PCC performs vasectomies"],{d:"APPT",a:"Provide counseling; schedule appointment with PCC."})
+  EX("Provide counseling.",[]),
+  DP(["Not in a stable relationship","No children","Under 30 years old","PCC performs vasectomies"],{d:"APPT",a:"Schedule appointment with PCC."})
  ],
  tx:["Counsel before scheduling: contraception options, brief procedure overview, permanence (reversal ~50% effective). Not effective until lack of sperm is confirmed by lab test around 3 months; use alternate birth control until then. Pregnancy still occurs in ~2%. Condoms needed for STI protection. Rest 2–4 days with scrotal support and ice; about 2 weeks before full duty.","If none of the above apply: message provider (secure message, T-Con) or follow local policy."],
  rtc:"",meds:[]});
@@ -892,7 +894,8 @@ P("L-5","l","Requests a Vasectomy",{pg:167,
 P("L-6","l","Needs an Immunization",{pg:168,
  ddx:["Routine / required immunization"],rf:["None"],act:"None",
  flow:[
-  DP(["Rabies","Immunization not required","Requested early","Contraindication for immunization","Medic not trained"],{d:"AEM",a:"Provide counseling. Rabies → Provider Now."})
+  EX("Provide counseling.",[]),
+  DP(["Rabies","Immunization not required","Requested early","Contraindication for immunization","Medic not trained"],{d:"AEM",a:"Rabies → Provider Now."})
  ],
  tx:["If the clinic does not have the immunization, refer to the appropriate location (readiness clinic, immunization clinic).","Obtain approval from the AEM. Counsel the patient; confirm no contraindications.","Provide the vaccine per package insert. Document in the required databases or per local policy."],
  rtc:"Return if redness/infection at site, rash, anaphylaxis, seizure, fever or any other serious symptom after the vaccine.",meds:[],
@@ -902,7 +905,8 @@ P("L-7","l","Lymph Node Enlargement",{pg:169,
  ddx:["Reactive node (infection / inflammation)","Systemic illness","Malignancy"],
  rf:["Any red flag"],act:"None",
  flow:[
-  DP(["Multiple body areas","Unexplained weight loss","Supraclavicular","Posterior cervical","Not mobile","Not soft (hard / rubbery)","No recent infection (within 2 weeks)"],{d:"PN",a:"Perform lymph node exam."}),
+  EX("Lymph node exam.",[]),
+  DP(["Multiple body areas","Unexplained weight loss","Supraclavicular","Posterior cervical","Not mobile","Not soft (hard / rubbery)","No recent infection (within 2 weeks)"],{d:"PN"}),
   DP(["Infection / inflammation symptoms present"],{tri:["ADTMC protocol for the infection symptoms"]})
  ],
  tx:["Screen according to the infection or inflammation symptoms."],
@@ -912,6 +916,7 @@ P("L-8","l","Blood Pressure Check",{pg:170,
  ddx:["Hypertension","Hypotension","Orthostatic hypotension"],
  rf:["BP >180/120 (severe / urgency)"],act:"None",
  flow:[
+  EX("Check blood pressure.",[]),
   DP(["BP greater than 150/90 (recheck after 5 min; still >150/90)","Systolic <90","Difference >15 mmHg between arms"],{d:"PN",a:"Lay in a dark, quiet room if BP elevated."}),
   DP(["Last day of the 5-day BP check","Orthostatic hypotension (SBP drop ≥20, DBP drop ≥10 or HR rise ≥20 with standing)"],{d:"AEM",a:"Start IV fluids if orthostatic."})
  ],
@@ -922,7 +927,8 @@ P("L-8","l","Blood Pressure Check",{pg:170,
 P("L-9","l","Medical Screening for Overseas PCS",{pg:171,
  ddx:["Overseas PCS screening"],rf:["None"],act:"None",
  flow:[
-  DP(["MEDPROS RED"],{d:"APPT",a:"Record review. Schedule appointment or refer for service; instruct on how to correct readiness deficiencies."}),
+  EX("Record review.",[]),
+  DP(["MEDPROS RED"],{d:"APPT",a:"Schedule appointment or refer for service; instruct on how to correct readiness deficiencies."}),
   DP(["Non-deployable profile","Behavioral health appointment","Specialty care appointment","Pregnant / postpartum"],{d:"APPT",a:"Schedule appointment (referral to provider before form is signed)."})
  ],
  tx:["If no deficiencies: fill out the form on paper; provider reviews and signs. Instruct Soldier to wait or return at a later time per provider availability / local policy."],
@@ -960,7 +966,8 @@ P("L-12","l","Request for Nonprescription or Traveling Medications",{pg:174,
 P("M-1","m","No Signs of Improvement (Not Getting Better)",{pg:175,
  ddx:["Treatment failure","Wrong diagnosis"],rf:["Worsening on treatment"],act:"None",
  flow:[
-  DP(["Worsening on treatment","Previously saw Provider or AEM"],{d:"PN",a:"Rescreen algorithm."}),
+  EX("Rescreen algorithm.",[]),
+  DP(["Worsening on treatment","Previously saw Provider or AEM"],{d:"PN"}),
   DP(["Previously screened as Self-Care or AEM"],{d:"AEM"})
  ],
  tx:[],rtc:"",meds:[],
