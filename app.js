@@ -739,7 +739,7 @@ function gEscalate(){
   guided.i=guided.steps.findIndex(x=>x.k==='dispo');
   renderMain();document.getElementById('main').scrollTop=0;
 }
-function gOpenNote(){var a=document.getElementById('aside');if(a)a.classList.add('open');}
+function gOpenNote(){sheetTog(true);}
 function gFieldCard(t,s,f){
   let inner=`<div class="fname">${f.tag} · ${f.name}</div><div class="qtxt">${ccAsk(t,s,f.id)||f.ask}</div>`;
   if(!f.customOnly){
@@ -1044,6 +1044,29 @@ function renderNav(){
   h+=`<button class="${view==='guardados'?'active':''}" onclick="goRef('guardados')">💾 Saved${nSaved?' ('+nSaved+')':''}<span class="k">G</span></button>`;
   h+=`<button class="${view==='ajustes'?'active':''}" onclick="goRef('ajustes')">⚙️ Settings / Privacy</button>`;
   n.innerHTML=h;
+  updTabs();updPeek();
+}
+/* ===== Phone: bottom tab bar + note sheet ===== */
+const TAB_OF={adtmc:'adtmc',tpl:'adtmc',admeds:'admeds',mace:'mace',guardados:'guardados',more:'more',preguntas:'more',assess:'more',perfiles:'more',ajustes:'more'};
+function updTabs(){const t=TAB_OF[view]||'adtmc';document.querySelectorAll('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.v===t));}
+function tabGo(v){sheetTog(false);if(v==='adtmc'&&ad.pid&&view!=='tpl'&&view!=='adtmc'){const m=protoTpl(ad.pid);cur=m.tid;view='tpl';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;return;}goRef(v);}
+function sheetTog(open){const a=document.getElementById('aside');if(!a)return;const o=open===undefined?!a.classList.contains('open'):!!open;a.classList.toggle('open',o);document.body.classList.toggle('sheet-open',o);}
+function updPeek(){
+  const t=document.getElementById('pkT'),s=document.getElementById('pkS');if(!t||!s)return;
+  let hi=null;try{hi=adHighest();}catch(e){}
+  t.textContent=L('Note','Nota')+(hi&&LV[hi]?' · '+LV[hi].s:'');
+  const txt=(document.getElementById('note')||{}).textContent||'';
+  const ln=txt.split('\n').map(x=>x.trim()).filter(Boolean);
+  const cc=ln.find(x=>/^(CC|S):/.test(x));
+  s.textContent=cc?cc.replace(/^(CC|S):\s*/,''):(ln.length>1?L('Tap to open','Toca para abrir'):L('Tap options — the note builds itself','Toca opciones — la nota se arma sola'));
+}
+function renderMore(){
+  const row=(ic,txt,on)=>'<div class="prow" onclick="'+on+'"><span class="ptit">'+ic+' '+txt+'</span><span class="dim">›</span></div>';
+  let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
+  h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
+  h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag o">⌫</span><span class="name">'+L('Clear','Borrar')+'</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="resetTpl()">Clear section</button><button class="ghost" style="color:var(--red)" onclick="resetAll()">Clear all</button></div></div>';
+  return h;
 }
 function go(id){if(guided&&guided.tpl!==id)guided=null;cur=id;view='tpl';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;}
 function goRef(v){view=v;renderNav();renderMain();document.getElementById('main').scrollTop=0;}
@@ -1086,6 +1109,7 @@ function renderMain(){
   if(view==='guardados'){m.innerHTML=renderSaved();return;}
   if(view==='assess'){m.innerHTML=renderAssess();return;}
   if(view==='mace'){m.innerHTML=renderMace();return;}
+  if(view==='more'){m.innerHTML=renderMore();return;}
   if(guided&&view==='tpl'&&guided.tpl===cur){m.innerHTML=renderGuided();return;}
   const t=TPLS.find(x=>x.id===cur), s=state[cur];
   let h=ad.pid?(adHeadHtml(getP(ad.pid))+'<div class="secbar">1 · '+({quick:'Reason for visit',focus:'Focused history'}[hmode()]||'History — OPQRST / AMPLE')+'</div>'):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:var(--chipx-txt)">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
