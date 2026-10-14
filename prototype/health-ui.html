@@ -1,0 +1,239 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sick Call — UI prototype</title>
+<style>
+:root{--bg:#F2F2F7;--card:#FFFFFF;--tx:#000;--tx2:#6C6C70;--sep:#E5E5EA;--fill:#E9E9EE;
+--red:#FF3B30;--orange:#FF9500;--green:#34C759;--blue:#007AFF;--pink:#FF2D55;--purple:#AF52DE;--teal:#30B0C7;--acc:#FF9500}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#000;--card:#1C1C1E;--tx:#fff;--tx2:#98989F;--sep:#38383A;--fill:#2C2C2E}}
+:root[data-theme=dark]{--bg:#000;--card:#1C1C1E;--tx:#fff;--tx2:#98989F;--sep:#38383A;--fill:#2C2C2E}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--tx);font:17px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:1fr;min-height:100vh}
+.col{padding:0 16px calc(150px + env(safe-area-inset-bottom))}
+.top{display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 0 4px;color:var(--blue);font-size:17px}
+.top .r{display:flex;gap:18px}
+h1{font-size:34px;font-weight:700;letter-spacing:.2px;margin:2px 0 2px}
+.sub{color:var(--tx2);font-size:15px;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.ic{width:28px;height:28px;border-radius:7px;display:inline-grid;place-items:center;flex:none}
+.ic svg{width:17px;height:17px;fill:#fff}
+h2{font-size:22px;font-weight:700;margin:26px 0 10px;display:flex;justify-content:space-between;align-items:baseline}
+h2 small{font-size:15px;font-weight:400;color:var(--blue)}
+.card{background:var(--card);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.ch{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
+.ch .t{flex:1}.ch .tm{color:var(--tx2);font-weight:400;font-size:14px}
+.big{font-size:28px;font-weight:700;margin-top:8px}.big span{font-size:17px;color:var(--tx2);font-weight:500;margin-left:3px}
+.msg{font-size:15px;margin-top:6px;color:var(--tx)}
+.hl{border-left:0;position:relative}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:600;color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid .card{margin:0}
+.list{background:var(--card);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:12px 16px;position:relative;min-height:48px}
+.row+.row:before{content:"";position:absolute;top:0;left:56px;right:0;border-top:.5px solid var(--sep)}
+.row .lbl{flex:1;font-size:16px}
+.tg{width:51px;height:31px;border-radius:999px;background:var(--fill);position:relative;flex:none}
+.tg:after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.tg.on{background:var(--red)}.tg.on:after{left:22px}
+.chev{color:var(--tx2);font-size:20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{padding:9px 14px;border-radius:999px;background:var(--fill);font-size:15px;min-height:38px;display:inline-flex;align-items:center}
+.chip.on{background:var(--acc);color:#fff;font-weight:600}
+.chip.deny{background:transparent;box-shadow:inset 0 0 0 1.5px var(--sep);color:var(--tx2)}
+.q{font-size:13px;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+.q+.chips{margin-bottom:14px}
+.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin-top:8px}
+.seg div{flex:1;text-align:center;padding:7px 0;font-size:14px;border-radius:7px;font-weight:500}
+.seg .on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.15);font-weight:600}
+.prog{display:flex;gap:4px;margin:2px 0 16px}.prog i{flex:1;height:4px;border-radius:2px;background:var(--fill)}.prog i.d{background:var(--acc)}
+/* note sheet */
+.sheet{position:fixed;left:8px;right:8px;bottom:calc(84px + env(safe-area-inset-bottom));background:var(--card);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.18);padding:8px 16px 12px}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--sep);margin:0 auto 8px}
+.peek{display:flex;align-items:center;gap:10px}.peek .t{flex:1}.peek b{display:block;font-size:15px}.peek span{font-size:13px;color:var(--tx2)}
+.btn{background:var(--blue);color:#fff;border-radius:10px;padding:9px 14px;font-size:15px;font-weight:600;white-space:nowrap}
+.btn.g{background:var(--fill);color:var(--blue)}
+.peek .btn{color:#fff;font-size:15px}.peek .btn.g{color:var(--blue)}
+.notebody{display:none}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--sep);display:flex;padding:6px 0 calc(6px + env(safe-area-inset-bottom))}
+.tabs div{flex:1;text-align:center;font-size:10px;color:var(--tx2);font-weight:500}
+.tabs svg{width:26px;height:26px;display:block;margin:0 auto 2px;fill:currentColor}
+.tabs .on{color:var(--blue)}
+pre{white-space:pre-wrap;font:14px/1.45 ui-monospace,"SF Mono",Menlo,monospace;color:var(--tx)}
+/* expanded sheet */
+body.open .sheet{top:calc(54px + env(safe-area-inset-top));bottom:0;left:0;right:0;border-radius:14px 14px 0 0;padding-bottom:30px;overflow:auto}
+body.open .notebody{display:block}
+body.open .peek .btn.c{display:none}
+body.open:before{content:"";position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1}body.open .sheet{z-index:2}
+/* tablet */
+.side{display:none}
+@media (min-width:760px){
+ .app{grid-template-columns:minmax(0,1fr) 380px;gap:20px;padding:0 20px}
+ .col{padding-bottom:110px}
+ .sheet{display:none}
+ .side{display:block;position:sticky;top:0;height:100vh;overflow:auto;padding:calc(18px + env(safe-area-inset-top)) 0 110px}
+ .side .card{padding:16px}
+ .tabs{left:0;right:0}
+}
+@media (min-width:1100px){.app{grid-template-columns:260px minmax(0,1fr) 400px}.nav{display:block!important}}
+.nav{display:none;padding-top:24px}
+.nav .list{margin-bottom:16px}.nav .row .lbl{font-size:15px}
+.search{background:var(--fill);border-radius:10px;padding:8px 12px;color:var(--tx2);font-size:16px;margin-bottom:16px}
+
+.badge{display:inline-block;background:var(--purple);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.3px;vertical-align:middle;margin-left:6px}
+.vrow{display:flex;align-items:center;gap:12px;cursor:pointer}
+.vrow .lbl{flex:1;font-size:16px}.vrow .val{color:var(--tx2);font-size:15px}
+.vin{display:none;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.vin.on{display:grid}
+.vin label{font-size:12px;color:var(--tx2);font-weight:600}
+.vin input{width:100%;margin-top:3px;border:0;background:var(--fill);color:var(--tx);border-radius:8px;padding:8px;font:16px -apple-system,system-ui,sans-serif}
+.allneg{font-size:15px;color:var(--blue);font-weight:400;background:none;border:0;padding:0;cursor:pointer}
+.allneg.done{color:var(--green);font-weight:600}
+.chip,.seg div,.tg,.row,.btn,.peek,.grab{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.chip.pos{background:var(--red);color:#fff;font-weight:600}
+.warn{font-size:13px;color:var(--orange);margin-top:8px}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-80px);background:var(--card);color:var(--tx);box-shadow:0 6px 24px rgba(0,0,0,.2);padding:10px 18px;border-radius:999px;font-size:15px;font-weight:600;transition:transform .25s;z-index:9}
+.toast.on{transform:translate(-50%,0)}
+.sheet{transition:top .25s}
+.disp-PN{color:var(--red)!important}.disp-AEM{color:var(--orange)!important}.disp-MCP{color:var(--green)!important}
+</style></head><body>
+<div class="app">
+ <aside class="nav">
+  <h1 style="font-size:28px">Protocols</h1>
+  <div class="search">🔍 Search symptom</div>
+  <div class="list">
+   <div class="row"><span class="ic" style="background:var(--pink)"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.5-9C1 8.8 3 5 6.6 5c2 0 3.4 1 5.4 3 2-2 3.4-3 5.4-3C21 5 23 8.8 21.5 12 19 16.6 12 21 12 21z"/></svg></span><span class="lbl">Chest / Breathing</span><span class="chev">›</span></div>
+   <div class="row" style="background:color-mix(in srgb,var(--orange) 14%,transparent)"><span class="ic" style="background:var(--orange)"><svg viewBox="0 0 24 24"><path d="M9 2h6v7l3 13h-4l-2-8-2 8H6l3-13z"/></svg></span><span class="lbl"><b>Musculoskeletal</b></span><span class="chev">›</span></div>
+   <div class="row"><span class="ic" style="background:var(--green)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span><span class="lbl">Gastrointestinal</span><span class="chev">›</span></div>
+   <div class="row"><span class="ic" style="background:var(--purple)"><svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 12 3z"/></svg></span><span class="lbl">Neurological</span><span class="chev">›</span></div>
+   <div class="row"><span class="ic" style="background:var(--teal)"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></span><span class="lbl">Eyes</span><span class="chev">›</span></div>
+  </div>
+ </aside>
+ <main class="col">
+  <div class="top"><span>‹ Protocols</span><span class="r"><span>ES</span><span>⋯</span></span></div>
+  <h1>Knee Pain<span class="badge">PROTOTYPE</span></h1>
+  <div class="sub"><span class="ic" style="background:var(--orange)"><svg viewBox="0 0 24 24"><path d="M9 2h6v7l3 13h-4l-2-8-2 8H6l3-13z"/></svg></span>B-8 · Musculoskeletal · ADTMC p. 43</div>
+
+  <div class="card" id="dispCard">
+   <div class="ch" id="dispHead"><span class="ic" id="dispIc" style="width:22px;height:22px;border-radius:6px"><svg viewBox="0 0 24 24"><path d="M12 2 1 21h22zM11 9h2v6h-2zm0 8h2v2h-2z"/></svg></span><span class="t">Suggested disposition</span><span class="tm">live</span></div>
+   <div class="big" id="dispBig"></div>
+   <div class="msg" id="dispMsg"></div>
+  </div>
+
+  <h2>Red Flags <button class="allneg" id="allNeg" onclick="allNeg()">All negative</button></h2>
+  <div class="list" id="rfList"></div>
+  <div class="warn" id="rfWarn">Red flags not screened yet.</div>
+
+  <h2>Decision Points</h2>
+  <div class="card">
+   <div class="q">Provider Now if any</div><div class="chips" id="dp1"></div>
+   <div class="q">AEM if any</div><div class="chips" id="dp2"></div>
+  </div>
+
+  <h2>History</h2>
+  <div class="card">
+   <div class="q">Onset</div><div class="chips" id="onset"></div>
+   <div class="q">Mechanism</div><div class="chips" id="moi"></div>
+   <div class="q">Side</div><div class="seg" id="side"></div>
+   <div class="q" style="margin-top:14px">Pain</div><div class="seg" id="pain"></div>
+   <div class="q" style="margin-top:14px">Denies</div><div class="chips" id="deny"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+   <div class="vrow" onclick="vTog()"><span class="ic" style="background:var(--pink)"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.5-9C1 8.8 3 5 6.6 5c2 0 3.4 1 5.4 3 2-2 3.4-3 5.4-3C21 5 23 8.8 21.5 12 19 16.6 12 21 12 21z"/></svg></span><span class="lbl">Vitals</span><span class="val" id="vSum">Not taken</span><span class="chev" id="vChev">›</span></div>
+   <div class="vin" id="vin" onclick="event.stopPropagation()">
+    <div><label>BP</label><input id="v_bp" inputmode="numeric" placeholder="120/80"></div>
+    <div><label>HR</label><input id="v_hr" inputmode="numeric" placeholder="—"></div>
+    <div><label>RR</label><input id="v_rr" inputmode="numeric" placeholder="—"></div>
+    <div><label>Temp °F</label><input id="v_t" inputmode="decimal" placeholder="—"></div>
+    <div><label>SpO₂ %</label><input id="v_s" inputmode="numeric" placeholder="—"></div>
+    <div><label>Pain /10</label><input id="v_p" inputmode="numeric" placeholder="—"></div>
+   </div>
+  </div>
+  <p style="color:var(--tx2);font-size:13px;margin-top:18px">Prototype with sample data only. Nothing is saved.</p>
+ </main>
+
+ <aside class="side">
+  <div class="card">
+   <div class="peek"><div class="t"><b>Note</b><span>updated live</span></div><span class="btn g" onclick="fmtTog()" id="fmtB">SOAP-D</span><span class="btn" onclick="copyNote()">Copy</span></div>
+   <div style="height:12px"></div>
+   <pre id="note2"></pre>
+  </div>
+  <div class="list"><div class="row"><span class="lbl" style="color:var(--blue)">DD 689 sick slip</span><span class="chev">›</span></div><div class="row"><span class="lbl" style="color:var(--blue)">DA 5181</span><span class="chev">›</span></div><div class="row"><span class="lbl" style="color:var(--blue)">Download .txt</span><span class="chev">›</span></div></div>
+ </aside>
+</div>
+
+<div class="sheet">
+ <div class="grab" onclick="sheet()"></div>
+ <div class="peek" onclick="sheet(true)"><div class="t"><b id="pk1">Note</b><span id="pk2"></span></div><span class="btn c" onclick="event.stopPropagation();copyNote()">Copy</span></div>
+ <div class="notebody"><div style="height:12px"></div>
+  <div class="seg" style="margin-bottom:14px" id="fmtSeg"><div onclick="fmt='c';draw()">Compact</div><div onclick="fmt='s';draw()">SOAP-D</div></div>
+  <pre id="note1"></pre>
+  <div style="display:flex;gap:10px;margin-top:16px"><span class="btn" style="flex:1;text-align:center" onclick="copyNote()">Copy note</span><span class="btn g" style="flex:1;text-align:center">DD 689</span><span class="btn g" style="flex:1;text-align:center" onclick="sheet()">Close</span></div>
+ </div>
+</div>
+<div class="toast" id="toast">Note copied ✓</div>
+<nav class="tabs">
+ <div class="on"><svg viewBox="0 0 24 24"><path d="M4 4h16v4H4zm0 6h16v4H4zm0 6h10v4H4z"/></svg>Protocols</div>
+ <div><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6zM14 3v5h5"/></svg>Note</div>
+ <div><svg viewBox="0 0 24 24"><path d="M8.5 3a5.5 5.5 0 0 1 3.9 1.6l7 7a5.5 5.5 0 0 1-7.8 7.8l-7-7A5.5 5.5 0 0 1 8.5 3z"/></svg>Meds</div>
+ <div><svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 12 3zM9 21h6v1H9z"/></svg>MACE</div>
+ <div><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm9 3h-2.1a7 7 0 0 0-1-2.4l1.5-1.5-1.5-1.5-1.5 1.5a7 7 0 0 0-2.4-1V3h-2v2.1a7 7 0 0 0-2.4 1L8.1 4.6 6.6 6.1l1.5 1.5a7 7 0 0 0-1 2.4H5v2h2.1a7 7 0 0 0 1 2.4l-1.5 1.5 1.5 1.5 1.5-1.5a7 7 0 0 0 2.4 1V19h2v-2.1a7 7 0 0 0 2.4-1l1.5 1.5 1.5-1.5-1.5-1.5a7 7 0 0 0 1-2.4H21z"/></svg>Settings</div>
+</nav>
+<script>
+const q=new URLSearchParams(location.search);if(q.get('theme'))document.documentElement.dataset.theme=q.get('theme');
+const RF=['Abnormal pulse / motor / sensation','Deformity','High-energy trauma'];
+const DP1=['Red / warm','Immediate swelling after trauma','No mechanism of injury'];
+const DP2=['Swelling','Decreased ROM','Previous knee injury'];
+const ON=['Today','1–3 days','4–7 days','>1 week'],MOI=['Running / PT','Twisting','Fall','Ruck march'],SIDE=['Left','Right','Both'],PAIN=['0–3','4–6','7–10'];
+const DEN=['Locking','Giving way','Numbness / tingling'];
+const S={rf:{},rfDone:false,dp:new Set(),on:'1–3 days',moi:new Set(['Running / PT']),side:'Right',pain:'4–6',den:new Set(['Locking','Giving way'])};
+let fmt='c';
+const lc=x=>x.replace(/\b([A-Z])([a-z])/g,(m,a,b)=>a.toLowerCase()+b);
+const $=i=>document.getElementById(i);
+const warnSvg='<svg viewBox="0 0 24 24"><path d="M12 2 1 21h22zM11 9h2v6h-2zm0 8h2v2h-2z"/></svg>';
+function rfTog(i){S.rf[RF[i]]=!S.rf[RF[i]];draw();}
+function allNeg(){RF.forEach(f=>S.rf[f]=false);S.rfDone=true;draw();}
+function chips(id,arr,isOn,cb,cls){$(id).innerHTML=arr.map((o,i)=>`<span class="chip ${isOn(o)?(cls||'on'):''}" data-i="${i}">${o}</span>`).join('');[...$(id).children].forEach(c=>c.onclick=()=>{cb(arr[+c.dataset.i]);draw();});}
+function seg(id,arr,val,cb){$(id).innerHTML=arr.map((o,i)=>`<div class="${o===val?'on':''}" data-i="${i}">${o}</div>`).join('');[...$(id).children].forEach(c=>c.onclick=()=>{cb(arr[+c.dataset.i]);draw();});}
+const tgl=(set,o)=>set.has(o)?set.delete(o):set.add(o);
+function vTog(){$('vin').classList.toggle('on');$('vChev').textContent=$('vin').classList.contains('on')?'⌄':'›';}
+function vit(){const v={bp:$('v_bp').value,hr:$('v_hr').value,rr:$('v_rr').value,t:$('v_t').value,s:$('v_s').value,p:$('v_p').value};const parts=[];if(v.bp)parts.push('BP '+v.bp);if(v.hr)parts.push('HR '+v.hr);if(v.rr)parts.push('RR '+v.rr);if(v.t)parts.push('T '+v.t+' F');if(v.s)parts.push('SpO2 '+v.s+'%');if(v.p)parts.push('Pain '+v.p+'/10');return parts;}
+document.querySelectorAll('.vin input').forEach(i=>i.oninput=draw);
+function disp(){const pos=RF.filter(f=>S.rf[f]);const d1=DP1.filter(x=>S.dp.has(x)),d2=DP2.filter(x=>S.dp.has(x));
+ if(pos.length)return{c:'PN',n:'Provider Now',m:'Red flag: '+pos.join('; ')+'. Immobilize the injured extremity before transport.'};
+ if(d1.length)return{c:'PN',n:'Provider Now',m:'Decision point 1: '+lc(d1.join(', '))+'. Immobilize the injured extremity before transport.'};
+ if(d2.length)return{c:'AEM',n:'Acute Evaluation',m:'Decision point 2: '+lc(d2.join(', '))+'. PT if available.'};
+ return{c:'MCP',n:'Minor Care Protocol',m:'No decision point positive. Treat per B-8 minor care; return if knee catches, locks or gives out.'};}
+function rfLine(){const pos=RF.filter(f=>S.rf[f]);if(pos.length)return'RED FLAG present: '+pos.join('; ')+'.';return S.rfDone?'No red flags.':null;}
+function noteText(){const d=disp(),v=vit(),L=[];const moi=lc([...S.moi].join(', '));
+ const cc=`${S.side==='Both'?'Bilateral':S.side==='Left'?'L':'R'} knee pain x ${S.on}${moi?' after '+moi:''}.`;
+ const den=[...S.den].map(lc);const pos=[...S.dp].filter(x=>DP1.concat(DP2).includes(x));
+ const rf=rfLine();
+ if(fmt==='c'){L.push('CC: '+cc);L.push('HPI: Pain '+S.pain+'/10.'+(den.length?' Denies '+den.join(', ')+'.':''));if(rf)L.push(rf);
+  L.push('VS: '+(v.length?v.join(', '):'not taken')+'.');if(pos.length)L.push('Findings: '+lc(pos.join(', '))+'.');
+  L.push('A: B-8 Knee Pain → '+d.c+'.');L.push('P: '+d.m);}
+ else{L.push('S: '+cc+' Pain '+S.pain+'/10.'+(den.length?' Denies '+den.join(', ')+'.':''));
+  L.push('O: VS '+(v.length?v.join(', '):'not taken')+'.'+(pos.length?' '+lc(pos.join(', '))+'.':''));
+  L.push('A: B-8 Knee Pain.'+(rf?' '+rf:''));L.push('P: '+d.m);L.push('D: '+d.c+' — '+d.n+'.');}
+ return L.join('\n');}
+function draw(){
+ $('rfList').innerHTML=RF.map((f,i)=>`<div class="row" onclick="rfTog(${i})"><span class="ic" style="background:var(--red)">${warnSvg}</span><span class="lbl">${f}</span><span class="tg ${S.rf[f]?'on':''}"></span></div>`).join('');
+ const anyPos=RF.some(f=>S.rf[f]);if(anyPos)S.rfDone=true;
+ $('allNeg').textContent=anyPos?'Red flag present':(S.rfDone?'✓ All negative':'All negative');$('allNeg').className='allneg'+(S.rfDone&&!anyPos?' done':'');if(anyPos)$('allNeg').style.color='var(--red)';else $('allNeg').style.color='';
+ $('rfWarn').style.display=S.rfDone?'none':'block';
+ chips('dp1',DP1,o=>S.dp.has(o),o=>tgl(S.dp,o),'pos');chips('dp2',DP2,o=>S.dp.has(o),o=>tgl(S.dp,o));
+ chips('onset',ON,o=>S.on===o,o=>S.on=o);chips('moi',MOI,o=>S.moi.has(o),o=>tgl(S.moi,o));
+ seg('side',SIDE,S.side,o=>S.side=o);seg('pain',PAIN,S.pain,o=>S.pain=o);
+ chips('deny',DEN,o=>S.den.has(o),o=>tgl(S.den,o));
+ const d=disp(),col={PN:'var(--red)',AEM:'var(--orange)',MCP:'var(--green)'}[d.c];
+ $('dispHead').style.color=col;$('dispIc').style.background=col;$('dispBig').innerHTML=d.c+' <span>'+d.n+'</span>';$('dispMsg').textContent=d.m;
+ const v=vit();$('vSum').textContent=v.length?v.slice(0,2).join(' · '):'Not taken';
+ const t=noteText();$('note1').textContent=t;$('note2').textContent=t;
+ $('pk1').textContent='Note · '+d.c;$('pk2').textContent=(anyPos?'red flag present':S.rfDone?'no red flags':'red flags not screened')+(document.body.classList.contains('open')?'':' · tap to open');
+ [...$('fmtSeg').children].forEach((c,i)=>c.className=(i===0)===(fmt==='c')?'on':'');$('fmtB').textContent=fmt==='c'?'SOAP-D':'Compact';
+}
+function fmtTog(){fmt=fmt==='c'?'s':'c';draw();}
+function sheet(open){document.body.classList.toggle('open',open===true?true:open===false?false:!document.body.classList.contains('open'));draw();}
+function copyNote(){const t=noteText();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).catch(()=>{}).finally(()=>{$('toast').classList.add('on');setTimeout(()=>$('toast').classList.remove('on'),1400);});}
+draw();if(q.get('sheet'))sheet(true);
+</script>
+</body></html>
