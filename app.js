@@ -1138,10 +1138,20 @@ function renderMain(){
   h+=`<input type="text" placeholder="other CC..." value="${s.ccCustom}" oninput="cust('${cur}','__cc',this.value)"></div>`;
   if(!ad.pid)h+=adSuggestHtml(t,s);
 
-  // fields
-  visFields(t).forEach(f=>{
+  // fields — answered letters collapse into a one-line summary as you move on (compact history)
+  const vf=visFields(t),hasC=f=>s.fields[f.id].size>0||!!(s.custom[f.id]||'').trim();
+  const fi=settings.hcompact===false||!s.focus?-1:vf.findIndex(f=>f.id===s.focus);
+  if(vf.length>2){
+    h+='<div class="hprog">'+vf.map(f=>'<span class="hl'+(hasC(f)?' done':'')+(f.id===s.focus?' cur':'')+'" onclick="fOpen(\''+cur+'\',\''+f.id+'\')" title="'+q$(f.name)+'">'+f.tag+'</span>').join('')+(fi>0?'<span class="hall" onclick="fOpen(\''+cur+'\',null)">'+L('Show all','Ver todo')+'</span>':'')+'</div>';
+  }
+  vf.forEach((f,i)=>{
+    if(i<fi){
+      const sum=hasC(f)?joinSel(f,s):'';
+      h+='<div class="field fcol'+(sum?'':' empty')+'" id="fld_'+f.id+'" onclick="fOpen(\''+cur+'\',\''+f.id+'\')"><span class="tag">'+f.tag+'</span><span class="name">'+f.name+'</span><span class="fsum">'+(sum?q$(sum):L('not asked','sin preguntar'))+'</span><span class="chev">›</span></div>';
+      return;
+    }
     const tagClass = 'OPQRT'.includes(f.tag)&&['o','pw','pb','q','r','rr','t'].includes(f.id)?'o':(['sx','a','m','phx','l','e','s2','m','seen','lmp'].includes(f.id)?'s2':'');
-    h+=`<div class="field"><div class="lab"><span class="tag ${tagClass}">${f.tag}</span><span class="name">${f.name}</span><span class="ask">${ccAsk(t,s,f.id)||f.ask}</span>${clrBtn(cur,f.id)}</div>`;
+    h+=`<div class="field${f.id===s.focus?' fcur':''}" id="fld_${f.id}"><div class="lab"><span class="tag ${tagClass}">${f.tag}</span><span class="name">${f.name}</span><span class="ask">${ccAsk(t,s,f.id)||f.ask}</span>${clrBtn(cur,f.id)}</div>`;
     if(!f.customOnly){
       h+=`<div class="chips">`;
       f.opts.forEach(o=>h+=chipHtml(cur,f.id,o,s.fields[f.id].has(o)));
@@ -1503,8 +1513,12 @@ function tog(tid,fid,opt,deny){
   const set = fid==='__cc'?s.cc:s.fields[fid];
   if(set.has(key))set.delete(key);
   else{set.add(key);excApply(s,fid,opt,deny);}
+  if(fid!=='__cc')s.focus=fid;
   renderMain();renderNote();
+  if(fid!=='__cc')fKeep(fid);
 }
+function fKeep(fid){const el=document.getElementById('fld_'+fid);if(el&&el.scrollIntoView)el.scrollIntoView({block:'nearest'});}
+function fOpen(tid,fid){const s=state[tid];if(!s)return;s.focus=fid;renderMain();if(fid)setTimeout(()=>{const el=document.getElementById('fld_'+fid);if(el)el.scrollIntoView({block:'center',behavior:'smooth'});},0);}
 function cust(tid,fid,val){
   if(fid==='__cc'){state[tid].ccCustom=val;}else{state[tid].custom[fid]=val;}
   renderNote();
@@ -2457,6 +2471,7 @@ function renderSettings(){
   h+='<div class="field"><div class="lab"><span class="tag">🌐</span><span class="name">Language</span></div><div class="chips"><span class="chip '+(LANG==='en'?'on':'')+'" onclick="setLang(\'en\')">English</span><span class="chip '+(LANG==='es'?'on':'')+'" onclick="setLang(\'es\')">Español</span></div><div class="fuq">Interface language. The note is always written in English.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🎨</span><span class="name">Theme</span></div><div class="chips">'+THEMES.map(x=>'<span class="chip '+(settings.theme===x[0]?'on':'')+'" onclick="setTheme(\''+x[0]+'\')">'+x[1]+'</span>').join('')+'</div><div class="chips" style="margin-top:8px"><span class="chip '+(settings.mode!=='light'?'on':'')+'" onclick="setMode(\'dark\')">Dark</span><span class="chip '+(settings.mode==='light'?'on':'')+'" onclick="setMode(\'light\')">Light</span></div><div class="fuq">Color and brightness of the interface. Saved on this device only. The note text is not affected.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🩺</span><span class="name">'+L('AEM in my unit','AEM en mi unidad')+'</span><span class="ask">ADTMC II</span></div><div class="chips"><span class="chip '+(settings.aemOn?'on':'')+'" onclick="togAem()">'+(settings.aemOn?L('AEM available','AEM disponible'):L('No AEM — "AEM Now" goes to the clinic','Sin AEM — "AEM Now" va a la clínica'))+'</span></div>'+(settings.aemOn?'<input id="aemName" maxlength="60" autocomplete="off" placeholder="'+L('AEM rank / name (optional)','Rango / nombre del AEM (opcional)')+'" value="'+q$(settings.aemName||'')+'" oninput="setAemName(this.value)" style="margin-top:8px">':'')+'<div class="fuq">'+L('AEM = expeditionary combat medic, special operations medic, flight paramedic, or the supervising NCO when local policy delegates that authority. If no AEM is available, the Soldier is seen by the supervising privileged provider (ADTMC Category II).','AEM = expeditionary combat medic, special operations medic, flight paramedic, o el NCO supervisor cuando la política local le delega esa autoridad. Si no hay AEM disponible, al Soldado lo ve el proveedor privilegiado supervisor (ADTMC Categoría II).')+'</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">≡</span><span class="name">'+L('Compact history','Historial compacto')+'</span></div><div class="chips"><span class="chip '+(settings.hcompact!==false?'on':'')+'" onclick="settings.hcompact=settings.hcompact===false;saveSettings();renderMain()">'+(settings.hcompact!==false?L('ON — answered letters fold up as you move on','ENCENDIDO — las letras respondidas se pliegan al avanzar'):L('Off — show every letter open','Apagado — todas las letras abiertas'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🛡️</span><span class="name">Daily auto-delete</span></div><div class="chips"><span class="chip '+(settings.purge?'on':'')+'" onclick="togPurge()">'+(settings.purge?'ON — notes and data from previous days are deleted on open':'Off')+'</span></div><div class="fuq">Recommended: notes contain Soldier information (PII/PHI). Export what you need before the day ends.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🔒</span><span class="name">Lock PIN</span><span class="ask">'+(settings.pin?'active':'no PIN')+'</span></div>';
   h+=settings.pin?'<div class="algo-actions" style="margin-top:0"><button onclick="lockNow()">Lock now</button><button class="ghost" onclick="clearPin()">Remove PIN</button></div>':'<div class="subrow"><div class="half"><input type="password" id="pinNew" inputmode="numeric" maxlength="8" placeholder="4–8 digit PIN" style="margin-top:0"></div><div><button class="gstart" style="width:auto;padding:8px 16px;margin:0" onclick="setPin()">Save PIN</button></div></div>';
