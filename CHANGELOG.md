@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **DD 689 printing:** block 12 holds only Assessment / Plan / Dispo; the clinical history (CC, OPQRST, AMPLE, vitals, exam) prints below the form in the white space (two columns, auto-sized; toggle "History below"). Fixed: toolbar printing on the page, gray overlay when opened from the note sheet, text boxes printed as plain text.
+  **Impresión del DD 689:** el bloque 12 solo lleva Assessment / Plan / Dispo; el historial clínico (CC, OPQRST, AMPLE, vitales, examen) se imprime debajo del formulario en el espacio blanco (dos columnas, tamaño automático; botón "History below"). Arreglado: la barra de botones salía impresa, el velo gris al abrirlo desde la hoja de la nota, y los cuadros de texto se imprimen como texto.
 - **New look, step 5 (polish):** all inputs share the new style (search boxes, meds daily-max counter with larger −/+ buttons), rounded tables and lists, native controls follow light/dark mode, reduced-motion respected.
   **Nuevo diseño, paso 5 (pulido):** todos los campos con el nuevo estilo (búsquedas, contador de dosis máxima con botones −/+ más grandes), tablas y listas redondeadas, controles nativos siguen el modo claro/oscuro, se respeta "reducir movimiento".
 - **New look, step 4 (protocol screen):** live "Suggested disposition" card under the protocol title (color by category, reason, tap to jump to the decision); red flags as iOS switches with an "All negative" button; notes say "No red flags." when every red flag is negative (instead of listing each one).

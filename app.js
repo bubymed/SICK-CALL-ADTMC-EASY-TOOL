@@ -2451,15 +2451,18 @@ function slipData(){
   const i=lines.findIndex(l=>/^ASSESSMENT:|^PLAN:|^DISPO|^A — ASSESSMENT|^P — PLAN|^D — DISPOSITION/.test(l));
   const rem=i<0?'':lines.slice(i).join('\n').replace(/\n{2,}/g,'\n').trim();
   const d=new Date(),ymd=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
-  return{cond:cc.join('; '),ymd,name:patient.trim(),rem,full:lines.join('\n').trim()};
+  const body=(lines.length&&/^(PT:|\d{2} [A-Z]{3} \d{2})/.test(lines[0]))?lines.slice(1):lines;
+  const hEnd=i<0?lines.length:i;const hist=lines.slice(lines.length-body.length,hEnd).join('\n').replace(/\n{2,}/g,'\n').trim();
+  return{cond:cc.join('; '),ymd,name:patient.trim(),rem,hist,full:lines.join('\n').trim()};
 }
 function slipOpen(){
+  if(typeof sheetTog==='function')sheetTog(false);
   const D=slipData();let org='';try{org=localStorage.getItem('sc_org')||'';}catch(e){}
   let o=document.getElementById('slipOv');if(o)o.remove();
   o=document.createElement('div');o.id='slipOv';
   const cb=(id,l)=>`<label class="sl-cb"><input type="checkbox" id="${id}"><span class="bx"></span>${l}</label>`;
   o.innerHTML=`<div class="sl-bar"><b>DD Form 689 — Individual Sick Slip</b><span class="spacer"></span>
-    <button onclick="slipRem(this)" id="slipRemBtn">Remarks: A/P/Dispo</button><button onclick="slipPrint()">🖨 Print</button><button class="ghost" onclick="slipClose()">✕ Close</button></div>
+    <button onclick="slipHist(this)" id="slipHistBtn">History below: ON</button><button onclick="slipPrint()">🖨 Print</button><button class="ghost" onclick="slipClose()">✕ Close</button></div>
     <div class="sl-hint">Fill-in only for printing. Name, DoD ID, rank and signature are NOT saved. Tick the boxes in blocks 10–11 and draw your signature in block 13 with your finger if your SOP authorizes you to sign. Blocks 7–9 stay blank for the Commander.</div>
     <div class="sl-form"><div class="sl-title">INDIVIDUAL SICK SLIP</div>
     <div class="sl-row"><div class="sl-c w65"><label>1. MEDICAL CONDITION <i>(Brief Description)</i></label>${cb('slIll','ILLNESS')}${cb('slInj','INJURY')}<textarea id="slCond" rows="2">${D.cond.replace(/</g,'&lt;')}</textarea></div>
@@ -2472,7 +2475,8 @@ function slipOpen(){
       <div class="sl-c w50"><label>10. IN LINE OF DUTY</label><div class="sl-cbs">${cb('slL1','No (EPTS)')}${cb('slL2','Yes (EPTS)')}</div>
         <label>11. DISPOSITION OF PATIENT</label><div class="sl-cbs g3">${cb('slD1','DUTY')}${cb('slD2','QUARTERS')}${cb('slD3','SICK BAY')}${cb('slD4','HOSPITAL')}${cb('slD5','NOT EXAMINED')}${cb('slD6','OTHER <i>(Specify:)</i>')}</div><input id="slOth" placeholder="Other (specify)" autocomplete="off">
         <label>12. REMARKS</label><textarea id="slRem" rows="3" oninput="slFitAll()">${D.rem.replace(/</g,'&lt;')}</textarea><div id="slWarn" class="sl-warn" style="display:none">Long remarks: may not fit on one page. Shorten them or print the full note separately.</div><label>13. SIGNATURE OF MEDICAL OFFICER</label><div class="sl-sigwrap"><canvas id="slSig" class="sl-sig"></canvas><button type="button" class="sl-noprint sl-sigclr" onclick="slSigClear()">Clear signature</button></div><input id="slSigName" placeholder="Printed name, rank, title (optional)" autocomplete="off"></div></div>
-    <div class="sl-foot"><b>DD FORM 689, AUG 2017</b><span>PREVIOUS EDITION IS OBSOLETE.</span><b>Page 1 of 1</b></div></div>`;
+    <div class="sl-foot"><b>DD FORM 689, AUG 2017</b><span>PREVIOUS EDITION IS OBSOLETE.</span><b>Page 1 of 1</b></div></div>
+    <div class="sl-cont" id="slCont"><div class="sl-cont-h">CLINICAL HISTORY — continuation of block 12 <span>(${D.ymd})</span></div><textarea id="slHist" oninput="slFitAll()">${(D.hist||'').replace(/</g,'&lt;')}</textarea></div>`;
   o._d=D;document.body.appendChild(o);
   const ill=document.getElementById('slIll'),inj=document.getElementById('slInj');
   ill.onchange=()=>{if(ill.checked)inj.checked=false;};inj.onchange=()=>{if(inj.checked)ill.checked=false;};
@@ -2493,13 +2497,17 @@ function slSigInit(){
 }
 function slSigClear(){const c=document.getElementById('slSig');if(c&&_sigCtx){_sigCtx.save();_sigCtx.setTransform(1,0,0,1,0,0);_sigCtx.clearRect(0,0,c.width,c.height);_sigCtx.restore();}}
 function slFit(el){if(!el)return;el.style.height='auto';el.style.overflow='hidden';el.style.height=(el.scrollHeight+2)+'px';}
-function slFitAll(){const o=document.getElementById('slipOv');if(!o)return;const r=document.getElementById('slRem');if(r){const n=r.value.length;r.style.fontSize=n>1500?'9px':n>900?'10px':n>500?'11px':'';}o.querySelectorAll('textarea').forEach(slFit);const w=document.getElementById('slWarn');if(w&&r){w.style.display=r.value.length>1800?'block':'none';}}
+function slFitAll(){const o=document.getElementById('slipOv');if(!o)return;const r=document.getElementById('slRem');if(r){const n=r.value.length;r.style.fontSize=n>1500?'9px':n>900?'10px':n>500?'11px':'';}const hh=document.getElementById('slHist');if(hh){const n=hh.value.length;hh.style.fontSize=n>2200?'8px':n>1400?'9px':n>800?'10px':'';}o.querySelectorAll('textarea').forEach(slFit);const w=document.getElementById('slWarn');if(w&&r){w.style.display=r.value.length>1800?'block':'none';}}
+function slipHist(b){const c=document.getElementById('slCont');if(!c)return;c.classList.toggle('off');b.textContent='History below: '+(c.classList.contains('off')?'OFF':'ON');}
 function slipRem(b){const o=document.getElementById('slipOv'),r=document.getElementById('slRem');o._full=!o._full;r.value=o._full?o._d.full:o._d.rem;b.textContent=o._full?'Remarks: full note':'Remarks: A/P/Dispo';slFitAll();}
 function slipPrint(){
   slFitAll();
   // inputs print as text: mirror values into attributes so print shows them
   document.querySelectorAll('#slipOv input[type=text],#slipOv input:not([type])').forEach(i=>i.setAttribute('value',i.value));
   document.querySelectorAll('#slipOv input[type=checkbox]').forEach(i=>{if(i.checked)i.setAttribute('checked','');else i.removeAttribute('checked');});
+  // textareas print as plain text blocks (iOS can clip textareas when printing)
+  document.querySelectorAll('#slipOv textarea').forEach(t=>{if(t.id==='slHist')return;let d=t.nextElementSibling;if(!d||!d.classList.contains('sl-pt')){d=document.createElement('div');d.className='sl-pt';t.after(d);}d.textContent=t.value;d.style.fontSize=getComputedStyle(t).fontSize;});
+  const hh=document.getElementById('slHist');if(hh){let pd=document.getElementById('slHistP');if(!pd){pd=document.createElement('div');pd.id='slHistP';hh.after(pd);}pd.textContent=hh.value;const nl=hh.value.split('\n').length,n=hh.value.length;pd.style.fontSize=(nl>34||n>2200)?'7.5pt':(nl>22||n>1400)?'8pt':(nl>12||n>800)?'8.5pt':'9pt';pd.classList.toggle('two',nl>6||n>500);}
   document.body.classList.add('slip-print');window.print();
 }
 function slipClose(){const o=document.getElementById('slipOv');if(o)o.remove();document.body.classList.remove('slip-print');_sigCtx=null;}
@@ -2519,6 +2527,7 @@ function daData(){
   return{ymd,cc:cc.join('; '),al,v:gVitals,ent,hi,sum,plan,firstVisit:!ad.ret,ret:ad.ret};
 }
 function daOpen(){
+  if(typeof sheetTog==='function')sheetTog(false);
   const D=daData();let org='';try{org=localStorage.getItem('sc_org')||'';}catch(e){}
   let o=document.getElementById('slipOv');if(o)o.remove();
   o=document.createElement('div');o.id='slipOv';
