@@ -1687,6 +1687,7 @@ function soapdNote(stamp){
   L.push('');L.push('D — DISPOSITION');
   const hi=adHighest();
   L.push('Care category: '+(hi?SD_CAT[hi]||LV[hi].s:'not yet determined')+(entries.length>1&&hi?' (higher of the protocols screened)':'')+'.');
+  if(hi==='AEM')L.push(settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' for evaluation.':'No AEM available in unit — referred to supervising privileged provider (clinic).');
   const mcp=entries.filter(e=>e.level==='MCP').map(e=>e.id);
   if(mcp.length)L.push('MCP protocol(s): '+mcp.join(', ')+'.');
   if(ad.prov.trim())L.push('Provider / AEM notified: '+ad.prov.trim()+'.');
@@ -2169,11 +2170,14 @@ function adResultCard(p,R){
   let h='';
   if(R.final){
     const lv=LV[R.final];
-    h+='<div class="resbox lv-'+lv.c+'"><div class="resk">DISPOSITION</div><div class="resh">'+lv.f+'</div>';
+    const lf=R.final==='AEM'?(settings.aemOn?'AEM NOW — see '+(aemWho()?q$(aemWho()):'your AEM')+' (ADTMC II)':'REFER TO CLINIC — AEM Now (ADTMC II) · no AEM in your unit'):lv.f;
+    h+='<div class="resbox lv-'+lv.c+'"><div class="resk">DISPOSITION</div><div class="resh">'+lf+'</div>';
     if(R.final==='MCP')h+='<div class="resn">Minor-care protocol '+p.id+' — follow the treatment below.</div>';
     const rs=[...R.esc];if(R.level)rs.push({lv:R.level,why:'Protocol endpoint '+p.id});
     rs.filter(e=>e.lv===R.final).forEach(e=>h+='<div class="resw">• '+q$(e.why)+'</div>');
-    if(R.final==='PN'||R.final==='AEM')h+='<div class="resn">Document OPQRST/AMPLE so the clinic has the full picture, and send the patient. Equipment, meds and a provider are there.</div>';
+    if(R.final==='AEM'&&settings.aemOn)h+='<div class="resn">Notify your AEM'+(aemWho()?' ('+q$(aemWho())+')':'')+'. The AEM must physically evaluate the Soldier, confirm your data and direct the plan (ADTMC p. 225). If the AEM is not available → supervising privileged provider (clinic).</div>';
+    else if(R.final==='AEM')h+='<div class="resn">No AEM available in your unit (Settings) → per ADTMC Category II the Soldier is seen by the supervising privileged provider. Document OPQRST/AMPLE and send the patient to the clinic.</div>';
+    if(R.final==='PN')h+='<div class="resn">Document OPQRST/AMPLE so the clinic has the full picture, and send the patient. Equipment, meds and a provider are there.</div>';
     if(R.forced&&R.level&&R.level!=='PN')h+='<div class="resn">Note: the protocol alone would give '+LV[R.level].s+'; the global rules raise it.</div>';
     h+='</div>';
   }
@@ -2223,7 +2227,7 @@ function adNoteParts(){
     (e.plan||[]).forEach(x=>out.plan.push(x));
   });
   const hi=adHighest();
-  const D={PN:'Sent to clinic — needs a provider now.',AEM:'Sent to clinic — AEM/provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
+  const D={PN:'Sent to clinic — needs a provider now.',AEM:settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' — evaluation today.':'Sent to clinic — no AEM available; supervising provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
   if(hi&&hi!=='MCP')out.dispo=D[hi]||LV[hi].s;
   if(ad.prov.trim())out.assess.push('Clinic notified: '+ad.prov.trim()+'.');
   return out;
@@ -2326,7 +2330,10 @@ function adMedItems(){
 /* =========================================================
    PRIVACY / SETTINGS / EXPORT / FOLLOW-UP
 ========================================================= */
-const settings=(function(){let s={purge:true,pin:'',theme:'green',mode:'dark',noteFmt:'compact'};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
+const settings=(function(){let s={purge:true,pin:'',theme:'green',mode:'dark',noteFmt:'compact',aemOn:false,aemName:''};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
+function aemWho(){return settings.aemName&&settings.aemName.trim()?settings.aemName.trim():'';}
+function togAem(){settings.aemOn=!settings.aemOn;saveSettings();renderMain();renderNote();}
+function setAemName(v){settings.aemName=v.slice(0,60);saveSettings();renderNote();}
 function saveSettings(){try{localStorage.setItem('sc_settings',JSON.stringify(settings));}catch(e){}}
 const THEMES=[['green','Orange'],['blue','Blue'],['amber','Green'],['red','Red'],['purple','Purple'],['gray','Gray']];
 const THEME_BG={dark:{green:'#000000',blue:'#000000',amber:'#000000',red:'#000000',purple:'#000000',gray:'#000000'},light:'#F2F2F7'};
@@ -2420,6 +2427,7 @@ function renderSettings(){
   let h='<h2 class="tpl">⚙️ Settings / Privacy</h2><p class="tpl-sub">Everything stays on this device (localStorage). Nothing is sent to any server.</p>';
   h+='<div class="field"><div class="lab"><span class="tag">🌐</span><span class="name">Language</span></div><div class="chips"><span class="chip '+(LANG==='en'?'on':'')+'" onclick="setLang(\'en\')">English</span><span class="chip '+(LANG==='es'?'on':'')+'" onclick="setLang(\'es\')">Español</span></div><div class="fuq">Interface language. The note is always written in English.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🎨</span><span class="name">Theme</span></div><div class="chips">'+THEMES.map(x=>'<span class="chip '+(settings.theme===x[0]?'on':'')+'" onclick="setTheme(\''+x[0]+'\')">'+x[1]+'</span>').join('')+'</div><div class="chips" style="margin-top:8px"><span class="chip '+(settings.mode!=='light'?'on':'')+'" onclick="setMode(\'dark\')">Dark</span><span class="chip '+(settings.mode==='light'?'on':'')+'" onclick="setMode(\'light\')">Light</span></div><div class="fuq">Color and brightness of the interface. Saved on this device only. The note text is not affected.</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">🩺</span><span class="name">'+L('AEM in my unit','AEM en mi unidad')+'</span><span class="ask">ADTMC II</span></div><div class="chips"><span class="chip '+(settings.aemOn?'on':'')+'" onclick="togAem()">'+(settings.aemOn?L('AEM available','AEM disponible'):L('No AEM — "AEM Now" goes to the clinic','Sin AEM — "AEM Now" va a la clínica'))+'</span></div>'+(settings.aemOn?'<input id="aemName" maxlength="60" autocomplete="off" placeholder="'+L('AEM rank / name (optional)','Rango / nombre del AEM (opcional)')+'" value="'+q$(settings.aemName||'')+'" oninput="setAemName(this.value)" style="margin-top:8px">':'')+'<div class="fuq">'+L('AEM = expeditionary combat medic, special operations medic, flight paramedic, or the supervising NCO when local policy delegates that authority. If no AEM is available, the Soldier is seen by the supervising privileged provider (ADTMC Category II).','AEM = expeditionary combat medic, special operations medic, flight paramedic, o el NCO supervisor cuando la política local le delega esa autoridad. Si no hay AEM disponible, al Soldado lo ve el proveedor privilegiado supervisor (ADTMC Categoría II).')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🛡️</span><span class="name">Daily auto-delete</span></div><div class="chips"><span class="chip '+(settings.purge?'on':'')+'" onclick="togPurge()">'+(settings.purge?'ON — notes and data from previous days are deleted on open':'Off')+'</span></div><div class="fuq">Recommended: notes contain Soldier information (PII/PHI). Export what you need before the day ends.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🔒</span><span class="name">Lock PIN</span><span class="ask">'+(settings.pin?'active':'no PIN')+'</span></div>';
   h+=settings.pin?'<div class="algo-actions" style="margin-top:0"><button onclick="lockNow()">Lock now</button><button class="ghost" onclick="clearPin()">Remove PIN</button></div>':'<div class="subrow"><div class="half"><input type="password" id="pinNew" inputmode="numeric" maxlength="8" placeholder="4–8 digit PIN" style="margin-top:0"></div><div><button class="gstart" style="width:auto;padding:8px 16px;margin:0" onclick="setPin()">Save PIN</button></div></div>';

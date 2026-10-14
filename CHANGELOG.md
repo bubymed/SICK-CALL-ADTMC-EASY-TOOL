@@ -14,6 +14,8 @@ Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los n�
   **Nuevo diseño, paso 2 (teléfono):** barra de pestañas abajo (Protocolos, Meds, MACE, Guardados, Más) y la nota como hoja que asoma encima con la disposición, el motivo de consulta y un botón Copiar; toca para abrir/cerrar. "Más" tiene referencias, Ajustes, tamaño de letra y Borrar. Tablet/computadora sin cambios.
 - **New look, step 1 (visual only):** Apple Health-style colors, system font, rounded cards and pill chips, orange default accent, larger default text (16 px), light/dark refreshed. Layout, logic and notes unchanged.
   **Nuevo diseño, paso 1 (solo visual):** colores estilo Apple Salud, letra del sistema, tarjetas redondeadas y chips tipo píldora, acento naranja por defecto, texto más grande por defecto (16 px), claro/oscuro renovados. Distribución, lógica y notas sin cambios.
+- **AEM availability setting (Settings):** if your unit has no AEM, "AEM Now" says to send the Soldier to the clinic (supervising provider, ADTMC Category II); if it does, it names your AEM. Default: no AEM.
+  **Ajuste de AEM disponible (Ajustes):** si tu unidad no tiene AEM, "AEM Now" indica mandar al Soldado a la clínica (proveedor supervisor, ADTMC Categoría II); si lo tiene, muestra el nombre de tu AEM. Predeterminado: sin AEM.
 - **DD 689:** blocks 10–11 are real checkboxes; finger-drawn signature + printed name for block 13 (not saved); fixed the dark/clipped print preview on iPhone (#26).
   **DD 689:** los bloques 10–11 son casillas reales; firma con el dedo y nombre impreso en el bloque 13 (no se guarda); se arregló la vista previa de impresión oscura/cortada en iPhone (#26).
 
