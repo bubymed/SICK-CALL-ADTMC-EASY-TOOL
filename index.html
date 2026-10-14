@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sick Call — 68W ADTMC Tool</title>
-<meta name="theme-color" content="#10140f">
+<meta name="theme-color" content="#000000">
 <script>try{var _s=JSON.parse(localStorage.getItem("sc_settings")||"{}"),_r=document.documentElement;if(_s.theme&&_s.theme!=="green")_r.setAttribute("data-theme",_s.theme);if(_s.mode==="light")_r.setAttribute("data-mode","light");}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
@@ -25,6 +25,7 @@
 <main id="main"></main>
 
 <aside id="aside">
+  <div id="peek" onclick="sheetTog()"><div class="grab"></div><div class="pk-row"><div class="pk-t"><b id="pkT">Note</b><span id="pkS">Tap options — the note builds itself</span></div><button class="pk-copy" onclick="event.stopPropagation();copyNote(this)">Copy</button></div></div>
   <div class="out-head">
     <span class="t">Note (transcribe to slip)</span>
     <span class="spacer"></span>
@@ -49,6 +50,7 @@
   <div id="note"></div>
 </aside>
 </div>
+<nav id="tabbar"><button data-v="adtmc" onclick="tabGo('adtmc')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v3H4zm0 5.5h16v3H4zM4 16h10v3H4z"/></svg><span>Protocols</span></button><button data-v="admeds" onclick="tabGo('admeds')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.6 3.5a5.1 5.1 0 0 1 3.6 1.5l6.8 6.8a5.1 5.1 0 0 1-7.2 7.2L5 12.2a5.1 5.1 0 0 1 3.6-8.7zm-2.2 7.3 3.8 3.8 4.4-4.4-3.8-3.8a3.1 3.1 0 0 0-4.4 4.4z"/></svg><span>Meds</span></button><button data-v="mace" onclick="tabGo('mace')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5a7 7 0 0 0-4 12.7V18h8v-2.8a7 7 0 0 0-4-12.7zM9 19.5h6V21H9z"/></svg><span>MACE</span></button><button data-v="guardados" onclick="tabGo('guardados')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span>Saved</span></button><button data-v="more" onclick="tabGo('more')"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/></svg><span>More</span></button></nav>
 <button id="mobileNoteBtn" onclick="document.getElementById('aside').classList.toggle('open')">View note</button>
 
 <div id="lock"><div style="font-size:2em">🔒</div><div>Sick Call locked</div><input id="pinIn" type="password" inputmode="numeric" maxlength="8" onkeydown="if(event.key==='Enter')tryUnlock()"><div id="pinMsg" style="color:var(--red);min-height:1.2em"></div><button onclick="tryUnlock()">Unlock</button></div>

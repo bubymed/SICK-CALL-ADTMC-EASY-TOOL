@@ -739,7 +739,7 @@ function gEscalate(){
   guided.i=guided.steps.findIndex(x=>x.k==='dispo');
   renderMain();document.getElementById('main').scrollTop=0;
 }
-function gOpenNote(){var a=document.getElementById('aside');if(a)a.classList.add('open');}
+function gOpenNote(){sheetTog(true);}
 function gFieldCard(t,s,f){
   let inner=`<div class="fname">${f.tag} · ${f.name}</div><div class="qtxt">${ccAsk(t,s,f.id)||f.ask}</div>`;
   if(!f.customOnly){
@@ -1044,6 +1044,29 @@ function renderNav(){
   h+=`<button class="${view==='guardados'?'active':''}" onclick="goRef('guardados')">💾 Saved${nSaved?' ('+nSaved+')':''}<span class="k">G</span></button>`;
   h+=`<button class="${view==='ajustes'?'active':''}" onclick="goRef('ajustes')">⚙️ Settings / Privacy</button>`;
   n.innerHTML=h;
+  updTabs();updPeek();
+}
+/* ===== Phone: bottom tab bar + note sheet ===== */
+const TAB_OF={adtmc:'adtmc',tpl:'adtmc',admeds:'admeds',mace:'mace',guardados:'guardados',more:'more',preguntas:'more',assess:'more',perfiles:'more',ajustes:'more'};
+function updTabs(){const t=TAB_OF[view]||'adtmc';document.querySelectorAll('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.v===t));}
+function tabGo(v){sheetTog(false);if(v==='adtmc'&&ad.pid&&view!=='tpl'&&view!=='adtmc'){const m=protoTpl(ad.pid);cur=m.tid;view='tpl';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;return;}goRef(v);}
+function sheetTog(open){const a=document.getElementById('aside');if(!a)return;const o=open===undefined?!a.classList.contains('open'):!!open;a.classList.toggle('open',o);document.body.classList.toggle('sheet-open',o);}
+function updPeek(){
+  const t=document.getElementById('pkT'),s=document.getElementById('pkS');if(!t||!s)return;
+  let hi=null;try{hi=adHighest();}catch(e){}
+  t.textContent=L('Note','Nota')+(hi&&LV[hi]?' · '+LV[hi].s:'');
+  const txt=(document.getElementById('note')||{}).textContent||'';
+  const ln=txt.split('\n').map(x=>x.trim()).filter(Boolean);
+  const cc=ln.find(x=>/^(CC|S):/.test(x));
+  s.textContent=cc?cc.replace(/^(CC|S):\s*/,''):(ln.length>1?L('Tap to open','Toca para abrir'):L('Tap options — the note builds itself','Toca opciones — la nota se arma sola'));
+}
+function renderMore(){
+  const row=(ic,txt,on)=>'<div class="prow" onclick="'+on+'"><span class="ptit">'+ic+' '+txt+'</span><span class="dim">›</span></div>';
+  let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
+  h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
+  h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag o">⌫</span><span class="name">'+L('Clear','Borrar')+'</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="resetTpl()">Clear section</button><button class="ghost" style="color:var(--red)" onclick="resetAll()">Clear all</button></div></div>';
+  return h;
 }
 function go(id){if(guided&&guided.tpl!==id)guided=null;cur=id;view='tpl';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;}
 function goRef(v){view=v;renderNav();renderMain();document.getElementById('main').scrollTop=0;}
@@ -1086,6 +1109,7 @@ function renderMain(){
   if(view==='guardados'){m.innerHTML=renderSaved();return;}
   if(view==='assess'){m.innerHTML=renderAssess();return;}
   if(view==='mace'){m.innerHTML=renderMace();return;}
+  if(view==='more'){m.innerHTML=renderMore();return;}
   if(guided&&view==='tpl'&&guided.tpl===cur){m.innerHTML=renderGuided();return;}
   const t=TPLS.find(x=>x.id===cur), s=state[cur];
   let h=ad.pid?(adHeadHtml(getP(ad.pid))+'<div class="secbar">1 · '+({quick:'Reason for visit',focus:'Focused history'}[hmode()]||'History — OPQRST / AMPLE')+'</div>'):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:var(--chipx-txt)">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
@@ -1569,7 +1593,7 @@ function delSaved(i){const arr=getSaved();arr.splice(i,1);setSaved(arr);renderNa
 function clearSaved(){setSaved([]);renderNav();renderMain();}
 
 /* ---- text size ---- */
-let fsBase=parseInt(localStorage.getItem('sc_fs')||'14');
+let fsBase=parseInt(localStorage.getItem('sc_fs')||'16');
 function setFs(d){fsBase=Math.min(19,Math.max(12,fsBase+d));document.body.style.fontSize=fsBase+'px';localStorage.setItem('sc_fs',fsBase);}
 
 /* =========================================================
@@ -1608,7 +1632,8 @@ function sectionLines(t,s){
     L.push(line+'.');
   }
   const rfNeg=(t.redFlags||[]).filter(f=>s.rf[f]==='neg');
-  if(rfNeg.length)L.push('Red flags: denies '+rfNeg.join(', ')+'.');
+  const rfAllN=(t.redFlags||[]).length&&rfNeg.length===(t.redFlags||[]).length;
+  if(rfAllN)L.push('No red flags.');else if(rfNeg.length)L.push('Red flags: denies '+rfNeg.join(', ')+'.');
   return L;
 }
 /* ===== SOAP-D note (MEDCOM Pam 40-7-21, Appendix D: Screening Note) =====
@@ -1662,6 +1687,7 @@ function soapdNote(stamp){
   L.push('');L.push('D — DISPOSITION');
   const hi=adHighest();
   L.push('Care category: '+(hi?SD_CAT[hi]||LV[hi].s:'not yet determined')+(entries.length>1&&hi?' (higher of the protocols screened)':'')+'.');
+  if(hi==='AEM')L.push(settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' for evaluation.':'No AEM available in unit — referred to supervising privileged provider (clinic).');
   const mcp=entries.filter(e=>e.level==='MCP').map(e=>e.id);
   if(mcp.length)L.push('MCP protocol(s): '+mcp.join(', ')+'.');
   if(ad.prov.trim())L.push('Provider / AEM notified: '+ad.prov.trim()+'.');
@@ -2047,6 +2073,7 @@ function adVitalsInputs(){
 function adVC(){if(view==='adtmc'&&ad.pid)renderMain();}
 function adVU(){const e=document.getElementById('vbanner');if(e)e.outerHTML=adVBanner();renderNote();}
 function adRf(f){ad.rf[f]=ad.rf[f]==='neg'?'pos':(ad.rf[f]==='pos'?undefined:'neg');if(ad.rf[f]===undefined)delete ad.rf[f];renderMain();renderNote();}
+function adRfSet(f){ad.rf[f]=ad.rf[f]==='pos'?'neg':'pos';renderMain();renderNote();}
 function adRfAll(){rfList(getP(ad.pid)).forEach(f=>{if(ad.rf[f]!=='pos')ad.rf[f]='neg';});ad.rfDone=true;renderMain();renderNote();}
 function adDPTog(i,j){const a=ad.dp[i]||(ad.dp[i]=[]);const k=a.indexOf(j);k<0?a.push(j):a.splice(k,1);ad.dpDone[i]=true;delete ad.out[i];renderMain();renderNote();}
 function adDPNone(i){ad.dp[i]=[];ad.dpDone[i]=true;delete ad.out[i];renderMain();renderNote();}
@@ -2055,7 +2082,18 @@ function adUndo(i){delete ad.dpDone[i];delete ad.out[i];delete ad.out['x'+i];ren
 function adHeadHtml(p){
   let h='<div class="algo-actions" style="margin:0 0 10px"><button class="ghost" onclick="adBack()">← Index</button></div>';
   h+='<h2 class="tpl"><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2><p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>';
+  h+=adLiveCard(p);
   return h;
+}
+function adLiveCard(p){
+  let R;try{R=adEval(p);}catch(e){return'';}
+  const rfs=rfList(p),nPos=rfs.filter(f=>ad.rf[f]==='pos').length,nScr=rfs.filter(f=>ad.rf[f]).length;
+  const go="var e=document.querySelector('.resbox')||[...document.querySelectorAll('.secbar')].pop();if(e)e.scrollIntoView({behavior:'smooth',block:'center'})";
+  if(R.final){const lv=LV[R.final];let why=(R.esc.find(e=>e.lv===R.final)||{}).why;
+    if(!why){const fired=[];let dn=0;p.flow.forEach((st,i)=>{if(st.items)dn++;const a=ad.dp[i];if(st.items&&a&&a.length)fired.push('DP'+dn+': '+a.map(j=>st.items[j]).filter(Boolean).join(', '));});why=fired.length?fired[fired.length-1]:('Protocol endpoint '+p.id);}
+    return '<div class="livecard lv-'+lv.c+'" onclick="'+go+'"><div class="lc-k">'+L('Suggested disposition','Disposición sugerida')+'<span>'+L('live','en vivo')+'</span></div><div class="lc-h">'+q$(lv.s)+'</div><div class="lc-m">'+q$(why)+' · '+L('see decision ↓','ver decisión ↓')+'</div></div>';}
+  const pend=[];if(rfs.length&&nScr<rfs.length)pend.push(L('red flags','banderas rojas')+' '+nScr+'/'+rfs.length);
+  return '<div class="livecard lv-wait" onclick="'+go+'"><div class="lc-k">'+L('Suggested disposition','Disposición sugerida')+'<span>'+L('live','en vivo')+'</span></div><div class="lc-h">'+L('In progress','En progreso')+'</div><div class="lc-m">'+(pend.length?L('Pending: ','Pendiente: ')+pend.join(' · '):L('Answer the decision points below.','Responde los puntos de decisión abajo.'))+'</div></div>';
 }
 function adScreenHtml(p,R){
   let h='';
@@ -2065,9 +2103,13 @@ function adScreenHtml(p,R){
   h+=adVBanner();
   const rfs=rfList(p);
   if(rfs.length){
-    h+='<div class="field"><div class="lab"><span class="tag" style="color:var(--red)">🚩</span><span class="name">Red flags</span><span class="ask">tap once = negative · twice = PRESENT</span>'+(Object.keys(ad.rf).length?'<span class="clr" onclick="adClrRf()" title="Clear this section">✕ clear</span>':'')+'</div><div class="chips"><span class="chip" onclick="adRfAll()">✓✓ all negative</span>';
-    rfs.forEach((f,i)=>{const st=ad.rf[f]||'',cls=st==='neg'?'rfn':(st==='pos'?'rfp':'');h+='<span class="chip '+cls+'" onclick="adRf(decodeURIComponent(\''+encodeURIComponent(f).replace(/'/g,'%27')+'\'))">'+(st==='neg'?'✓ neg: ':(st==='pos'?'⚠ PRESENT: ':''))+q$(f)+'</span>';});
-    h+='</div></div>';
+    const nPos=rfs.filter(f=>ad.rf[f]==='pos').length,nNeg=rfs.filter(f=>ad.rf[f]==='neg').length,allN=!nPos&&nNeg===rfs.length;
+    const st=nPos?'<span class="rf-st pos">'+nPos+' PRESENT</span>':(allN?'<span class="rf-st neg">✓ All negative</span>':'<button class="rf-all" onclick="adRfAll()">All negative</button>');
+    h+='<div class="rf-head"><h3>Red flags</h3>'+st+(Object.keys(ad.rf).length?'<span class="clr" onclick="adClrRf()" title="Clear this section">✕ clear</span>':'')+'</div>';
+    h+='<div class="rf-list">';
+    rfs.forEach(f=>{const v=ad.rf[f]||'';const k=encodeURIComponent(f).replace(/'/g,'%27');
+      h+='<div class="rf-row '+v+'" role="switch" aria-checked="'+(v==='pos')+'" onclick="adRfSet(decodeURIComponent(\''+k+'\'))"><span class="rf-ic">!</span><span class="rf-lbl">'+q$(f)+(v===''?'<small>'+L('not screened','sin revisar')+'</small>':'')+'</span><span class="tgl'+(v==='pos'?' on':'')+'"></span></div>';});
+    h+='</div><div class="rf-help">'+L('Switch on = PRESENT (Provider Now). Mark the rest with “All negative”.','Encendido = PRESENTE (Provider Now). Marca el resto con “All negative”.')+'</div>';
   }
   // flow
   let n=0;const last=R.cur!==-1?R.cur:R.end;
@@ -2128,11 +2170,14 @@ function adResultCard(p,R){
   let h='';
   if(R.final){
     const lv=LV[R.final];
-    h+='<div class="resbox lv-'+lv.c+'"><div class="resk">DISPOSITION</div><div class="resh">'+lv.f+'</div>';
+    const lf=R.final==='AEM'?(settings.aemOn?'AEM NOW — see '+(aemWho()?q$(aemWho()):'your AEM')+' (ADTMC II)':'REFER TO CLINIC — AEM Now (ADTMC II) · no AEM in your unit'):lv.f;
+    h+='<div class="resbox lv-'+lv.c+'"><div class="resk">DISPOSITION</div><div class="resh">'+lf+'</div>';
     if(R.final==='MCP')h+='<div class="resn">Minor-care protocol '+p.id+' — follow the treatment below.</div>';
     const rs=[...R.esc];if(R.level)rs.push({lv:R.level,why:'Protocol endpoint '+p.id});
     rs.filter(e=>e.lv===R.final).forEach(e=>h+='<div class="resw">• '+q$(e.why)+'</div>');
-    if(R.final==='PN'||R.final==='AEM')h+='<div class="resn">Document OPQRST/AMPLE so the clinic has the full picture, and send the patient. Equipment, meds and a provider are there.</div>';
+    if(R.final==='AEM'&&settings.aemOn)h+='<div class="resn">Notify your AEM'+(aemWho()?' ('+q$(aemWho())+')':'')+'. The AEM must physically evaluate the Soldier, confirm your data and direct the plan (ADTMC p. 225). If the AEM is not available → supervising privileged provider (clinic).</div>';
+    else if(R.final==='AEM')h+='<div class="resn">No AEM available in your unit (Settings) → per ADTMC Category II the Soldier is seen by the supervising privileged provider. Document OPQRST/AMPLE and send the patient to the clinic.</div>';
+    if(R.final==='PN')h+='<div class="resn">Document OPQRST/AMPLE so the clinic has the full picture, and send the patient. Equipment, meds and a provider are there.</div>';
     if(R.forced&&R.level&&R.level!=='PN')h+='<div class="resn">Note: the protocol alone would give '+LV[R.level].s+'; the global rules raise it.</div>';
     h+='</div>';
   }
@@ -2150,7 +2195,8 @@ function adProtoLines(p,R){
   const anyV=Object.values(gVitals).some(x=>String(x).trim());
   L.push(++n+'. Vitals: '+(!anyV?'not taken (field screening)':(v.abn.length?'ABNORMAL — '+v.abn.join('; ')+(ad.vovr?' (provider reviewed, cleared to continue)':''):'within ADTMC limits'))+'.');
   const rfs=rfList(p),neg=rfs.filter(f=>ad.rf[f]==='neg'),pos=rfs.filter(f=>ad.rf[f]==='pos');
-  if(pos.length||neg.length)L.push(++n+'. Red flags: '+(pos.length?'PRESENT — '+pos.join('; ')+'. ':'')+(neg.length?'Denies '+neg.join(', ')+'.':''));
+  if(!pos.length&&neg.length&&neg.length===rfs.length)L.push(++n+'. No red flags.');
+  else if(pos.length||neg.length)L.push(++n+'. Red flags: '+(pos.length?'PRESENT — '+pos.join('; ')+'. ':'')+(neg.length?'Denies '+neg.join(', ')+'.':''));
   if(ad.ret)L.push(++n+'. Return visit for same complaint'+(ad.worse?' — worsening / previously seen by provider or AEM.':' — not screened below AEM.'));
   for(let i=0;i<p.flow.length;i++){
     const st=p.flow[i];
@@ -2181,7 +2227,7 @@ function adNoteParts(){
     (e.plan||[]).forEach(x=>out.plan.push(x));
   });
   const hi=adHighest();
-  const D={PN:'Sent to clinic — needs a provider now.',AEM:'Sent to clinic — AEM/provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
+  const D={PN:'Sent to clinic — needs a provider now.',AEM:settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' — evaluation today.':'Sent to clinic — no AEM available; supervising provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
   if(hi&&hi!=='MCP')out.dispo=D[hi]||LV[hi].s;
   if(ad.prov.trim())out.assess.push('Clinic notified: '+ad.prov.trim()+'.');
   return out;
@@ -2192,7 +2238,7 @@ function adEntry(p,R){
   const anyV=Object.values(gVitals).some(x=>String(x).trim());const v=adVitals();
   if(anyV&&v.abn.length)bits.push('Abnormal vitals: '+v.abn.join('; ')+'.');
   if(pos.length)bits.push('RED FLAG present: '+pos.join('; ')+'.');
-  else if(neg.length)bits.push('Denies red flags.');
+  else if(neg.length)bits.push(neg.length===rfs.length?'No red flags.':'Denies '+neg.join(', ')+'.');
   const pf=[];
   for(let i=0;i<p.flow.length;i++){
     const st=p.flow[i];
@@ -2284,10 +2330,13 @@ function adMedItems(){
 /* =========================================================
    PRIVACY / SETTINGS / EXPORT / FOLLOW-UP
 ========================================================= */
-const settings=(function(){let s={purge:true,pin:'',theme:'green',mode:'dark',noteFmt:'compact'};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
+const settings=(function(){let s={purge:true,pin:'',theme:'green',mode:'dark',noteFmt:'compact',aemOn:false,aemName:''};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
+function aemWho(){return settings.aemName&&settings.aemName.trim()?settings.aemName.trim():'';}
+function togAem(){settings.aemOn=!settings.aemOn;saveSettings();renderMain();renderNote();}
+function setAemName(v){settings.aemName=v.slice(0,60);saveSettings();renderNote();}
 function saveSettings(){try{localStorage.setItem('sc_settings',JSON.stringify(settings));}catch(e){}}
-const THEMES=[['green','Green'],['blue','Blue'],['amber','Amber'],['red','Red'],['purple','Purple'],['gray','Gray']];
-const THEME_BG={dark:{green:'#10140f',blue:'#0e1319',amber:'#16120b',red:'#170f0f',purple:'#130f19',gray:'#121212'},light:'#f3f5f1'};
+const THEMES=[['green','Orange'],['blue','Blue'],['amber','Green'],['red','Red'],['purple','Purple'],['gray','Gray']];
+const THEME_BG={dark:{green:'#000000',blue:'#000000',amber:'#000000',red:'#000000',purple:'#000000',gray:'#000000'},light:'#F2F2F7'};
 function applyTheme(){
   const r=document.documentElement;
   const t=THEMES.some(x=>x[0]===settings.theme)?settings.theme:'green';
@@ -2378,6 +2427,7 @@ function renderSettings(){
   let h='<h2 class="tpl">⚙️ Settings / Privacy</h2><p class="tpl-sub">Everything stays on this device (localStorage). Nothing is sent to any server.</p>';
   h+='<div class="field"><div class="lab"><span class="tag">🌐</span><span class="name">Language</span></div><div class="chips"><span class="chip '+(LANG==='en'?'on':'')+'" onclick="setLang(\'en\')">English</span><span class="chip '+(LANG==='es'?'on':'')+'" onclick="setLang(\'es\')">Español</span></div><div class="fuq">Interface language. The note is always written in English.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🎨</span><span class="name">Theme</span></div><div class="chips">'+THEMES.map(x=>'<span class="chip '+(settings.theme===x[0]?'on':'')+'" onclick="setTheme(\''+x[0]+'\')">'+x[1]+'</span>').join('')+'</div><div class="chips" style="margin-top:8px"><span class="chip '+(settings.mode!=='light'?'on':'')+'" onclick="setMode(\'dark\')">Dark</span><span class="chip '+(settings.mode==='light'?'on':'')+'" onclick="setMode(\'light\')">Light</span></div><div class="fuq">Color and brightness of the interface. Saved on this device only. The note text is not affected.</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">🩺</span><span class="name">'+L('AEM in my unit','AEM en mi unidad')+'</span><span class="ask">ADTMC II</span></div><div class="chips"><span class="chip '+(settings.aemOn?'on':'')+'" onclick="togAem()">'+(settings.aemOn?L('AEM available','AEM disponible'):L('No AEM — "AEM Now" goes to the clinic','Sin AEM — "AEM Now" va a la clínica'))+'</span></div>'+(settings.aemOn?'<input id="aemName" maxlength="60" autocomplete="off" placeholder="'+L('AEM rank / name (optional)','Rango / nombre del AEM (opcional)')+'" value="'+q$(settings.aemName||'')+'" oninput="setAemName(this.value)" style="margin-top:8px">':'')+'<div class="fuq">'+L('AEM = expeditionary combat medic, special operations medic, flight paramedic, or the supervising NCO when local policy delegates that authority. If no AEM is available, the Soldier is seen by the supervising privileged provider (ADTMC Category II).','AEM = expeditionary combat medic, special operations medic, flight paramedic, o el NCO supervisor cuando la política local le delega esa autoridad. Si no hay AEM disponible, al Soldado lo ve el proveedor privilegiado supervisor (ADTMC Categoría II).')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🛡️</span><span class="name">Daily auto-delete</span></div><div class="chips"><span class="chip '+(settings.purge?'on':'')+'" onclick="togPurge()">'+(settings.purge?'ON — notes and data from previous days are deleted on open':'Off')+'</span></div><div class="fuq">Recommended: notes contain Soldier information (PII/PHI). Export what you need before the day ends.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🔒</span><span class="name">Lock PIN</span><span class="ask">'+(settings.pin?'active':'no PIN')+'</span></div>';
   h+=settings.pin?'<div class="algo-actions" style="margin-top:0"><button onclick="lockNow()">Lock now</button><button class="ghost" onclick="clearPin()">Remove PIN</button></div>':'<div class="subrow"><div class="half"><input type="password" id="pinNew" inputmode="numeric" maxlength="8" placeholder="4–8 digit PIN" style="margin-top:0"></div><div><button class="gstart" style="width:auto;padding:8px 16px;margin:0" onclick="setPin()">Save PIN</button></div></div>';
