@@ -765,7 +765,7 @@ function gFieldCard(t,s,f){
 function renderGuided(){
   const t=TPLS.find(x=>x.id===guided.tpl), s=state[guided.tpl];
   const step=guided.steps[guided.i], total=guided.steps.length;
-  let h=`<div class="gtop"><span>${t.icon} ${t.title.split('/')[0].trim()} — Entrevista guiada</span><span class="gn">${guided.i+1}/${total}</span></div>`;
+  let h=`<div class="gtop"><span>${t.icon} ${t.title.split('/')[0].trim()} — Entrevista guiada</span><span class="gn">${guided.i+1}/${total}</span><button class="xbtn" onclick="gExit()" aria-label="Close" title="Close guided interview"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`;
   h+=`<div class="gbar"><div style="width:${Math.round((guided.i+1)/total*100)}%"></div></div>`;
   let inner='';
   let controls=true;
@@ -1044,7 +1044,7 @@ function renderNav(){
   h+=`<button class="${view==='guardados'?'active':''}" onclick="goRef('guardados')">💾 Saved${nSaved?' ('+nSaved+')':''}<span class="k">G</span></button>`;
   h+=`<button class="${view==='ajustes'?'active':''}" onclick="goRef('ajustes')">⚙️ Settings / Privacy</button>`;
   n.innerHTML=h;
-  updTabs();updPeek();
+  updTabs();updPeek();updMulti();
 }
 /* ===== Phone: bottom tab bar + note sheet ===== */
 const TAB_OF={adtmc:'adtmc',tpl:'adtmc',admeds:'admeds',mace:'mace',guardados:'guardados',more:'more',preguntas:'more',assess:'more',perfiles:'more',ajustes:'more'};
@@ -1065,7 +1065,7 @@ function renderMore(){
   let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
   h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
   h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
-  h+='<div class="field"><div class="lab"><span class="tag o">⌫</span><span class="name">'+L('Clear','Borrar')+'</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="resetTpl()">Clear section</button><button class="ghost" style="color:var(--red)" onclick="resetAll()">Clear all</button></div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag o">⌫</span><span class="name">'+L('Clear','Borrar')+'</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="resetTpl()">Clear section</button><button class="ghost" style="color:var(--red)" onclick="clearAllAsk(this)">Clear all</button></div></div>';
   return h;
 }
 function go(id){if(guided&&guided.tpl!==id)guided=null;cur=id;view='tpl';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;}
@@ -1538,12 +1538,23 @@ function resetTpl(){
   resetState(cur);
   renderMain();renderNote();
 }
+function clearAllAsk(b){
+  if(b.dataset.arm){clearTimeout(b._t);delete b.dataset.arm;b.textContent=b.dataset.lbl;b.classList.remove('armed');resetAll();return;}
+  b.dataset.lbl=b.textContent;b.dataset.arm='1';b.classList.add('armed');b.textContent=L('Tap again to clear','Toca otra vez para borrar');
+  b._t=setTimeout(()=>{delete b.dataset.arm;b.textContent=b.dataset.lbl;b.classList.remove('armed');},3000);
+}
 function resetAll(){
   setNoteMode('auto');
   TPLS.forEach(t=>resetState(t.id));resetVitals();adResetAll();
+  ad.q='';ad.cat='';ad.excl=[];guided=null;
+  medQ='';for(const k in dcUsed)delete dcUsed[k];rfq={n:'',id:'',dob:'',med:''};
+  mace=null;pra={second:null,stage:1,nsi:{},exert:null};pb={t:null,d:null,r:new Set(),f:new Set(),h:false,c:''};
+  try{localStorage.removeItem('sc_org');}catch(e){}
   patient='';const pi=document.getElementById('ptIn');if(pi)pi.value='';
+  if(typeof slipClose==='function')slipClose();if(typeof sheetTog==='function')sheetTog(false);
   view='adtmc';renderNav();renderMain();
-  renderNote();
+  renderNote();persist();adPersist();
+  const m=document.getElementById('main');if(m)m.scrollTop=0;
 }
 
 /* ---- editar nota a mano ---- */
@@ -1642,9 +1653,8 @@ const SD_HPI=['o','pw','pb','q','r','rr','t','sx','e','seen','s2'];
 const SD_AMPLE={a:'Allergies',m:'Meds',phx:'PMH',l:'Last oral intake'};
 const SD_CAT={PN:'I — Provider Now',AEM:'II — AEM Now',MCP:'III — Minor Care Protocol (MCP)',SP:'IV — Specialty referral',APPT:'Appointment / referral requested'};
 function soapdNote(stamp){
-  const entries=ad.log.map(e=>e);
-  if(ad.pid){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length)entries.push(adEntry(p,R));}
-  const active=TPLS.filter(t=>tplHasContent(t,state[t.id]));
+  const entries=noteEntries();
+  const active=noteActive();
   const v=gVitals,anyV=Object.values(v).some(x=>String(x).trim());
   if(!active.length&&!entries.length&&!anyV&&!patient.trim())return '';
   const L=[];
@@ -1721,7 +1731,7 @@ function renderNote(){
   if(v.temp)vl.push('T '+v.temp); if(v.spo2)vl.push('SpO2 '+v.spo2); if(v.pain)vl.push('Pain '+v.pain);
   if(vl.length)L.push('VS: '+vl.join(', '));
   // active sections (any template with content)
-  const active=TPLS.filter(t=>tplHasContent(t,state[t.id]));
+  const active=noteActive();
   // positive red flags from ALL sections → top
   const posAll=[];
   active.forEach(t=>{(t.redFlags||[]).forEach(f=>{if(state[t.id].rf[f]==='pos')posAll.push(f);});});
@@ -1801,6 +1811,27 @@ let ad={pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false
 function adResetProto(){ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
 function adResetAll(){adResetProto();ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
+function noteEntries(){const ex=new Set(ad.excl||[]);const e=ad.log.filter(x=>!ex.has('ad:'+x.id));
+  if(ad.pid&&!ex.has('ad:'+ad.pid)){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length)e.push(adEntry(p,R));}return e;}
+function noteActive(){const ex=new Set(ad.excl||[]);return TPLS.filter(t=>tplHasContent(t,state[t.id])&&!ex.has('tpl:'+t.id));}
+function noteTog(k){const a=ad.excl||(ad.excl=[]);const i=a.indexOf(k);const off=i<0;off?a.push(k):a.splice(i,1);
+  if(k.startsWith('ad:')){try{const id=k.slice(3),tid=protoTpl(id).tid,tk='tpl:'+tid;
+    const others=ad.log.map(x=>x.id).concat(ad.pid?[ad.pid]:[]).filter(x=>x!==id&&!a.includes('ad:'+x)&&protoTpl(x).tid===tid);
+    const j=a.indexOf(tk);if(off&&!others.length&&j<0)a.push(tk);if(!off&&j>=0)a.splice(j,1);}catch(e){}}
+  renderNote();}
+function updMulti(){
+  const box=document.getElementById('multiWarn');if(!box)return;
+  const ex=new Set(ad.excl||[]);
+  const prot=ad.log.map(x=>({k:'ad:'+x.id,l:x.id+' '+x.title}));
+  if(ad.pid&&!ad.log.some(x=>x.id===ad.pid)){const p=getP(ad.pid);prot.push({k:'ad:'+p.id,l:p.id+' '+p.title+' ('+L('in progress','en curso')+')'});}
+  const secs=TPLS.filter(t=>tplHasContent(t,state[t.id])).map(t=>({k:'tpl:'+t.id,l:t.title}));
+  const grp=(arr,ttl)=>arr.length>1?'<div class="mw-g"><span class="mw-t">'+ttl+'</span>'+arr.map(x=>'<span class="chip '+(ex.has(x.k)?'':'on')+'" onclick="noteTog(\''+x.k+'\')">'+(ex.has(x.k)?'✕ ':'✓ ')+q$(x.l)+'</span>').join('')+'</div>':'';
+  const h=grp(prot,L('Protocols','Protocolos'))+grp(secs,L('History sections','Secciones de historia'));
+  box.innerHTML=h?'<div class="mw-h">⚠️ '+L('This note has more than one complaint. Tap any that does not belong to this patient to leave it out.','Esta nota tiene más de una queja. Toca la que no sea de este paciente para dejarla fuera.')+'</div>'+h:'';
+  box.style.display=h?'block':'none';
+  const incl=a=>a.filter(x=>!ex.has(x.k)).length;
+  const pk=document.getElementById('pkS');if(pk&&h&&(incl(prot)>1||incl(secs)>1))pk.innerHTML='<b style="color:var(--orange)">⚠️ '+L('More than one complaint — review','Más de una queja — revisar')+'</b>';
+}
 function adPersist(){try{localStorage.setItem('sc_ad',JSON.stringify({ad,gFlags,day:new Date().toDateString()}));}catch(e){}}
 function adRestore(){try{const d=JSON.parse(localStorage.getItem('sc_ad')||'null');if(!d)return;
   if(settings.purge&&d.day!==new Date().toDateString())return;
@@ -1871,8 +1902,7 @@ function adEval(p){
 }
 function adHighest(){ // highest disposition among committed + current
   let best=null;const take=l=>{if(l&&(!best||LV[l].r>LV[best].r))best=l;};
-  ad.log.forEach(e=>take(e.level));
-  if(ad.pid){const R=adEval(getP(ad.pid));take(R.final);}
+  noteEntries().forEach(e=>take(e.level));
   return best;
 }
 function adForcesPN(){ // used to block RTD/Light duty chips
@@ -2214,8 +2244,7 @@ function adProtoLines(p,R){
 }
 function adNoteParts(){
   const out={assess:[],plan:[],dispo:'',rfpos:[]};
-  const entries=ad.log.map(e=>e);
-  if(ad.pid){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length)entries.push(adEntry(p,R));}
+  const entries=noteEntries();
   if(!entries.length)return out;
   const ld=lmpDays();
   if(gFlags.female){out.assess.push('LMP: '+(gFlags.lmp?(new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)'):'not documented')+(gFlags.preg?' — possible pregnancy':'')+(gFlags.lact?' — lactating':'')+'.');}
@@ -2445,8 +2474,9 @@ function dl(name,txt,type){const b=new Blob([txt],{type:type||'text/plain'});con
 function exportNote(){const t=document.getElementById('note').textContent;if(!t.trim())return;const d=new Date();dl('sickcall_'+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'.txt',t);}
 function printNote(){window.print();}
 /* DD Form 689 (Individual Sick Slip) — printable replica, prefilled from the note. Name/DoD ID are typed only, never stored. */
+function noteIsEmpty(){return !noteEntries().length&&!noteActive().length&&!Object.values(gVitals).some(x=>String(x).trim());}
 function slipData(){
-  const lines=document.getElementById('note').textContent.split('\n');
+  const lines=noteIsEmpty()?[]:document.getElementById('note').textContent.split('\n');
   const cc=[];lines.forEach(l=>{const m=l.match(/^CC: (.*?)\.?$/);if(m){const t=m[1].replace(/^C\/o\s+/i,'').trim();if(t&&!cc.includes(t))cc.push(t);}});
   const i=lines.findIndex(l=>/^ASSESSMENT:|^PLAN:|^DISPO|^A — ASSESSMENT|^P — PLAN|^D — DISPOSITION/.test(l));
   const rem=i<0?'':lines.slice(i).join('\n').replace(/\n{2,}/g,'\n').trim();
@@ -2462,7 +2492,7 @@ function slipOpen(){
   o=document.createElement('div');o.id='slipOv';
   const cb=(id,l)=>`<label class="sl-cb"><input type="checkbox" id="${id}"><span class="bx"></span>${l}</label>`;
   o.innerHTML=`<div class="sl-bar"><b>DD Form 689 — Individual Sick Slip</b><span class="spacer"></span>
-    <button onclick="slipHist(this)" id="slipHistBtn">History below: ON</button><button onclick="slipPrint()">🖨 Print</button><button class="ghost" onclick="slipClose()">✕ Close</button></div>
+    <button onclick="slipHist(this)" id="slipHistBtn">History below: ON</button><button onclick="slipPrint()">🖨 Print</button><button class="xbtn" onclick="slipClose()" aria-label="Close" title="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="sl-hint">Fill-in only for printing. Name, DoD ID, rank and signature are NOT saved. Tick the boxes in blocks 10–11 and draw your signature in block 13 with your finger if your SOP authorizes you to sign. Blocks 7–9 stay blank for the Commander.</div>
     <div class="sl-form"><div class="sl-title">INDIVIDUAL SICK SLIP</div>
     <div class="sl-row"><div class="sl-c w65"><label>1. MEDICAL CONDITION <i>(Brief Description)</i></label>${cb('slIll','ILLNESS')}${cb('slInj','INJURY')}<textarea id="slCond" rows="2">${D.cond.replace(/</g,'&lt;')}</textarea></div>
@@ -2514,9 +2544,8 @@ function slipClose(){const o=document.getElementById('slipOv');if(o)o.remove();d
 
 /* ---- DA Form 5181 (Screening Note of Acute Medical Care), prefilled ---- */
 function daData(){
-  const lines=document.getElementById('note').textContent.split('\n');
-  const ent=ad.log.slice();
-  if(ad.pid){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length)ent.push(adEntry(p,R));}
+  const lines=noteIsEmpty()?[]:document.getElementById('note').textContent.split('\n');
+  const ent=noteEntries();
   const cc=[];lines.forEach(l=>{const m=l.match(/^CC: (.*?)\.?$/);if(m){const t=m[1].replace(/^C\/o\s+/i,'').trim();if(t&&!cc.includes(t))cc.push(t);}});
   let al='';lines.forEach(l=>{const m=l.match(/^(?:A:|Allergies:?)\s*(.*?)\.?$/i);if(m&&!al)al=m[1];});
   if(!al){const m=document.getElementById('note').textContent.match(/\bNKDA\b/);if(m)al='NKDA';}
@@ -2538,7 +2567,7 @@ function daOpen(){
   const com=[D.plan.length?D.plan.map(x=>'- '+x).join('\n'):'',rest?('Additional protocols:\n'+rest):''].filter(Boolean).join('\n');
   const dm={PN:'daD1',AEM:'daD2',MCP:'daD4',SP:'daD5',APPT:'daD5'};
   o.innerHTML=`<div class="sl-bar"><b>DA Form 5181 — Screening Note of Acute Medical Care</b><span class="spacer"></span>
-    <button onclick="slipPrint()">🖨 Print</button><button class="ghost" onclick="slipClose()">✕ Close</button></div>
+    <button onclick="slipPrint()">🖨 Print</button><button class="xbtn" onclick="slipClose()" aria-label="Close" title="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="sl-hint">Fill-in only for printing. Patient identification (name, SSN/DoD ID, unit) is NOT saved — write it by hand or type it here before printing. Signatures stay blank. Final disposition is a suggestion mapped from the ADTMC category: check it.</div>
     <div class="sl-form da"><div class="sl-title">SCREENING NOTE OF ACUTE MEDICAL CARE</div>
     <div class="sl-row"><div class="sl-c w35"><label>TIME PATIENT DEPARTS UNIT <i>(From DD Form 689)</i></label><input id="daDep"></div>
