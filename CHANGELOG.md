@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **New look, step 1 (visual only):** Apple Health-style colors, system font, rounded cards and pill chips, orange default accent, larger default text (16 px), light/dark refreshed. Layout, logic and notes unchanged.
+  **Nuevo diseño, paso 1 (solo visual):** colores estilo Apple Salud, letra del sistema, tarjetas redondeadas y chips tipo píldora, acento naranja por defecto, texto más grande por defecto (16 px), claro/oscuro renovados. Distribución, lógica y notas sin cambios.
 - **DD 689:** blocks 10–11 are real checkboxes; finger-drawn signature + printed name for block 13 (not saved); fixed the dark/clipped print preview on iPhone (#26).
   **DD 689:** los bloques 10–11 son casillas reales; firma con el dedo y nombre impreso en el bloque 13 (no se guarda); se arregló la vista previa de impresión oscura/cortada en iPhone (#26).
 

@@ -1569,7 +1569,7 @@ function delSaved(i){const arr=getSaved();arr.splice(i,1);setSaved(arr);renderNa
 function clearSaved(){setSaved([]);renderNav();renderMain();}
 
 /* ---- text size ---- */
-let fsBase=parseInt(localStorage.getItem('sc_fs')||'14');
+let fsBase=parseInt(localStorage.getItem('sc_fs')||'16');
 function setFs(d){fsBase=Math.min(19,Math.max(12,fsBase+d));document.body.style.fontSize=fsBase+'px';localStorage.setItem('sc_fs',fsBase);}
 
 /* =========================================================
@@ -2286,8 +2286,8 @@ function adMedItems(){
 ========================================================= */
 const settings=(function(){let s={purge:true,pin:'',theme:'green',mode:'dark',noteFmt:'compact'};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
 function saveSettings(){try{localStorage.setItem('sc_settings',JSON.stringify(settings));}catch(e){}}
-const THEMES=[['green','Green'],['blue','Blue'],['amber','Amber'],['red','Red'],['purple','Purple'],['gray','Gray']];
-const THEME_BG={dark:{green:'#10140f',blue:'#0e1319',amber:'#16120b',red:'#170f0f',purple:'#130f19',gray:'#121212'},light:'#f3f5f1'};
+const THEMES=[['green','Orange'],['blue','Blue'],['amber','Green'],['red','Red'],['purple','Purple'],['gray','Gray']];
+const THEME_BG={dark:{green:'#000000',blue:'#000000',amber:'#000000',red:'#000000',purple:'#000000',gray:'#000000'},light:'#F2F2F7'};
 function applyTheme(){
   const r=document.documentElement;
   const t=THEMES.some(x=>x[0]===settings.theme)?settings.theme:'green';

@@ -56,3 +56,4 @@ Object.assign(ES_DICT,{
 'Add to note':'Agregar a la nota'
 });
 Object.assign(ES_DICT,{'⋯ More':'⋯ Más','⬇ Download .txt':'⬇ Descargar .txt','🖨 Print note':'🖨 Imprimir nota','📄 DA Form 5181':'📄 Formulario DA 5181','📄 DD Form 689':'📄 Formulario DD 689'});
+Object.assign(ES_DICT,{"Orange":"Naranja"});
