@@ -478,3 +478,29 @@ header .brand,header button{white-space:nowrap}
 .tgl:after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:left .2s}
 .tgl.on{background:var(--red)}.tgl.on:after{left:22px}
 .rf-help{font-size:12.5px;color:var(--dim);margin:0 4px 14px}
+
+/* ===== PR E: polish (inputs everywhere, meds counter, native controls, dark mode) ===== */
+:root{color-scheme:dark}
+:root[data-mode="light"]{color-scheme:light}
+:root[data-mode="light"] .dateIn{color-scheme:light}
+main input[type=text],main input[type=search],main input[type=password],main input:not([type]),main textarea,main select,aside input[type=text]{background:var(--panel2);color:var(--txt);border:none;border-radius:10px;padding:9px 12px;font-size:16px;font-family:var(--sans)}
+main input::placeholder,main textarea::placeholder,aside input::placeholder{color:var(--dim)}
+main input:focus,main textarea:focus,main select:focus{outline:2px solid var(--accent);outline-offset:0}
+main input[type=checkbox],main input[type=radio]{accent-color:var(--accent);width:20px;height:20px}
+.dcbox{border:none;background:var(--panel2);border-radius:12px;padding:10px 12px}
+.dcbox .mini{font-size:13px}
+.dcrow{gap:10px;margin-top:8px}
+.dcrow button{background:var(--panel);border:none;color:var(--blue);border-radius:10px;width:44px;height:40px;font-size:1.3em;font-weight:600}
+.dcrow input{width:72px!important;text-align:center;background:var(--panel)!important;font-weight:600;font-variant-numeric:tabular-nums}
+.medcard .mh b,.medrow b{font-weight:700}
+.rxb{border-radius:6px;padding:1px 6px}
+.ref table{border-radius:12px;overflow:hidden;background:var(--panel)}
+.ref td,.ref th{padding:9px 12px}
+.ref .qline,.ref .exline{border-radius:10px;padding:8px 10px}
+.savedN{background:var(--panel)}
+.savedN .savedH{background:transparent;border-bottom:.5px solid var(--line)}
+#lock{gap:16px}
+#lock input{width:220px;font-size:1.3em;text-align:center}
+details.dd summary{padding:9px 12px;font-size:.9em}
+.secbar+.field,.secbar+.algoq{margin-top:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}

@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **New look, step 5 (polish):** all inputs share the new style (search boxes, meds daily-max counter with larger −/+ buttons), rounded tables and lists, native controls follow light/dark mode, reduced-motion respected.
+  **Nuevo diseño, paso 5 (pulido):** todos los campos con el nuevo estilo (búsquedas, contador de dosis máxima con botones −/+ más grandes), tablas y listas redondeadas, controles nativos siguen el modo claro/oscuro, se respeta "reducir movimiento".
 - **New look, step 4 (protocol screen):** live "Suggested disposition" card under the protocol title (color by category, reason, tap to jump to the decision); red flags as iOS switches with an "All negative" button; notes say "No red flags." when every red flag is negative (instead of listing each one).
   **Nuevo diseño, paso 4 (pantalla del protocolo):** tarjeta "Disposición sugerida" en vivo bajo el título (color por categoría, motivo, toca para ir a la decisión); banderas rojas como interruptores de iOS con botón "All negative"; la nota dice "No red flags." cuando todas son negativas (en vez de listarlas).
 - **New look, step 3 (tablet/desktop):** tablets (761–1099 px, e.g. iPad portrait) show the protocol and the note side by side with the bottom tab bar; wider screens (iPad landscape, computer) show sidebar + protocol + note. Header tidied; no horizontal scrolling.
