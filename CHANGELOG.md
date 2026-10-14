@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **AEM availability setting (Settings):** if your unit has no AEM, "AEM Now" says to send the Soldier to the clinic (supervising provider, ADTMC Category II); if it does, it names your AEM. Default: no AEM.
+  **Ajuste de AEM disponible (Ajustes):** si tu unidad no tiene AEM, "AEM Now" indica mandar al Soldado a la clínica (proveedor supervisor, ADTMC Categoría II); si lo tiene, muestra el nombre de tu AEM. Predeterminado: sin AEM.
 - **DD 689:** blocks 10–11 are real checkboxes; finger-drawn signature + printed name for block 13 (not saved); fixed the dark/clipped print preview on iPhone (#26).
   **DD 689:** los bloques 10–11 son casillas reales; firma con el dedo y nombre impreso en el bloque 13 (no se guarda); se arregló la vista previa de impresión oscura/cortada en iPhone (#26).
 
