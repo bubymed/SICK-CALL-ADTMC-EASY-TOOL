@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **New look, step 4 (protocol screen):** live "Suggested disposition" card under the protocol title (color by category, reason, tap to jump to the decision); red flags as iOS switches with an "All negative" button; notes say "No red flags." when every red flag is negative (instead of listing each one).
+  **Nuevo diseño, paso 4 (pantalla del protocolo):** tarjeta "Disposición sugerida" en vivo bajo el título (color por categoría, motivo, toca para ir a la decisión); banderas rojas como interruptores de iOS con botón "All negative"; la nota dice "No red flags." cuando todas son negativas (en vez de listarlas).
 - **New look, step 3 (tablet/desktop):** tablets (761–1099 px, e.g. iPad portrait) show the protocol and the note side by side with the bottom tab bar; wider screens (iPad landscape, computer) show sidebar + protocol + note. Header tidied; no horizontal scrolling.
   **Nuevo diseño, paso 3 (tablet/computadora):** en tablet (761–1099 px, p. ej. iPad vertical) el protocolo y la nota lado a lado con la barra de pestañas; en pantallas anchas (iPad horizontal, computadora) menú lateral + protocolo + nota. Encabezado ordenado; sin desplazamiento horizontal.
 - **New look, step 2 (phone):** bottom tab bar (Protocols, Meds, MACE, Saved, More) and the note as a sheet that peeks above it with the disposition, chief complaint and a Copy button; tap to open/close. "More" holds references, Settings, text size and Clear. Tablets/desktop unchanged.

@@ -1632,7 +1632,8 @@ function sectionLines(t,s){
     L.push(line+'.');
   }
   const rfNeg=(t.redFlags||[]).filter(f=>s.rf[f]==='neg');
-  if(rfNeg.length)L.push('Red flags: denies '+rfNeg.join(', ')+'.');
+  const rfAllN=(t.redFlags||[]).length&&rfNeg.length===(t.redFlags||[]).length;
+  if(rfAllN)L.push('No red flags.');else if(rfNeg.length)L.push('Red flags: denies '+rfNeg.join(', ')+'.');
   return L;
 }
 /* ===== SOAP-D note (MEDCOM Pam 40-7-21, Appendix D: Screening Note) =====
@@ -2071,6 +2072,7 @@ function adVitalsInputs(){
 function adVC(){if(view==='adtmc'&&ad.pid)renderMain();}
 function adVU(){const e=document.getElementById('vbanner');if(e)e.outerHTML=adVBanner();renderNote();}
 function adRf(f){ad.rf[f]=ad.rf[f]==='neg'?'pos':(ad.rf[f]==='pos'?undefined:'neg');if(ad.rf[f]===undefined)delete ad.rf[f];renderMain();renderNote();}
+function adRfSet(f){ad.rf[f]=ad.rf[f]==='pos'?'neg':'pos';renderMain();renderNote();}
 function adRfAll(){rfList(getP(ad.pid)).forEach(f=>{if(ad.rf[f]!=='pos')ad.rf[f]='neg';});ad.rfDone=true;renderMain();renderNote();}
 function adDPTog(i,j){const a=ad.dp[i]||(ad.dp[i]=[]);const k=a.indexOf(j);k<0?a.push(j):a.splice(k,1);ad.dpDone[i]=true;delete ad.out[i];renderMain();renderNote();}
 function adDPNone(i){ad.dp[i]=[];ad.dpDone[i]=true;delete ad.out[i];renderMain();renderNote();}
@@ -2079,7 +2081,18 @@ function adUndo(i){delete ad.dpDone[i];delete ad.out[i];delete ad.out['x'+i];ren
 function adHeadHtml(p){
   let h='<div class="algo-actions" style="margin:0 0 10px"><button class="ghost" onclick="adBack()">← Index</button></div>';
   h+='<h2 class="tpl"><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2><p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>';
+  h+=adLiveCard(p);
   return h;
+}
+function adLiveCard(p){
+  let R;try{R=adEval(p);}catch(e){return'';}
+  const rfs=rfList(p),nPos=rfs.filter(f=>ad.rf[f]==='pos').length,nScr=rfs.filter(f=>ad.rf[f]).length;
+  const go="var e=document.querySelector('.resbox')||[...document.querySelectorAll('.secbar')].pop();if(e)e.scrollIntoView({behavior:'smooth',block:'center'})";
+  if(R.final){const lv=LV[R.final];let why=(R.esc.find(e=>e.lv===R.final)||{}).why;
+    if(!why){const fired=[];let dn=0;p.flow.forEach((st,i)=>{if(st.items)dn++;const a=ad.dp[i];if(st.items&&a&&a.length)fired.push('DP'+dn+': '+a.map(j=>st.items[j]).filter(Boolean).join(', '));});why=fired.length?fired[fired.length-1]:('Protocol endpoint '+p.id);}
+    return '<div class="livecard lv-'+lv.c+'" onclick="'+go+'"><div class="lc-k">'+L('Suggested disposition','Disposición sugerida')+'<span>'+L('live','en vivo')+'</span></div><div class="lc-h">'+q$(lv.s)+'</div><div class="lc-m">'+q$(why)+' · '+L('see decision ↓','ver decisión ↓')+'</div></div>';}
+  const pend=[];if(rfs.length&&nScr<rfs.length)pend.push(L('red flags','banderas rojas')+' '+nScr+'/'+rfs.length);
+  return '<div class="livecard lv-wait" onclick="'+go+'"><div class="lc-k">'+L('Suggested disposition','Disposición sugerida')+'<span>'+L('live','en vivo')+'</span></div><div class="lc-h">'+L('In progress','En progreso')+'</div><div class="lc-m">'+(pend.length?L('Pending: ','Pendiente: ')+pend.join(' · '):L('Answer the decision points below.','Responde los puntos de decisión abajo.'))+'</div></div>';
 }
 function adScreenHtml(p,R){
   let h='';
@@ -2089,9 +2102,13 @@ function adScreenHtml(p,R){
   h+=adVBanner();
   const rfs=rfList(p);
   if(rfs.length){
-    h+='<div class="field"><div class="lab"><span class="tag" style="color:var(--red)">🚩</span><span class="name">Red flags</span><span class="ask">tap once = negative · twice = PRESENT</span>'+(Object.keys(ad.rf).length?'<span class="clr" onclick="adClrRf()" title="Clear this section">✕ clear</span>':'')+'</div><div class="chips"><span class="chip" onclick="adRfAll()">✓✓ all negative</span>';
-    rfs.forEach((f,i)=>{const st=ad.rf[f]||'',cls=st==='neg'?'rfn':(st==='pos'?'rfp':'');h+='<span class="chip '+cls+'" onclick="adRf(decodeURIComponent(\''+encodeURIComponent(f).replace(/'/g,'%27')+'\'))">'+(st==='neg'?'✓ neg: ':(st==='pos'?'⚠ PRESENT: ':''))+q$(f)+'</span>';});
-    h+='</div></div>';
+    const nPos=rfs.filter(f=>ad.rf[f]==='pos').length,nNeg=rfs.filter(f=>ad.rf[f]==='neg').length,allN=!nPos&&nNeg===rfs.length;
+    const st=nPos?'<span class="rf-st pos">'+nPos+' PRESENT</span>':(allN?'<span class="rf-st neg">✓ All negative</span>':'<button class="rf-all" onclick="adRfAll()">All negative</button>');
+    h+='<div class="rf-head"><h3>Red flags</h3>'+st+(Object.keys(ad.rf).length?'<span class="clr" onclick="adClrRf()" title="Clear this section">✕ clear</span>':'')+'</div>';
+    h+='<div class="rf-list">';
+    rfs.forEach(f=>{const v=ad.rf[f]||'';const k=encodeURIComponent(f).replace(/'/g,'%27');
+      h+='<div class="rf-row '+v+'" role="switch" aria-checked="'+(v==='pos')+'" onclick="adRfSet(decodeURIComponent(\''+k+'\'))"><span class="rf-ic">!</span><span class="rf-lbl">'+q$(f)+(v===''?'<small>'+L('not screened','sin revisar')+'</small>':'')+'</span><span class="tgl'+(v==='pos'?' on':'')+'"></span></div>';});
+    h+='</div><div class="rf-help">'+L('Switch on = PRESENT (Provider Now). Mark the rest with “All negative”.','Encendido = PRESENTE (Provider Now). Marca el resto con “All negative”.')+'</div>';
   }
   // flow
   let n=0;const last=R.cur!==-1?R.cur:R.end;
@@ -2174,7 +2191,8 @@ function adProtoLines(p,R){
   const anyV=Object.values(gVitals).some(x=>String(x).trim());
   L.push(++n+'. Vitals: '+(!anyV?'not taken (field screening)':(v.abn.length?'ABNORMAL — '+v.abn.join('; ')+(ad.vovr?' (provider reviewed, cleared to continue)':''):'within ADTMC limits'))+'.');
   const rfs=rfList(p),neg=rfs.filter(f=>ad.rf[f]==='neg'),pos=rfs.filter(f=>ad.rf[f]==='pos');
-  if(pos.length||neg.length)L.push(++n+'. Red flags: '+(pos.length?'PRESENT — '+pos.join('; ')+'. ':'')+(neg.length?'Denies '+neg.join(', ')+'.':''));
+  if(!pos.length&&neg.length&&neg.length===rfs.length)L.push(++n+'. No red flags.');
+  else if(pos.length||neg.length)L.push(++n+'. Red flags: '+(pos.length?'PRESENT — '+pos.join('; ')+'. ':'')+(neg.length?'Denies '+neg.join(', ')+'.':''));
   if(ad.ret)L.push(++n+'. Return visit for same complaint'+(ad.worse?' — worsening / previously seen by provider or AEM.':' — not screened below AEM.'));
   for(let i=0;i<p.flow.length;i++){
     const st=p.flow[i];
@@ -2216,7 +2234,7 @@ function adEntry(p,R){
   const anyV=Object.values(gVitals).some(x=>String(x).trim());const v=adVitals();
   if(anyV&&v.abn.length)bits.push('Abnormal vitals: '+v.abn.join('; ')+'.');
   if(pos.length)bits.push('RED FLAG present: '+pos.join('; ')+'.');
-  else if(neg.length)bits.push('Denies red flags.');
+  else if(neg.length)bits.push(neg.length===rfs.length?'No red flags.':'Denies '+neg.join(', ')+'.');
   const pf=[];
   for(let i=0;i<p.flow.length;i++){
     const st=p.flow[i];

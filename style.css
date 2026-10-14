@@ -449,3 +449,32 @@ header .brand,header button{white-space:nowrap}
   main{padding:24px 32px 80px}
 }
 .pt-row input{min-width:0}
+
+/* ===== PR D: protocol screen (live disposition card, red-flag switches) ===== */
+.livecard{background:var(--panel);border-radius:16px;padding:14px 16px;margin:4px 0 16px;cursor:pointer}
+.livecard .lc-k{display:flex;justify-content:space-between;font-size:14px;font-weight:600;color:var(--dim)}
+.livecard .lc-k span{font-weight:400;font-size:12px}
+.livecard .lc-h{font-size:28px;font-weight:700;margin:4px 0 2px;color:var(--txt)}
+.livecard .lc-m{font-size:14px;color:var(--dim)}
+.livecard.lv-pn .lc-k,.livecard.lv-pn .lc-h{color:var(--red)}
+.livecard.lv-aem .lc-k,.livecard.lv-aem .lc-h{color:var(--orange)}
+.livecard.lv-mcp .lc-k,.livecard.lv-mcp .lc-h{color:var(--green)}
+.livecard.lv-sp .lc-k,.livecard.lv-sp .lc-h{color:var(--blue)}
+.livecard.lv-appt .lc-k,.livecard.lv-appt .lc-h{color:var(--purple)}
+.livecard.lv-pn,.livecard.lv-aem,.livecard.lv-mcp,.livecard.lv-sp,.livecard.lv-appt{background:var(--panel);border:none}
+.rf-head{display:flex;align-items:baseline;gap:10px;margin:8px 0 8px}
+.rf-head h3{font-size:22px;font-weight:700;flex:1}
+.rf-all{background:none;border:none;color:var(--blue);font-size:16px;cursor:pointer;padding:0}
+.rf-st{font-size:15px;font-weight:600}.rf-st.neg{color:var(--green)}.rf-st.pos{color:var(--red)}
+.rf-list{background:var(--panel);border-radius:var(--radius);overflow:hidden;margin-bottom:6px}
+.rf-row{display:flex;align-items:center;gap:12px;padding:11px 16px;min-height:52px;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent}
+.rf-row+.rf-row:before{content:"";position:absolute;top:0;left:56px;right:0;border-top:.5px solid var(--line)}
+.rf-ic{width:28px;height:28px;border-radius:7px;background:var(--red);color:#fff;font-weight:800;display:grid;place-items:center;flex:none}
+.rf-row.neg .rf-ic{background:var(--green)}
+.rf-lbl{flex:1;font-size:16px}
+.rf-lbl small{display:block;font-size:12px;color:var(--dim)}
+.rf-row.pos .rf-lbl{color:var(--red);font-weight:600}
+.tgl{width:51px;height:31px;border-radius:999px;background:var(--panel2);position:relative;flex:none;transition:background .2s}
+.tgl:after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:left .2s}
+.tgl.on{background:var(--red)}.tgl.on:after{left:22px}
+.rf-help{font-size:12.5px;color:var(--dim);margin:0 4px 14px}
