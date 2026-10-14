@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **New look, step 3 (tablet/desktop):** tablets (761–1099 px, e.g. iPad portrait) show the protocol and the note side by side with the bottom tab bar; wider screens (iPad landscape, computer) show sidebar + protocol + note. Header tidied; no horizontal scrolling.
+  **Nuevo diseño, paso 3 (tablet/computadora):** en tablet (761–1099 px, p. ej. iPad vertical) el protocolo y la nota lado a lado con la barra de pestañas; en pantallas anchas (iPad horizontal, computadora) menú lateral + protocolo + nota. Encabezado ordenado; sin desplazamiento horizontal.
 - **New look, step 2 (phone):** bottom tab bar (Protocols, Meds, MACE, Saved, More) and the note as a sheet that peeks above it with the disposition, chief complaint and a Copy button; tap to open/close. "More" holds references, Settings, text size and Clear. Tablets/desktop unchanged.
   **Nuevo diseño, paso 2 (teléfono):** barra de pestañas abajo (Protocolos, Meds, MACE, Guardados, Más) y la nota como hoja que asoma encima con la disposición, el motivo de consulta y un botón Copiar; toca para abrir/cerrar. "Más" tiene referencias, Ajustes, tamaño de letra y Borrar. Tablet/computadora sin cambios.
 - **New look, step 1 (visual only):** Apple Health-style colors, system font, rounded cards and pill chips, orange default accent, larger default text (16 px), light/dark refreshed. Layout, logic and notes unchanged.
