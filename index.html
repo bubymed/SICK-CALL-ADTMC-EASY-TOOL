@@ -18,14 +18,14 @@
   <button onclick="setFs(-1)" title="smaller text">A−</button>
   <button onclick="setFs(1)" title="larger text">A+</button>
   <button onclick="resetTpl()">Clear section</button>
-  <button onclick="resetAll()" title="Clears all sections, vitals and patient">Clear all</button>
+  <button class="danger" onclick="clearAllAsk(this)" title="Clears everything and starts a new case">Clear all</button>
 </header>
 
 <nav id="nav"></nav>
 <main id="main"></main>
 
 <aside id="aside">
-  <div id="peek" onclick="sheetTog()"><div class="grab"></div><div class="pk-row"><div class="pk-t"><b id="pkT">Note</b><span id="pkS">Tap options — the note builds itself</span></div><button class="pk-copy" onclick="event.stopPropagation();copyNote(this)">Copy</button></div></div>
+  <div id="peek" onclick="sheetTog()"><div class="grab"></div><div class="pk-row"><div class="pk-t"><b id="pkT">Note</b><span id="pkS">Tap options — the note builds itself</span></div><button class="pk-copy" onclick="event.stopPropagation();copyNote(this)">Copy</button><button class="xbtn pk-x" onclick="event.stopPropagation();sheetTog(false)" aria-label="Close" title="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div></div>
   <div class="out-head">
     <span class="t">Note (transcribe to slip)</span>
     <span class="spacer"></span>
@@ -47,6 +47,7 @@
     <input id="ptIn" type="text" placeholder="Soldier (Rank Last name) — optional" oninput="patient=this.value;renderNote()">
     <button onclick="savePatient(this)" title="Saves this note and clears everything for the next Soldier">Save ➜ next</button>
   </div>
+  <div id="multiWarn" style="display:none"></div>
   <div id="note"></div>
 </aside>
 </div>
