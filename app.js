@@ -1065,7 +1065,7 @@ function renderMore(){
   let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
   h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
   h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
-  h+='<div class="field"><div class="lab"><span class="tag o">⌫</span><span class="name">'+L('Clear','Borrar')+'</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="resetTpl()">Clear section</button><button class="ghost" style="color:var(--red)" onclick="clearAllAsk(this)">Clear all</button></div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag o">⌫</span><span class="name">'+L('Clear','Borrar')+'</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="resetTpl()">Clear section</button><button class="danger" onclick="clearAllAsk(this)">Clear all</button></div></div>';
   return h;
 }
 function go(id){if(guided&&guided.tpl!==id)guided=null;cur=id;view='tpl';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;}

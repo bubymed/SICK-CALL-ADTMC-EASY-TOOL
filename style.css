@@ -538,5 +538,5 @@ aside.open #peek .pk-x{display:inline-grid}
 #multiWarn .chip:not(.on){text-decoration:line-through;opacity:.7}
 @media print{#multiWarn{display:none!important}}
 
-header button.danger,button.danger{color:var(--red)!important;font-weight:600}
-button.armed{background:var(--red)!important;color:#fff!important}
+header button.danger,button.danger,.algo-actions button.danger{background:var(--red)!important;color:#fff!important;border:none!important;font-weight:700}
+header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!important;color:#fff!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 40%,transparent)}
