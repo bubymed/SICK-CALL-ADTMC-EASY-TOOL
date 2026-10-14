@@ -201,7 +201,7 @@ document.querySelectorAll('.vin input').forEach(i=>i.oninput=draw);
 function disp(){const pos=RF.filter(f=>S.rf[f]);const d1=DP1.filter(x=>S.dp.has(x)),d2=DP2.filter(x=>S.dp.has(x));
  if(pos.length)return{c:'PN',n:'Provider Now',m:'Red flag: '+pos.join('; ')+'. Immobilize the injured extremity before transport.'};
  if(d1.length)return{c:'PN',n:'Provider Now',m:'Decision point 1: '+lc(d1.join(', '))+'. Immobilize the injured extremity before transport.'};
- if(d2.length)return{c:'AEM',n:'Acute Evaluation',m:'Decision point 2: '+lc(d2.join(', '))+'. PT if available.'};
+ if(d2.length)return{c:'AEM',n:'Advanced Enlisted Medic',m:'Decision point 2: '+lc(d2.join(', '))+'. PT if available.'};
  return{c:'MCP',n:'Minor Care Protocol',m:'No decision point positive. Treat per B-8 minor care; return if knee catches, locks or gives out.'};}
 function rfLine(){const pos=RF.filter(f=>S.rf[f]);if(pos.length)return'RED FLAG present: '+pos.join('; ')+'.';return S.rfDone?'No red flags.':null;}
 function noteText(){const d=disp(),v=vit(),L=[];const moi=lc([...S.moi].join(', '));
