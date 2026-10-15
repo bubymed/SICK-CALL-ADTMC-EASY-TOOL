@@ -1122,7 +1122,9 @@ function renderMain(){
   if(view==='more'){m.innerHTML=renderMore();return;}
   if(guided&&view==='tpl'&&guided.tpl===cur){m.innerHTML=renderGuided();return;}
   const t=TPLS.find(x=>x.id===cur), s=state[cur];
-  let h=ad.pid?(adHeadHtml(getP(ad.pid))+'<div class="secbar">1 · '+({quick:'Reason for visit',focus:'Focused history'}[hmode()]||'History — OPQRST / AMPLE')+'</div>'):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:var(--chipx-txt)">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
+  const _hlab={quick:'Reason for visit',focus:'Focused history'}[hmode()]||'History — OPQRST / AMPLE';
+  const _rfTop=ad.pid&&getP(ad.pid)&&rfList(getP(ad.pid)).length;
+  let h=ad.pid?(adHeadHtml(getP(ad.pid))+'<div class="secbar">1 · '+(_rfTop?L('Chief complaint & red flags','Motivo de consulta y banderas rojas'):_hlab)+'</div>'):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:var(--chipx-txt)">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
   if(hmode()!=='quick')h+=`<button class="gstart" onclick="startGuided()">▶ Guided interview — one question at a time</button>`;
   if(hmode()!=='quick')h+=`<div class="warn">${t.er}</div>`;
   if(hmode()!=='full')h+=`<div class="note-hint">${hmode()==='quick'?'This visit does not need a full history.':'Focused history for this complaint.'} <span class="chip" onclick="adFullHist()">+ Add full OPQRST / AMPLE</span></div>`;
@@ -1147,6 +1149,9 @@ function renderMain(){
   if(s.cc.size>=2)h+=`<div class="fuq">💡 ${s.cc.size} complaints in this section. If they share a mechanism (e.g. fall → knee + wrist), document them together and use "other/detail" to tell sides apart. If they are different systems, open them in separate templates — they combine on their own in the same note.</div>`;
   h+=`<input type="text" placeholder="other CC..." value="${s.ccCustom}" oninput="cust('${cur}','__cc',this.value)"></div>`;
   if(!ad.pid)h+=adSuggestHtml(t,s);
+  if(ad.pid&&getP(ad.pid)){const _pp=getP(ad.pid);if(rfList(_pp).length){h+='<div class="secbar">🚩 '+L('Red flags — screen first','Banderas rojas — primero')+'</div>'+adRfBlock(_pp);
+    if(rfList(_pp).some(f=>ad.rf[f]==='pos'))h+='<div class="rfbanner">🚩 '+L('Red flag present → Provider Now. You can skip the rest of the history: ','Bandera roja → Provider Now. Puedes saltarte el resto de la historia: ')+'<span class="scr-link" onclick="var e=document.querySelector(\'.resbox\');if(e)e.scrollIntoView({behavior:\'smooth\',block:\'center\'})">'+L('go to decision','ir a la decisión')+' ›</span></div>';
+    h+='<div class="secbar">'+_hlab+'</div>';}}
 
   // fields — answered letters collapse into a one-line summary as you move on (compact history)
   const vf=visFields(t),hasC=f=>s.fields[f.id].size>0||!!(s.custom[f.id]||'').trim();
@@ -1224,7 +1229,7 @@ function renderMain(){
   h+=`<input type="text" placeholder="disposition text (editable)..." value="${s.dispoTxt}" oninput="dispoTxt('${cur}',this.value)"></div>`;
 
   }
-  if(ad.pid){const _p=getP(ad.pid),_R=adEval(_p);h+='<div class="secbar">2 · ADTMC screening</div>'+adScreenHtml(_p,_R)+'<div class="secbar">3 · Decision and plan</div>'+adDecisionHtml(_p,_R);}
+  if(ad.pid){const _p=getP(ad.pid),_R=adEval(_p);h+='<div class="secbar">2 · '+L('ADTMC decision points','Puntos de decisión ADTMC')+'</div>'+adScreenHtml(_p,_R,{noRf:true})+'<div class="secbar">3 · Decision and plan</div>'+adDecisionHtml(_p,_R);}
   h+=`<div class="note-hint">💡 Remember: write it as a <b>recommendation</b> under CoC/provider supervision, not as a medical order. Meds → "to be picked up at Mendoza Pharmacy".</div>`;
   m.innerHTML=h;
 }
@@ -1243,6 +1248,7 @@ function renderMeds(){
 }
 function renderAssess(){
   let h=`<h2 class="tpl">🧪 Assessments / Special Tests</h2><p class="tpl-sub">How to perform each screening test and what a positive means. 68W level — a positive test is documented in EX and escalated, not diagnosed.</p><div class="ref">`;
+  if(typeof HOWTO!=='undefined'){h+='<h3>ⓘ '+L('Step-by-step cards','Tarjetas paso a paso')+'</h3><div class="chips" style="margin-bottom:10px">'+Object.keys(HOWTO).map(k=>'<span class="chip" onclick="htOpen(\''+k+'\')">ⓘ '+q$(HOWTO[k].t)+'</span>').join('')+'</div>';}
   ASSESS.forEach(([sec,rows])=>{
     h+=`<h3>${sec}</h3><table><tr><th style="width:32%">Test / Sign</th><th>How / Interpretation</th></tr>`;
     rows.forEach(r=>h+=`<tr><td class="med">${r[0]}</td><td>${r[1]}</td></tr>`);
@@ -2197,6 +2203,19 @@ function adLiveCard(p){
   const pend=[];if(rfs.length&&nScr<rfs.length)pend.push(L('red flags','banderas rojas')+' '+nScr+'/'+rfs.length);
   return '<div class="livecard lv-wait" onclick="'+go+'"><div class="lc-k">'+L('Suggested disposition','Disposición sugerida')+'<span>'+L('live','en vivo')+'</span></div><div class="lc-h">'+L('In progress','En progreso')+'</div><div class="lc-m">'+(pend.length?L('Pending: ','Pendiente: ')+pend.join(' · '):L('Answer the decision points below.','Responde los puntos de decisión abajo.'))+'</div></div>';
 }
+/* ===== How-to cards (data/howto.js) ===== */
+function htKey(t){if(typeof HOWTO_MATCH==='undefined')return null;const m=HOWTO_MATCH.find(([rx])=>rx.test(t));return m?m[1]:null;}
+function htBtn(t){const k=htKey(t);return k?'<span class="htb" role="button" aria-label="How to" title="How to do this" onclick="event.stopPropagation();htOpen(\''+k+'\')">ⓘ</span>':'';}
+function htOpen(k){const c=HOWTO[k];if(!c)return;let o=document.getElementById('htOv');if(o)o.remove();o=document.createElement('div');o.id='htOv';
+  o.innerHTML='<div class="ht-card" role="dialog" aria-label="'+q$(c.t)+'"><div class="ht-top"><b>'+q$(c.t)+'</b><button class="xbtn" onclick="htClose()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
+   +(c.rev?'':'<div class="ht-rev">'+L('Pending clinical review by the supervising provider','Pendiente de revisión clínica por el proveedor supervisor')+'</div>')
+   +'<p class="ht-what">'+q$(c.what)+'</p><h4>'+L('How to do it','Cómo hacerlo')+'</h4><ol>'+c.how.map(x=>'<li>'+q$(x)+'</li>').join('')+'</ol>'
+   +'<div class="ht-res"><div><b>'+L('Normal','Normal')+'</b><span>'+q$(c.normal)+'</span></div><div class="pos"><b>'+L('Positive / abnormal','Positivo / anormal')+'</b><span>'+q$(c.pos)+'</span></div></div>'
+   +'<p class="ht-act"><b>'+L('What to do','Qué hacer')+':</b> '+q$(c.act)+'</p>'
+   +'<p class="ht-unsure">'+L('Not sure how to do it? Mark it as not done and ask your NCO, AEM or provider — never guess.','¿No estás seguro? Márcalo como no hecho y pregunta a tu NCO, AEM o proveedor — nunca adivines.')+'</p>'
+   +'<p class="ht-src">'+L('Source','Fuente')+': '+q$(c.src)+'</p></div>';
+  o.onclick=e=>{if(e.target===o)htClose();};document.body.appendChild(o);}
+function htClose(){const o=document.getElementById('htOv');if(o)o.remove();}
 function adRfBlock(p){
   let h='';
   const rfs=rfList(p);
@@ -2206,7 +2225,7 @@ function adRfBlock(p){
     h+='<div class="rf-head"><h3>Red flags</h3>'+st+(Object.keys(ad.rf).length?'<span class="clr" onclick="adClrRf()" title="Clear this section">✕ clear</span>':'')+'</div>';
     h+='<div class="rf-list">';
     rfs.forEach(f=>{const v=ad.rf[f]||'';const k=encodeURIComponent(f).replace(/'/g,'%27');
-      h+='<div class="rf-row '+v+'" role="switch" aria-checked="'+(v==='pos')+'" onclick="adRfSet(decodeURIComponent(\''+k+'\'))"><span class="rf-ic">!</span><span class="rf-lbl">'+q$(f)+(v===''?'<small>'+L('not screened','sin revisar')+'</small>':'')+'</span><span class="tgl'+(v==='pos'?' on':'')+'"></span></div>';});
+      h+='<div class="rf-row '+v+'" role="switch" aria-checked="'+(v==='pos')+'" onclick="adRfSet(decodeURIComponent(\''+k+'\'))"><span class="rf-ic">!</span><span class="rf-lbl">'+q$(f)+htBtn(f)+(v===''?'<small>'+L('not screened','sin revisar')+'</small>':'')+'</span><span class="tgl'+(v==='pos'?' on':'')+'"></span></div>';});
     h+='</div><div class="rf-help">'+L('Switch on = PRESENT (Provider Now). Mark the rest with “All negative”.','Encendido = PRESENTE (Provider Now). Marca el resto con “All negative”.')+'</div>';
   }
   return h;
@@ -2233,7 +2252,7 @@ function adScreenHtml(p,R,opts){
     h+='<div class="algoq dpq'+(done?(fired?' fired':' clear'):'')+'"><div class="fname">Decision point '+n+(min>1?' · YES to ≥'+min+' → next action':' · any = YES')+'</div>';
     if(st.yes&&st.yes.a)h+='<div class="dpact">'+scrLink(st.yes.a)+'</div>';
     h+='<div class="chips">';
-    st.items.forEach((it,j)=>h+='<span class="chip '+(sel.includes(j)?'rfp':(sug.includes(j)?'sug':''))+'" onclick="adDPTog('+i+','+j+')">'+(sel.includes(j)?'YES · ':'')+q$(it)+'</span>');
+    st.items.forEach((it,j)=>h+='<span class="chip '+(sel.includes(j)?'rfp':(sug.includes(j)?'sug':''))+'" onclick="adDPTog('+i+','+j+')">'+(sel.includes(j)?'YES · ':'')+q$(it)+htBtn(it)+'</span>');
     h+='</div><div class="algo-actions" style="margin-top:8px">'+(sug.length?'<button onclick="adDPUse('+i+')">✓ Use interview answers ('+sug.length+')</button>':'')+'<button class="ghost" onclick="adDPNone('+i+')">'+(st.none?'None':'None / next')+' ➜</button>'+(done?'<button class="ghost" onclick="adUndo('+i+')">↺ redo</button>':'')+'</div>';
     if(done&&!fired&&st.lo)h+='<div class="fuq">'+q$(st.lo)+'</div>';
     if(done&&fired){
@@ -2490,7 +2509,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v11';
+const APP_VER='v12';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
