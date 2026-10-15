@@ -85,7 +85,7 @@ function iqDecode(txt){
   try{let m=String(txt).match(/[#&?]iq=([A-Za-z0-9_-]+)/);const b=(m?m[1]:String(txt).trim()).replace(/-/g,'+').replace(/_/g,'/');
     const q=JSON.parse(decodeURIComponent(escape(atob(b+'==='.slice((b.length+3)%4)))));
     if(!q||q.v!==1||typeof q.a!=='string')return null;
-    q.f=Array.isArray(q.f)?q.f.filter(x=>IQ_FLAGS.some(y=>y[0]===x)):[];q.s=Math.max(0,Math.min(10,+q.s||0));q.n=String(q.n||'').slice(0,100);
+    q.f=Array.isArray(q.f)?q.f.filter(x=>IQ_FLAGS.some(y=>y[0]===x)):[];q.s=Math.max(0,Math.min(10,+q.s||0));q.n=String(q.n||'').slice(0,100);q.rk=IQ_RANKS.includes(q.rk)?q.rk:'';q.ln=String(q.ln||'').replace(/[^A-Za-zÀ-ÿ' -]/g,'').trim().slice(0,30);
     const x={};if(q.x&&typeof q.x==='object')Object.keys(q.x).slice(0,20).forEach(k=>{const v=q.x[k];if(/^[a-z]{1,8}$/.test(k)&&(v===0||v===1||(Number.isInteger(v)&&v>=0&&v<10)||(Array.isArray(v)&&v.every(n=>Number.isInteger(n)&&n>=0&&n<10))))x[k]=v;});q.x=x;
     return q;}catch(e){return null;}
 }
@@ -146,3 +146,6 @@ function iqFUAns(q){/* → [{t:text EN/ES, lv}] for answered follow-ups */
     else if(Q[3]==='one'){const o=Q[4][v];if(o)out.push({k:lbl.replace(/\?$/,''),v:ES?o[1]:o[0],lv:'',id:Q[0],en:Q[1].replace(/\?$/,''),ven:o[0]});}
     else if(Array.isArray(v)&&v.length){const os=v.map(i=>Q[4][i]).filter(Boolean);out.push({k:lbl.replace(/\?$/,''),v:os.map(o=>ES?o[1]:o[0]).join(', '),lv:'',id:Q[0],en:Q[1].replace(/\?$/,''),ven:os.map(o=>o[0]).join(', ')});}
   });return out;}
+/* Rank + last name only (what's on the uniform) — no first name, no DoD ID. / Solo rango + apellido. */
+const IQ_RANKS=['PVT','PV2','PFC','SPC','CPL','SGT','SSG','SFC','MSG','1SG','SGM','CSM','WO1','CW2','CW3','CW4','CW5','2LT','1LT','CPT','MAJ','LTC','COL','CIV'];
+function iqWho(q){const rk=IQ_RANKS.includes(q.rk)?q.rk:'',ln=String(q.ln||'').trim();return (rk+' '+ln).trim();}

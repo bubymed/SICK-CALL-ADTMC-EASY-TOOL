@@ -647,3 +647,4 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 .iq-fu b{color:var(--txt);font-weight:600}
 .iq-fu .lv-r b{color:var(--red)}
 .iq-fu .lv-y b{color:#C9A000}
+#scanOv .sc-photo{display:block;text-align:center;margin:0 auto 18px;padding:12px 18px;border-radius:12px;background:#2C2C2E;color:#fff;font-size:16px;font-weight:600;cursor:pointer}

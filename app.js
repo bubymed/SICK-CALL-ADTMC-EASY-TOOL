@@ -2244,7 +2244,7 @@ function iqSave(){try{localStorage.setItem('sc_iq',JSON.stringify(iqList));}catc
 function iqToast(t){const el=document.getElementById('toast')||Object.assign(document.createElement('div'),{id:'toast'});if(!el.parentNode)document.body.appendChild(el);el.textContent=t;el.className='on';clearTimeout(el._h);el._h=setTimeout(()=>el.className='',2600);}
 function iqAdd(q){const key=iqEncode(q);if(iqList.some(e=>e.key===key)){iqToast(L('Already in the triage list','Ya está en la lista de triaje'));return false;}
   iqList.push({id:Date.now()+Math.floor(Math.random()*1000),key,q,at:Date.now(),seen:false});iqSave();
-  const tr=iqTriage(q);iqToast(L('Added: ','Agregado: ')+iqLvl(tr.c)+' · '+iqAreaTxt(q));return true;}
+  const tr=iqTriage(q);iqToast(L('Added: ','Agregado: ')+(iqWho(q)?iqWho(q)+' · ':'')+iqLvl(tr.c)+' · '+iqAreaTxt(q));return true;}
 function iqHash(){const h=location.hash||'';if(!/iq=/.test(h))return;const q=iqDecode(h);try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
   if(q){iqAdd(q);view='queue';ad.pid=ad.pid||null;}}
 function iqLvl(c){return L(IQ_LV[c][0],IQ_LV[c][1]);}
@@ -2263,11 +2263,11 @@ function renderQueue(){
   const cnt=c=>list.filter(e=>!e.seen&&e.tr.c===c).length;
   h+='<div class="iq-sum"><span class="iq-d red"></span>'+cnt('red')+' '+iqLvl('red')+'<span class="iq-d orange"></span>'+cnt('orange')+' '+iqLvl('orange')+'<span class="iq-d gray"></span>'+cnt('gray')+' '+iqLvl('gray')+'</div>';
   list.forEach(e=>{const q=e.q,pid=iqArea(q.a)[3],pii=piiFind(q.n||'');
-    h+='<div class="iq-card '+e.tr.c+(e.seen?' seen':'')+'"><div class="iq-top"><span class="iq-tag '+e.tr.c+'">'+iqLvl(e.tr.c)+'</span><b>'+q$(iqAreaTxt(q))+'</b><span class="iq-ago">'+iqAgo(e.at)+'</span></div>'
+    h+='<div class="iq-card '+e.tr.c+(e.seen?' seen':'')+'"><div class="iq-top"><span class="iq-tag '+e.tr.c+'">'+iqLvl(e.tr.c)+'</span><b>'+(iqWho(q)?q$(iqWho(q))+' · ':'')+q$(iqAreaTxt(q))+'</b><span class="iq-ago">'+iqAgo(e.at)+'</span></div>'
      +'<div class="iq-why">'+q$(e.tr.why)+'</div><div class="iq-facts">'+iqFacts(q).map(q$).join(' · ')+'</div>'+iqFUHtml(q)
      +(q.n?'<div class="iq-note">“'+q$(q.n)+'”'+(pii.length?' <span class="pii-warn">⚠ '+L('may contain personal info','puede tener info personal')+'</span>':'')+'</div>':'')
      +'<div class="iq-act"><button onclick="iqStart('+e.id+')">'+(e.seen?L('Open again','Abrir otra vez'):L('Start','Empezar'))+' '+pid+' ›</button><button class="ghost" onclick="iqDel('+e.id+')">'+L('Remove','Quitar')+'</button></div></div>';});
-  h+='<p class="note-hint foot">'+L('Suggested triage from the patient\'s own answers — you decide. No names are stored; the list deletes itself after 12 h.','Triaje sugerido con las respuestas del propio paciente — tú decides. No se guardan nombres; la lista se borra sola a las 12 h.')+'</p>';
+  h+='<p class="note-hint foot">'+L('Suggested triage from the patient\'s own answers — you decide. The list holds only rank + last name (no DoD ID), stays on this device and deletes itself after 12 h — clear it when sick call ends.','Triaje sugerido con las respuestas del propio paciente — tú decides. La lista solo tiene rango + apellido (sin DoD ID), se queda en este equipo y se borra sola a las 12 h — bórrala al terminar sick call.')+'</p>';
   return h;
 }
 function iqFUHtml(q){const fu=iqFUAns(q);if(!fu.length)return'';return '<div class="iq-fu">'+fu.map(x=>'<span class="'+(x.lv?'lv-'+x.lv:'')+'">'+q$(x.k)+': <b>'+q$(x.v)+'</b></span>').join('')+'</div>';}
@@ -2277,6 +2277,7 @@ function iqClear(b){if(b.dataset.arm!=='1'){b.dataset.arm='1';b.classList.add('d
 function iqStart(id){const e=iqList.find(x=>x.id===id);if(!e)return;const q=e.q,a=iqArea(q.a);
   e.seen=true;iqSave();
   adOpen(a[3]);
+  if(iqWho(q)&&!(patient||'').trim()){patient=iqWho(q);const pi=document.getElementById('ptIn');if(pi)pi.value=patient;}
   const s=state[cur];
   if(!s.cc.size&&!(s.ccCustom||'').trim())s.ccCustom=a[1].toLowerCase();
   const _fu=iqFUAns(q).map(x=>x.en+': '+x.ven).join('; ');
@@ -2288,7 +2289,7 @@ function iqStart(id){const e=iqList.find(x=>x.id===id);if(!e)return;const q=e.q,
   ad.iq={q,tr:iqTriage(q)};
   renderMain();renderNote();document.getElementById('main').scrollTop=0;}
 function iqBanner(x){const q=x.q,f=q.f||[];
-  let h='<div class="iq-ban '+x.tr.c+'"><b>📋 '+L('Patient questionnaire','Cuestionario del paciente')+' · '+iqLvl(x.tr.c)+'</b><span>'+q$(iqFacts(q).join(' · '))+'</span>';
+  let h='<div class="iq-ban '+x.tr.c+'"><b>📋 '+(iqWho(q)?q$(iqWho(q))+' · ':'')+L('Patient questionnaire','Cuestionario del paciente')+' · '+iqLvl(x.tr.c)+'</b><span>'+q$(iqFacts(q).join(' · '))+'</span>';
   if(f.length)h+='<span class="iq-rf">🚩 '+L('Patient reported: ','El paciente marcó: ')+q$(f.map(c=>iqLbl(IQ_FLAGS,c,LANG==='es'?2:1)).join(', '))+' — '+L('screen the red flags below now.','revisa las banderas rojas ahora.')+'</span>';
   h+=iqFUHtml(q);
   if(q.n)h+='<span>“'+q$(q.n)+'”</span>';
@@ -2298,7 +2299,7 @@ function iqLoadJs(src){return new Promise((ok,no)=>{const sc=document.createElem
 async function iqScan(){
   sheetTog(false);iqStop();
   const o=document.createElement('div');o.id='scanOv';
-  o.innerHTML='<div class="sc-top"><b>'+L('Scan patient QR','Escanear QR del paciente')+'</b><button class="xbtn" onclick="iqStop()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="sc-box"><video id="scV" playsinline muted autoplay></video><div class="sc-frame"></div></div><div class="sc-msg" id="scM">'+L('Point the camera at the code on the Soldier\'s phone.','Apunta la cámara al código en el teléfono del soldado.')+'</div>';
+  o.innerHTML='<div class="sc-top"><b>'+L('Scan patient QR','Escanear QR del paciente')+'</b><button class="xbtn" onclick="iqStop()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="sc-box"><video id="scV" playsinline muted autoplay></video><div class="sc-frame"></div></div><div class="sc-msg" id="scM">'+L('Point the camera at the code on the Soldier\'s phone.','Apunta la cámara al código en el teléfono del soldado.')+'</div><label class="sc-photo">🖼 '+L('Choose a photo or screenshot','Elegir foto o captura')+'<input type="file" accept="image/*" onchange="iqPhoto(this)" hidden></label>';
   document.body.appendChild(o);
   const msg=t=>{const m=document.getElementById('scM');if(m)m.innerHTML=t;};
   try{if(!window.jsQR)await iqLoadJs('vendor/jsQR.min.js');}catch(e){msg(L('Could not load the scanner. Connect to the internet once and try again.','No se pudo cargar el escáner. Conéctate a internet una vez e intenta otra vez.'));return;}
@@ -2315,6 +2316,16 @@ async function iqScan(){
     iqRaf=requestAnimationFrame(tick);};
   tick();
 }
+async function iqPhoto(inp){const f=inp.files&&inp.files[0];if(!f)return;const msg=t=>{const m=document.getElementById('scM');if(m)m.innerHTML=t;};
+  try{if(!window.jsQR)await iqLoadJs('vendor/jsQR.min.js');
+    const url=URL.createObjectURL(f),im=new Image();im.src=url;await im.decode();
+    let q=null;for(const mx of [1600,1000,2400]){const sc=Math.min(1,mx/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);const cx=c.getContext('2d');cx.drawImage(im,0,0,c.width,c.height);
+      const r=jsQR(cx.getImageData(0,0,c.width,c.height).data,c.width,c.height);if(r&&r.data){q=iqDecode(r.data);if(q)break;}}
+    URL.revokeObjectURL(url);
+    if(q){iqStop();iqAdd(q);view='queue';renderNav();renderMain();document.getElementById('main').scrollTop=0;}
+    else msg(L('No sick-call code found in that picture. Try a clearer screenshot.','No se encontró un código de sick call en esa imagen. Prueba con una captura más clara.'));
+  }catch(e){msg(L('Could not read that picture.','No se pudo leer esa imagen.'));}
+  inp.value='';}
 function iqStop(){cancelAnimationFrame(iqRaf);if(iqStream){iqStream.getTracks().forEach(t=>t.stop());iqStream=null;}const o=document.getElementById('scanOv');if(o)o.remove();}
 /* ===== How-to cards (data/howto.js) ===== */
 function htKey(t){if(typeof HOWTO_MATCH==='undefined')return null;const m=HOWTO_MATCH.find(([rx])=>rx.test(t));return m?m[1]:null;}
@@ -2629,7 +2640,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v15';
+const APP_VER='v16';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
