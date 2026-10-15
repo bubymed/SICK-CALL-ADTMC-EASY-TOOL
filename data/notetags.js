@@ -800,3 +800,147 @@ Object.assign(NOTE_TAGS,{
  }
  });
 })();
+// ---- batch 7 ----
+(function(){
+ const H=(y,n)=>({k:'hpi',y,n:n===undefined?y:n}), P=(y,n)=>({k:'pe',y,n:n===undefined?null:n}), Y=y=>({k:'hpi',y,n:null});
+ Object.assign(NOTE_TAGS,{
+ 'F-6':{
+  'Deteriorating level of consciousness':P('Deteriorating level of consciousness',null),
+  'Double vision':H('double vision'),
+  'Increased restlessness, combative or agitated behavior':P('Restless / combative / agitated','Calm, cooperative'),
+  'Repeat vomiting':H('repeated vomiting'),
+  'Positive result from structural brain injury detection device (if available)':P('Positive structural brain injury device result',null),
+  'Seizure':H('seizure'),
+  'Weakness or tingling in arms or legs':H('weakness / tingling in arms or legs','weakness or tingling in extremities'),
+  'Severe or worsening headache':H('severe / worsening headache','severe or worsening headache'),
+  'Abnormal neuro exam':P('Abnormal neuro exam',null),
+  'Battle sign, raccoon eyes':P('Battle sign / raccoon eyes','No Battle sign or raccoon eyes'),
+  'Suspected skull fracture':P('Suspected skull fracture',null),
+  'Anticoagulant use':H('anticoagulant use'),
+  'Amnesia 30+ min before the event':H('amnesia 30+ min before the event','pre-event amnesia ≥ 30 min'),
+  'Neurological deficit':P('Neurologic deficit','No neurologic deficit'),
+  'High-impact head injury':H('high-impact head injury',null),
+  'MACE 2 cognitive score ≤25 (<26)':P('MACE 2 cognitive score ≤ 25',null),
+  'Nausea, dizziness':H('nausea / dizziness','nausea or dizziness'),
+  'Headache':H('headache'),
+  'Memory / concentration problem':H('memory / concentration problems','memory or concentration problems'),
+  'Balance / visual problem':H('balance / visual problems','balance or visual problems'),
+  'Ringing in the ears':H('ringing in the ears'),
+  'Altered or loss of consciousness':H('altered / loss of consciousness','AOC or LOC'),
+  'History of prior TBIs':H('history of prior TBIs','prior TBIs'),
+  'Any abnormal neuro or VOMS exam':P('Abnormal neuro / VOMS exam',null)
+ },
+ 'C-4':{
+  'Toilet FULL of blood':H('toilet full of blood','large-volume rectal bleeding'),
+  'Vomiting blood or coffee grounds':H('hematemesis / coffee-ground emesis','hematemesis'),
+  'Melena':H('melena'),
+  'Lightheaded':H('lightheadedness'),
+  'Weight loss':H('weight loss'),
+  'Night sweats':H('night sweats'),
+  'Family history of early GI cancer':H('family history of early GI cancer'),
+  'Change in stool':H('change in stool','change in stools'),
+  'Mucus with stool':H('mucus with stool'),
+  'History of anal sex':Y('relevant sexual history'),
+  'Low back problems':H('low back problems',null)
+ },
+ 'E-3':{
+  'Female pelvic pain with intercourse':Y('pelvic pain with intercourse'),
+  'Pregnant':Y('pregnancy'),
+  'Orthostatic':P('Orthostatic',null),
+  'Fever':H('fever'),
+  'Worsening despite treatment':H('worsening despite treatment',null),
+  'Severe illness':P('Appears severely ill',null),
+  'Vaginal symptoms':Y('vaginal symptoms'),
+  'Skin lesion':P('Skin lesion','No skin lesions'),
+  'Rash':P('Rash','No rash')
+ },
+ 'J-2':{
+  'Requesting birth control':Y('requesting birth control'),
+  'Positive hCG':Y('positive hCG'),
+  'Hyperandrogenism signs':P('Signs of hyperandrogenism',null),
+  'Draining lesion':P('Draining lesion','No draining lesions'),
+  'Acute onset':H('acute onset',null),
+  'Requiring limitations in protective equipment':H('limits wear of protective equipment',null),
+  'Acne interferes with wearing equipment':H('acne interferes with equipment wear',null),
+  'Moderate–severe inflammatory acne':P('Moderate–severe inflammatory acne',null),
+  'Scarring or hyperpigmentation':P('Scarring / hyperpigmentation','No scarring'),
+  'Failed initial treatment':H('failed initial treatment',null),
+  'Appears very self-conscious':P('Appears very self-conscious',null)
+ },
+ 'J-3':{
+  'Facial cellulitis':P('Facial cellulitis','No facial cellulitis'),
+  'Abscess requiring drainage on face or neck':P('Abscess on face / neck needing drainage','No abscess'),
+  'Signs of scarring':P('Signs of scarring','No scarring'),
+  'Requiring limitations on protective equipment':H('limits wear of protective equipment',null),
+  'Failed conservative therapy':H('failed conservative therapy',null),
+  'Requesting profile':Y('requesting a shaving profile')
+ },
+ 'J-4':{
+  'Scaling with visible inflammation':P('Scaling with visible inflammation','No visible inflammation'),
+  'Abnormal sensation':H('abnormal sensation'),
+  'Painful erosions':P('Painful erosions','No erosions'),
+  '2nd complaint':Y('second visit for this complaint'),
+  'Medicated shampoo not (stopped) working':H('medicated shampoo not working',null),
+  'Developed new / worsening symptoms':H('new / worsening symptoms','new or worsening symptoms')
+ },
+ 'J-5':{
+  'New medication':H('new medication'),
+  'Lack of hair follicles':P('Absent hair follicles',null),
+  'Smooth, circular hair loss':P('Smooth, circular hair loss',null),
+  'Tinea capitis':P('Signs of tinea capitis',null),
+  'Papules, pustules':P('Papules / pustules','No papules or pustules'),
+  'Erythema':P('Erythema','No erythema')
+ },
+ 'J-6':{
+  'Diabetic Soldiers':H('diabetes'),
+  'Significant erosions / ulcerations or malodor in affected area':P('Significant erosions / ulceration / malodor','No erosions, ulceration or malodor'),
+  'Soldiers with weakened immune systems':H('weakened immune system','immunocompromise'),
+  'Rash with no improvement or response to medication':H('no improvement with medication',null),
+  'Blisters and ulcers':P('Blisters / ulcers','No blisters or ulcers')
+ },
+ 'J-7':{
+  'Diabetes':H('diabetes'),
+  'Immunodeficiency':H('immunodeficiency','immunocompromise'),
+  'Itchy, red rash in the groin area':H('itchy, red rash in the groin',null),
+  'No improvement in 2 weeks':H('no improvement in 2 weeks',null),
+  'Recurring infection':H('recurring infection',null)
+ },
+ 'J-8':{
+  'Failed treatment':H('failed treatment',null),
+  'Widespread':P('Widespread distribution',null),
+  'Recurrent':H('recurrent',null),
+  'Unidentified':P('Unidentified lesions',null),
+  'Atypical presentation':P('Atypical presentation',null)
+ },
+ 'J-16':{
+  'Diabetes mellitus':H('diabetes'),
+  'Decreased peripheral sensation to light touch':P('Decreased peripheral sensation to light touch','Light-touch sensation intact'),
+  'Lesion freely bleeds with paring':P('Lesion bleeds freely with paring',null),
+  'Plantar wart':P('Plantar wart',null),
+  'Interferes with normal duty':H('interferes with normal duty',null),
+  'Bunion':P('Bunion',null),
+  'Mallet / hammer toe':P('Mallet / hammer toe',null),
+  'Decreased toe motion':P('Decreased toe motion','Toe ROM normal')
+ },
+ 'J-17':{
+  'Bleeding':P('Bleeding wart',null),
+  'Sensitive area':P('Located in a sensitive area',null),
+  '>10 warts':P('> 10 warts',null),
+  'Upcoming mission limiting treatment':Y('upcoming mission limits treatment'),
+  'Signs of infection / inflammation':P('Signs of infection / inflammation','No signs of infection'),
+  'Treatment >12 weeks':H('treatment > 12 weeks',null),
+  '>3 warts':P('> 3 warts',null),
+  'Treatment >4 weeks':H('treatment > 4 weeks',null),
+  'Complication from treatment':H('complication from treatment',null)
+ },
+ 'K-4':{
+  'Diffuse symptoms':P('Diffuse involvement',null),
+  'Not exposed to dry wind':Y('no exposure to dry wind'),
+  'Signs of infection':P('Signs of infection','No signs of infection')
+ },
+ 'K-6':{
+  'Secondary infection':P('Secondary infection','No secondary infection'),
+  'No nits or lice seen':P('No nits or lice seen',null)
+ }
+ });
+})();
