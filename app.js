@@ -1080,7 +1080,7 @@ function updPeek(){
 function renderMore(){
   const row=(ic,txt,on)=>'<div class="prow" onclick="'+on+'"><span class="ptit">'+ic+' '+txt+'</span><span class="dim">›</span></div>';
   let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
-  h+=row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
+  h+=row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
   h+='</div><div class="plist" style="margin-top:14px">';
   h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
   h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
@@ -1638,6 +1638,7 @@ function savePatient(btn){
   const arr=getSaved();
   arr.unshift({t:Date.now(),name:patient.trim()||'(no name)',txt,ad:adSnap()});
   setSaved(arr);
+  try{settings.nSaved=(settings.nSaved||0)+1;saveSettings();if(settings.nSaved>=1&&!settings.svAsked)setTimeout(svNudge,900);}catch(e){}
   setNoteMode('auto');
   patient='';const pi=document.getElementById('ptIn');if(pi)pi.value='';
   TPLS.forEach(t=>resetState(t.id));resetVitals();adResetAll();
@@ -2327,6 +2328,15 @@ async function iqPhoto(inp){const f=inp.files&&inp.files[0];if(!f)return;const m
   }catch(e){msg(L('Could not read that picture.','No se pudo leer esa imagen.'));}
   inp.value='';}
 function iqStop(){cancelAnimationFrame(iqRaf);if(iqStream){iqStream.getTracks().forEach(t=>t.stop());iqStream=null;}const o=document.getElementById('scanOv');if(o)o.remove();}
+/* ===== Feedback survey (Tally) — opens an external form; nothing from the app is sent with it.
+   Encuesta (Tally) — abre un formulario externo; no se envía nada de la app. ===== */
+const SURVEY_URL='https://tally.so/r/WJ9ALJ';
+function svOpen(){settings.svAsked=true;saveSettings();svClose();window.open(SURVEY_URL,'_blank','noopener');}
+function svClose(){const o=document.getElementById('svOv');if(o)o.remove();}
+function svNudge(){if(document.getElementById('svOv'))return;settings.svAsked=true;saveSettings();
+  const o=document.createElement('div');o.id='svOv';
+  o.innerHTML='<div class="sv-card" role="dialog"><button class="xbtn" onclick="svClose()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><b>'+L('Is the app helping you?','¿Te está sirviendo la app?')+'</b><p>'+L('First note saved! Give us 2 minutes so the next update fits how you work.','¡Primera nota guardada! Danos 2 minutos para que la próxima actualización se ajuste a cómo trabajas.')+'</p><div class="algo-actions" style="margin:0"><button onclick="svOpen()">💬 '+L('Take the survey','Hacer la encuesta')+'</button><button class="ghost" onclick="svClose()">'+L('Not now','Ahora no')+'</button></div></div>';
+  o.onclick=e=>{if(e.target===o)svClose();};document.body.appendChild(o);}
 /* ===== How-to cards (data/howto.js) ===== */
 function htKey(t){if(typeof HOWTO_MATCH==='undefined')return null;const m=HOWTO_MATCH.find(([rx])=>rx.test(t));return m?m[1]:null;}
 function htBtn(t){const k=htKey(t);return k?'<span class="htb" role="button" aria-label="How to" title="How to do this" onclick="event.stopPropagation();htOpen(\''+k+'\')">ⓘ</span>':'';}
@@ -2640,7 +2650,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v16';
+const APP_VER='v17';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
