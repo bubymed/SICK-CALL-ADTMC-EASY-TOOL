@@ -1141,6 +1141,7 @@ function renderMain(){
   // fields — answered letters collapse into a one-line summary as you move on (compact history)
   const vf=visFields(t),hasC=f=>s.fields[f.id].size>0||!!(s.custom[f.id]||'').trim();
   const fi=settings.hcompact===false||!s.focus?-1:vf.findIndex(f=>f.id===s.focus);
+  h+='<div class="hwrap">';
   if(vf.length>2){
     h+='<div class="hprog">'+vf.map(f=>'<span class="hl'+(hasC(f)?' done':'')+(f.id===s.focus?' cur':'')+'" onclick="fOpen(\''+cur+'\',\''+f.id+'\')" title="'+q$(f.name)+'">'+f.tag+'</span>').join('')+(fi>0?'<span class="hall" onclick="fOpen(\''+cur+'\',null)">'+L('Show all','Ver todo')+'</span>':'')+'</div>';
   }
@@ -1171,6 +1172,7 @@ function renderMain(){
     }
     h+=`<input type="text" placeholder="${f.ph||'other / detail...'}" value="${s.custom[f.id]||''}" oninput="cust('${cur}','${f.id}',this.value)"></div>`;
   });
+  h+='</div>';
 
   // Severity (all templates)
   h+=`<div class="field"><div class="lab"><span class="tag o">S</span><span class="name">Severity</span><span class="ask">"0 to 10, how bad is it?"</span>${clrBtn(cur,'__sev')}</div>
@@ -1852,7 +1854,7 @@ const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · G
 const gFlags={female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
 let ad={pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{}};
 function adResetProto(){ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
-function adResetAll(){adResetProto();ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
+function adResetAll(){adResetProto();ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 /* Screening answers -> history / exam wording (data/notetags.js) */
 function adTagLines(p){
@@ -1885,7 +1887,8 @@ function updMulti(){
   if(ad.pid&&!ad.log.some(x=>x.id===ad.pid)){const p=getP(ad.pid);prot.push({k:'ad:'+p.id,l:p.id+' '+p.title+' ('+L('in progress','en curso')+')'});}
   const secs=TPLS.filter(t=>tplHasContent(t,state[t.id])).map(t=>({k:'tpl:'+t.id,l:t.title}));
   const grp=(arr,ttl)=>arr.length>1?'<div class="mw-g"><span class="mw-t">'+ttl+'</span>'+arr.map(x=>'<span class="chip '+(ex.has(x.k)?'':'on')+'" onclick="noteTog(\''+x.k+'\')">'+(ex.has(x.k)?'✕ ':'✓ ')+q$(x.l)+'</span>').join('')+'</div>':'';
-  const h=grp(prot,L('Protocols','Protocolos'))+grp(secs,L('History sections','Secciones de historia'));
+  const lk=ad.linked||[];const chained=prot.length>1&&prot.slice(1).every(x=>lk.includes(x.k.slice(3)));
+  const h=chained?'':grp(prot,L('Protocols','Protocolos'))+grp(secs,L('History sections','Secciones de historia'));
   box.innerHTML=h?'<div class="mw-h">⚠️ '+L('This note has more than one complaint. Tap any that does not belong to this patient to leave it out.','Esta nota tiene más de una queja. Toca la que no sea de este paciente para dejarla fuera.')+'</div>'+h:'';
   box.style.display=h?'block':'none';
   const incl=a=>a.filter(x=>!ex.has(x.k)).length;
@@ -2187,7 +2190,7 @@ function adLiveCard(p){
 function adScreenHtml(p,R){
   let h='';
   if(p.id==='F-6')h+='<div class="note-hint"><span class="chip" onclick="goRef(\'mace\')">🧠 Open MACE 2 tool (scoring)</span></div>';
-  if(p.note)h+='<div class="note-hint">'+q$(p.note)+'</div>';
+  if(p.note)h+='<div class="note-hint">'+scrLink(p.note)+'</div>';
   if(p.ddx&&p.ddx.length)h+='<details class="dd"><summary>Differential (ADTMC)</summary><div style="padding:6px 10px;font-size:.9em;color:var(--dim)">'+p.ddx.map(q$).join(' · ')+'</div></details>';
   h+=adVBanner();
   const rfs=rfList(p);
@@ -2213,7 +2216,7 @@ function adScreenHtml(p,R){
     n++;
     const sel=ad.dp[i]||[],done=!!ad.dpDone[i],min=st.min||1,fired=done&&sel.length>=min;const sug=done?[]:adDPSug(st);
     h+='<div class="algoq dpq'+(done?(fired?' fired':' clear'):'')+'"><div class="fname">Decision point '+n+(min>1?' · YES to ≥'+min+' → next action':' · any = YES')+'</div>';
-    if(st.yes&&st.yes.a)h+='<div class="dpact">'+q$(st.yes.a)+'</div>';
+    if(st.yes&&st.yes.a)h+='<div class="dpact">'+scrLink(st.yes.a)+'</div>';
     h+='<div class="chips">';
     st.items.forEach((it,j)=>h+='<span class="chip '+(sel.includes(j)?'rfp':(sug.includes(j)?'sug':''))+'" onclick="adDPTog('+i+','+j+')">'+(sel.includes(j)?'YES · ':'')+q$(it)+'</span>');
     h+='</div><div class="algo-actions" style="margin-top:8px">'+(sug.length?'<button onclick="adDPUse('+i+')">✓ Use interview answers ('+sug.length+')</button>':'')+'<button class="ghost" onclick="adDPNone('+i+')">'+(st.none?'None':'None / next')+' ➜</button>'+(done?'<button class="ghost" onclick="adUndo('+i+')">↺ redo</button>':'')+'</div>';
@@ -2222,7 +2225,7 @@ function adScreenHtml(p,R){
       const y=st.yes||{};
       if(y.out){h+='<div class="fuq">Result:</div><div class="chips">';y.out.forEach((o,k)=>h+='<span class="chip '+(ad.out[i]===k?'on':'')+'" onclick="adOut('+i+','+k+')">'+q$(o.l)+(o.d?' → '+LV[o.d].s:' → continue')+'</span>');h+='</div>';}
       else if(y.d)h+='<div class="fuq">● Positive — see decision below.</div>';
-      else if(y.tri)h+='<div class="fuq">▲ Screen another protocol: '+y.tri.map(t=>/^[A-Z]-\d+$/.test(t)?'<span class="chip x" onclick="adOpen(\''+t+'\')">'+t+'</span>':q$(t)).join(' ')+'</div>';
+      else if(y.tri)h+='<div class="fuq">▲ Screen another protocol: <div class="chips" style="margin-top:6px">'+y.tri.map(t=>scrChip(t,'x')).join('')+'</div></div>';
     }
     if(done&&!fired&&st.none&&sel.length===0)h+='<div class="fuq">● None — see decision below.</div>';
     h+='</div>';
@@ -2270,10 +2273,22 @@ function adResultCard(p,R){
     if(R.forced&&R.level&&R.level!=='PN')h+='<div class="resn">Note: the protocol alone would give '+LV[R.level].s+'; the global rules raise it.</div>';
     h+='</div>';
   }
-  if(R.tri.length)h+='<div class="resbox lv-tri"><div class="resk">▲ SCREEN ANOTHER PROTOCOL</div><div class="chips" style="margin-top:6px">'+R.tri.map(t=>/^[A-Z]-\d+$/.test(t)?'<span class="chip on" onclick="adOpen(\''+t+'\')">'+t+' '+q$((getP(t)||{}).title||'')+'</span>':'<span class="dim">'+q$(t)+'</span>').join('')+'</div><div class="resn">The highest category among protocols prevails (App. D).</div></div>';
+  if(R.tri.length)h+='<div class="resbox lv-tri"><div class="resk">▲ SCREEN ANOTHER PROTOCOL</div><div class="resn">'+L('Tap one: this protocol is saved in the note and the next one opens.','Toca uno: este protocolo se guarda en la nota y se abre el siguiente.')+'</div><div class="chips" style="margin-top:8px">'+R.tri.map(t=>scrChip(t,'on')).join('')+'</div></div>';
   R.warn.forEach(w=>h+='<div class="warn" style="margin-top:8px">'+q$(w)+'</div>');
   return h;
 }
+/* "Screen X": finish the current protocol (kept in the note) and open the next one */
+function adScreen(id){
+  if(!getP(id))return;
+  if(ad.pid===id)return;
+  if(ad.pid){const p=getP(ad.pid),Rr=adEval(p);if(Rr.final||Rr.tri.length||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length){ad.log.push(adEntry(p,Rr));}}
+  (ad.linked||(ad.linked=[])).push(id);
+  adOpen(id);
+  const t=document.getElementById('toast')||Object.assign(document.createElement('div'),{id:'toast'});if(!t.parentNode)document.body.appendChild(t);
+  t.textContent=L('Previous protocol saved in the note — now screening ','Protocolo anterior guardado en la nota — ahora: ')+id;t.className='on';clearTimeout(t._h);t._h=setTimeout(()=>t.className='',2600);
+}
+function scrChip(t,cls){if(!/^[A-Z]-\d+$/.test(t))return q$(t);const done=ad.log.some(x=>x.id===t),P=getP(t);return '<span class="chip '+(cls||'x')+(done?' done':'')+'" onclick="adScreen(\''+t+'\')">'+(done?'✓ ':'▸ ')+t+(P?' '+q$(P.title):'')+'</span>';}
+function scrLink(txt){return q$(txt).replace(/\b([A-M]-\d{1,2})\b/g,(m,id)=>getP(id)&&id!==ad.pid?'<span class="scr-link" onclick="adScreen(\''+id+'\')">'+id+' ›</span>':m);}
 function adCommit(){
   const p=getP(ad.pid),R=adEval(p);
   ad.log.push(adEntry(p,R));
