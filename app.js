@@ -1691,10 +1691,12 @@ function soapdNote(stamp){
   active.forEach(t=>{const f=t.fields.find(x=>x.id==='lmp');if(f&&!gFlags.female){const val=joinSel(f,state[t.id]);if(val)L.push('LMP: '+val+'.');}});
   L.push('MRC status / delinquent readiness: '+(gFlags.mrc.trim()||'not documented')+'.');
   if(gFlags.aviation)L.push('Flight/dive status.');
+  entries.forEach(e=>{if(e.hpi)L.push('Screening ('+e.id+'): '+e.hpi);});
   L.push('');L.push('O — OBJECTIVE');
   const vl=[['T',v.temp],['HR',v.hr],['BP',v.bp],['RR',v.rr],['SpO2',v.spo2],['Pain',v.pain]].map(x=>x[0]+' '+(String(x[1]).trim()||'__'));
   L.push('VS: '+vl.join(', ')+'.');
   active.forEach(t=>{const s=state[t.id];t.fields.filter(f=>f.id==='exam').forEach(f=>{const val=joinSel(f,s);if(val)L.push('EX: '+val+'.');});});
+  entries.forEach(e=>{if(e.pe)L.push('PE ('+e.id+'): '+e.pe);});
   L.push('');L.push('A — ASSESSMENT');
   if(entries.length){L.push('Algorithm / code: '+entries.map(e=>e.title+' ('+e.id+')').join('; ')+'.');
     L.push('Protocol summary:');
@@ -1760,6 +1762,7 @@ function renderNote(){
     L.push(...sectionLines(t,state[t.id]));
     if(multi)L.push('');
   });
+  {const _sc=noteEntries().filter(e=>e.hpi||e.pe);if(_sc.length){if(L[L.length-1]!=='')L.push('');_sc.forEach(e=>{const pre=_sc.length>1?e.id+' ':'';if(e.hpi)L.push(pre+'HPI (screening): '+e.hpi);if(e.pe)L.push(pre+'PE (screening): '+e.pe);});}}
   if(A.assess.length){if(L[L.length-1]!=='')L.push('');L.push('ASSESSMENT:');L.push(...A.assess);}
   // combined plan (dedupe across sections)
   const plans=[];
@@ -1851,6 +1854,22 @@ let ad={pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false
 function adResetProto(){ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
 function adResetAll(){adResetProto();ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
+/* Screening answers -> history / exam wording (data/notetags.js) */
+function adTagLines(p){
+  const T=(typeof NOTE_TAGS!=='undefined'&&NOTE_TAGS[p.id])||null;const out={hpi:'',pe:''};if(!T)return out;
+  const yes=[],no=[],pe=[];
+  const put=(item,isYes)=>{const t=T[item];if(!t)return;
+    if(t.inv){(isYes?no:yes).push(t.inv);return;}
+    const txt=isYes?t.y:t.n;if(!txt)return;
+    if(t.k==='pe')pe.push(txt);else (isYes?yes:no).push(txt);};
+  rfList(p).forEach(f=>{if(ad.rf[f]==='pos')put(f,true);else if(ad.rf[f]==='neg')put(f,false);});
+  p.flow.forEach((st,i)=>{if(!st.items||!ad.dpDone[i])return;const a=ad.dp[i]||[];st.items.forEach((it,j)=>put(it,a.includes(j)));});
+  const uniq=a=>a.filter((x,i)=>a.indexOf(x)===i);
+  const y=uniq(yes),n=uniq(no).filter(x=>!y.includes(x));
+  out.hpi=[y.length?'Reports '+y.join(', ')+'.':'',n.length?'Denies '+n.join(', ')+'.':''].filter(Boolean).join(' ');
+  out.pe=uniq(pe).length?uniq(pe).join('. ')+'.':'';
+  return out;
+}
 function noteEntries(){const ex=new Set(ad.excl||[]);const e=ad.log.filter(x=>!ex.has('ad:'+x.id));
   if(ad.pid&&!ex.has('ad:'+ad.pid)){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length)e.push(adEntry(p,R));}return e;}
 function noteActive(){const ex=new Set(ad.excl||[]);return TPLS.filter(t=>tplHasContent(t,state[t.id])&&!ex.has('tpl:'+t.id));}
@@ -2318,7 +2337,8 @@ function adEntry(p,R){
   }
   if(pf.length)bits.push('Positive: '+pf.join(', ')+'.');
   if(ad.ret)bits.push(ad.worse?'Return visit — worse / already seen by provider or AEM.':'Return visit for the same complaint.');
-  return{id:p.id,title:p.title,level:R.final||null,pos,lines:adProtoLines(p,R),sum:p.title+' ('+p.id+')'+(bits.length||R.final?': ':'')+bits.join(' ')+(R.final?' → '+({PN:'Provider now.',AEM:'AEM today.',MCP:'Minor care.',SP:'Specialty referral.',APPT:'Appointment/referral.'}[R.final]||LV[R.final].s):''),plan:R.final==='MCP'?adPlanLines(adPlanItems(p)):[]};
+  const _tg=adTagLines(p);
+  return{id:p.id,title:p.title,level:R.final||null,pos,hpi:_tg.hpi,pe:_tg.pe,lines:adProtoLines(p,R),sum:p.title+' ('+p.id+')'+(bits.length||R.final?': ':'')+bits.join(' ')+(R.final?' → '+({PN:'Provider now.',AEM:'AEM today.',MCP:'Minor care.',SP:'Specialty referral.',APPT:'Appointment/referral.'}[R.final]||LV[R.final].s):''),plan:R.final==='MCP'?adPlanLines(adPlanItems(p)):[]};
 }
 /* ---- suggestions inside the classic templates ---- */
 const CCMAP={
