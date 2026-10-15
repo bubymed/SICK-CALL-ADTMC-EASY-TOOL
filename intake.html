@@ -47,6 +47,7 @@ textarea{width:100%;min-height:90px;border:0;border-radius:14px;background:var(-
 .qr{background:#fff;border-radius:22px;padding:14px;margin:6px auto 10px;max-width:340px;border:12px solid #8E8E93}
 .qr.fr-red{border-color:#FF3B30}.qr.fr-orange{border-color:#FFCC00}.qr.fr-gray{border-color:#8E8E93}
 .honest{color:var(--dim);font-size:14px;margin:14px 2px 0}
+.ucmj{color:var(--dim);font-size:12px;margin:6px 2px 0;opacity:.85}
 .qr svg{display:block;width:100%;height:auto}
 .sum{background:var(--card);border-radius:14px;padding:12px 16px;margin-top:12px;font-size:15px}
 .sum div{display:flex;gap:10px;padding:5px 0;border-top:1px solid var(--line)}
@@ -75,6 +76,7 @@ function cur(){return vis()[step]||vis()[0];}
 function setLang(es){IQ_ES=es;document.documentElement.lang=es?'es':'en';draw();}
 function pick(k,v){q[k]=v;if(k==='r'&&v===0)q.rw=null;next();}
 function flag(c){if(c==='none'){q.f=[];next();return;}const i=q.f.indexOf(c);i<0?q.f.push(c):q.f.splice(i,1);draw();}
+function ucmj(){return '<p class="ucmj">'+T('UCMJ Art. 115 (Malingering): feigning illness, physical disablement or mental lapse to avoid work, duty or service is punishable under the UCMJ. If your symptoms are real, always tell us — that is never a problem.','UCMJ Art. 115 (Malingering / fingir enfermedad): fingir una enfermedad, incapacidad física o mental para evitar el trabajo, el deber o el servicio se castiga bajo el UCMJ. Si tus síntomas son reales, siempre dínoslo — eso nunca es un problema.')+'</p>';}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function head(){const v=vis(),i=v.indexOf(cur());
   return '<div class="top"><b>🩺 '+T('Sick call check-in','Registro para sick call')+'</b><div class="lang"><button class="'+(IQ_ES?'':'on')+'" onclick="setLang(false)">EN</button><button class="'+(IQ_ES?'on':'')+'" onclick="setLang(true)">ES</button></div></div>'
@@ -86,7 +88,7 @@ function draw(){
   if(s==='start'){
     h+='<h1>'+T('Answer a few quick questions','Contesta unas preguntas rápidas')+'</h1><p class="sub">'+T('About 1 minute. Don\'t write your name or any ID. At the end you\'ll get a code to show the medic.','Más o menos 1 minuto. No escribas tu nombre ni ningún ID. Al final te sale un código para enseñarle al médico.')+'</p>'
      +'<div class="warn" style="background:var(--card);color:var(--txt);font-size:16px;font-weight:600">🚨 '+T('Trouble breathing, chest pain, heavy bleeding or passed out? Don\'t fill this out — tell the medic or call 911 now.','¿Te cuesta respirar, dolor de pecho, sangrado fuerte o te desmayaste? No llenes esto — avísale al médico o llama al 911 ya.')+'</div>'
-     +'<p class="honest">'+T('Answer honestly. The medic will examine you and decide your care — your answers only help us see you in the right order.','Contesta con la verdad. El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto.')+'</p>'
+     +'<p class="honest">'+T('Answer honestly. The medic will examine you and decide your care — your answers only help us see you in the right order.','Contesta con la verdad. El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto.')+'</p>'+ucmj()
      +'<button class="btn" onclick="next()">'+T('Start','Empezar')+'</button>'
      +'<p class="note">'+T('Nothing is saved or sent anywhere. Your answers stay on this phone until you close the page.','No se guarda ni se envía nada. Tus respuestas se quedan en este teléfono hasta que cierres la página.')+'</p>';
   }else if(s==='area'){
@@ -112,7 +114,7 @@ function draw(){
   }else if(s==='note'){
     h+='<h1>'+T('Anything else the medic should know?','¿Algo más que deba saber el médico?')+'</h1><p class="sub">'+T('Optional. A few words — no names, no ID numbers.','Opcional. Pocas palabras — sin nombres ni números de ID.')+'</p>'
      +'<textarea id="nt" maxlength="100" placeholder="'+T('e.g. hurt it running','ej. me lastimé corriendo')+'" oninput="q.n=this.value;document.getElementById(\'cn\').textContent=this.value.length+\'/100\'">'+esc(q.n)+'</textarea><div class="cnt" id="cn">'+q.n.length+'/100</div>'
-     +'<p class="honest">'+T('Answer honestly. The medic will examine you and decide your care — your answers only help us see you in the right order.','Contesta con la verdad. El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto.')+'</p>'
+     +'<p class="honest">'+T('Answer honestly. The medic will examine you and decide your care — your answers only help us see you in the right order.','Contesta con la verdad. El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto.')+'</p>'+ucmj()
      +'<button class="btn" onclick="q.n=q.n.trim();next()">'+T('Get my code','Ver mi código')+'</button>'+backBtn();
   }else if(s==='done'){
     const out={v:1,a:q.a,d:q.d,w:q.w?1:0,r:q.r?1:0,s:q.s||0,j:q.j?1:0,f:q.f,t:Math.round(Date.now()/60000),l:IQ_ES?'es':'en'};
