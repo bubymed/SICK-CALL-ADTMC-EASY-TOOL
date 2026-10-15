@@ -55,7 +55,7 @@ const IQ_FLAGS=[
  ['eye','Sudden vision loss or chemical in the eye','Pérdida de visión de repente o químico en el ojo'],
  ['heat','Overheated: confused, stopped sweating','Me sobrecalenté: confusión, dejé de sudar'],
  ['harm','Thoughts of hurting myself or someone else','Pensamientos de hacerme daño o hacerle daño a alguien']];
-const IQ_LV={red:['See now','Ver ya'],orange:['Sick call','Sick call'],gray:['Consider appointment','Considerar cita']};
+const IQ_LV={red:['See now','Ver ya'],orange:['Sick call / screening','Sick call / screening'],gray:['Consider appointment','Considerar cita']};
 function iqLbl(arr,code,i){const r=arr.find(x=>x[0]===code);return r?r[i]:code;}
 function iqArea(code){return IQ_AREAS.find(x=>x[0]===code)||IQ_AREAS[IQ_AREAS.length-1];}
 /* Triage rule (clinic guidance): sick call = acute (≤3 days) or worse in the last 2–3 days.

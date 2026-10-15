@@ -614,11 +614,11 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 .iq-d{width:10px;height:10px;border-radius:50%;display:inline-block;margin-left:8px}
 .iq-d:first-child{margin-left:0}
 .iq-d.red,.iq-tag.red{background:var(--red)}
-.iq-d.orange,.iq-tag.orange{background:var(--orange)}
+.iq-d.orange,.iq-tag.orange{background:#FFCC00}
 .iq-d.gray,.iq-tag.gray{background:#8E8E93}
 .iq-card{background:var(--panel);border-radius:14px;padding:12px 14px;margin-bottom:10px;border-left:5px solid #8E8E93}
 .iq-card.red{border-left-color:var(--red)}
-.iq-card.orange{border-left-color:var(--orange)}
+.iq-card.orange{border-left-color:#FFCC00}
 .iq-card.seen{opacity:.55}
 .iq-top{display:flex;align-items:center;gap:10px}
 .iq-top b{font-size:17px}
@@ -632,7 +632,7 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 .iq-act button{padding:9px 14px;border-radius:10px;font-size:15px}
 .iq-ban{display:flex;flex-direction:column;gap:3px;background:var(--panel);border-radius:14px;padding:12px 14px;margin:0 0 10px;border-left:5px solid #8E8E93;font-size:14px}
 .iq-ban.red{border-left-color:var(--red)}
-.iq-ban.orange{border-left-color:var(--orange)}
+.iq-ban.orange{border-left-color:#FFCC00}
 .iq-ban b{font-size:15px}
 .iq-ban .iq-rf{color:var(--red);font-weight:700}
 .iq-ban .iq-small{color:var(--dim);font-size:12px}

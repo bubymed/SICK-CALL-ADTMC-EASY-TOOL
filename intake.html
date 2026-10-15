@@ -44,7 +44,9 @@ textarea{width:100%;min-height:90px;border:0;border-radius:14px;background:var(-
 .cnt{color:var(--dim);font-size:13px;text-align:right;margin-top:4px}
 .warn{background:var(--red);color:#fff;border-radius:14px;padding:16px;font-weight:700;font-size:19px;line-height:1.3;margin-bottom:14px}
 .warn small{display:block;font-weight:500;font-size:15px;margin-top:6px}
-.qr{background:#fff;border-radius:18px;padding:14px;margin:6px auto 10px;max-width:340px}
+.qr{background:#fff;border-radius:22px;padding:14px;margin:6px auto 10px;max-width:340px;border:12px solid #8E8E93}
+.qr.fr-red{border-color:#FF3B30}.qr.fr-orange{border-color:#FFCC00}.qr.fr-gray{border-color:#8E8E93}
+.honest{color:var(--dim);font-size:14px;margin:14px 2px 0}
 .qr svg{display:block;width:100%;height:auto}
 .sum{background:var(--card);border-radius:14px;padding:12px 16px;margin-top:12px;font-size:15px}
 .sum div{display:flex;gap:10px;padding:5px 0;border-top:1px solid var(--line)}
@@ -84,6 +86,7 @@ function draw(){
   if(s==='start'){
     h+='<h1>'+T('Answer a few quick questions','Contesta unas preguntas rápidas')+'</h1><p class="sub">'+T('About 1 minute. Don\'t write your name or any ID. At the end you\'ll get a code to show the medic.','Más o menos 1 minuto. No escribas tu nombre ni ningún ID. Al final te sale un código para enseñarle al médico.')+'</p>'
      +'<div class="warn" style="background:var(--card);color:var(--txt);font-size:16px;font-weight:600">🚨 '+T('Trouble breathing, chest pain, heavy bleeding or passed out? Don\'t fill this out — tell the medic or call 911 now.','¿Te cuesta respirar, dolor de pecho, sangrado fuerte o te desmayaste? No llenes esto — avísale al médico o llama al 911 ya.')+'</div>'
+     +'<p class="honest">'+T('Answer honestly. The medic will examine you and decide your care — your answers only help us see you in the right order.','Contesta con la verdad. El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto.')+'</p>'
      +'<button class="btn" onclick="next()">'+T('Start','Empezar')+'</button>'
      +'<p class="note">'+T('Nothing is saved or sent anywhere. Your answers stay on this phone until you close the page.','No se guarda ni se envía nada. Tus respuestas se quedan en este teléfono hasta que cierres la página.')+'</p>';
   }else if(s==='area'){
@@ -109,6 +112,7 @@ function draw(){
   }else if(s==='note'){
     h+='<h1>'+T('Anything else the medic should know?','¿Algo más que deba saber el médico?')+'</h1><p class="sub">'+T('Optional. A few words — no names, no ID numbers.','Opcional. Pocas palabras — sin nombres ni números de ID.')+'</p>'
      +'<textarea id="nt" maxlength="100" placeholder="'+T('e.g. hurt it running','ej. me lastimé corriendo')+'" oninput="q.n=this.value;document.getElementById(\'cn\').textContent=this.value.length+\'/100\'">'+esc(q.n)+'</textarea><div class="cnt" id="cn">'+q.n.length+'/100</div>'
+     +'<p class="honest">'+T('Answer honestly. The medic will examine you and decide your care — your answers only help us see you in the right order.','Contesta con la verdad. El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto.')+'</p>'
      +'<button class="btn" onclick="q.n=q.n.trim();next()">'+T('Get my code','Ver mi código')+'</button>'+backBtn();
   }else if(s==='done'){
     const out={v:1,a:q.a,d:q.d,w:q.w?1:0,r:q.r?1:0,s:q.s||0,j:q.j?1:0,f:q.f,t:Math.round(Date.now()/60000),l:IQ_ES?'es':'en'};
@@ -116,7 +120,7 @@ function draw(){
     const url=iqBase()+'#iq='+iqEncode(out);
     if(q.f.length)h+='<div class="warn">⚠️ '+T('Tell the medic NOW — don\'t wait in line.','Avísale al médico AHORA — no esperes en la fila.')
       +(q.f.includes('harm')?'<small>'+T('You are not alone. Military / Veterans Crisis Line: call 988, then press 1 — 24/7.','No estás solo. Línea de crisis militar / veteranos: llama al 988 y marca 1 — 24/7.')+'</small>':'')+'</div>';
-    h+='<h1 style="text-align:center">'+T('Show this code to the medic','Enséñale este código al médico')+'</h1><div class="qr" id="qr"></div>';
+    h+='<h1 style="text-align:center">'+T('Show this code to the medic','Enséñale este código al médico')+'</h1><div class="qr fr-'+iqTriage(out).c+'" id="qr"></div>';
     const a=iqArea(q.a),rows=[[T('Problem','Problema'),IQ_ES?a[2]:a[1]],[T('Started','Empezó'),iqLbl(IQ_DUR,q.d,IQ_ES?2:1)],[T('Worse last 2–3 days','Peor en 2–3 días'),q.w?T('Yes','Sí'):'No'],[T('Seen before for this','Ya me vieron'),q.r?(T('Yes','Sí')+(q.rw?T(' — worse since',' — peor desde entonces'):'')):'No'],[T('Pain','Dolor'),(q.s||0)+'/10'],[T('Stops job / PT','Impide trabajo / PT'),q.j?T('Yes','Sí'):'No']];
     if(q.f.length)rows.push([T('Warning signs','Señales de alarma'),q.f.map(x=>iqLbl(IQ_FLAGS,x,IQ_ES?2:1)).join(', ')]);
     if(q.n)rows.push([T('Note','Nota'),q.n]);
