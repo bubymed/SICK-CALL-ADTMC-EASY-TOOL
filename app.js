@@ -1638,7 +1638,7 @@ function savePatient(btn){
   const arr=getSaved();
   arr.unshift({t:Date.now(),name:patient.trim()||'(no name)',txt,ad:adSnap()});
   setSaved(arr);
-  try{settings.nSaved=(settings.nSaved||0)+1;saveSettings();if(settings.nSaved===10&&!settings.svAsked)setTimeout(svNudge,900);}catch(e){}
+  try{settings.nSaved=(settings.nSaved||0)+1;saveSettings();if(settings.nSaved>=1&&!settings.svAsked)setTimeout(svNudge,900);}catch(e){}
   setNoteMode('auto');
   patient='';const pi=document.getElementById('ptIn');if(pi)pi.value='';
   TPLS.forEach(t=>resetState(t.id));resetVitals();adResetAll();
@@ -2335,7 +2335,7 @@ function svOpen(){settings.svAsked=true;saveSettings();svClose();window.open(SUR
 function svClose(){const o=document.getElementById('svOv');if(o)o.remove();}
 function svNudge(){if(document.getElementById('svOv'))return;settings.svAsked=true;saveSettings();
   const o=document.createElement('div');o.id='svOv';
-  o.innerHTML='<div class="sv-card" role="dialog"><button class="xbtn" onclick="svClose()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><b>'+L('Is the app helping you?','¿Te está sirviendo la app?')+'</b><p>'+L('You\'ve saved 10 notes. Give us 2 minutes so the next update fits how you work.','Ya guardaste 10 notas. Danos 2 minutos para que la próxima actualización se ajuste a cómo trabajas.')+'</p><div class="algo-actions" style="margin:0"><button onclick="svOpen()">💬 '+L('Take the survey','Hacer la encuesta')+'</button><button class="ghost" onclick="svClose()">'+L('Not now','Ahora no')+'</button></div></div>';
+  o.innerHTML='<div class="sv-card" role="dialog"><button class="xbtn" onclick="svClose()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><b>'+L('Is the app helping you?','¿Te está sirviendo la app?')+'</b><p>'+L('First note saved! Give us 2 minutes so the next update fits how you work.','¡Primera nota guardada! Danos 2 minutos para que la próxima actualización se ajuste a cómo trabajas.')+'</p><div class="algo-actions" style="margin:0"><button onclick="svOpen()">💬 '+L('Take the survey','Hacer la encuesta')+'</button><button class="ghost" onclick="svClose()">'+L('Not now','Ahora no')+'</button></div></div>';
   o.onclick=e=>{if(e.target===o)svClose();};document.body.appendChild(o);}
 /* ===== How-to cards (data/howto.js) ===== */
 function htKey(t){if(typeof HOWTO_MATCH==='undefined')return null;const m=HOWTO_MATCH.find(([rx])=>rx.test(t));return m?m[1]:null;}
