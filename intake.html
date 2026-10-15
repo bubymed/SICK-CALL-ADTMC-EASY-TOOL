@@ -54,6 +54,9 @@ textarea{width:100%;min-height:90px;border:0;border-radius:14px;background:var(-
 .rules .art{font-weight:600}
 .rules.big{margin-top:6px}.rules.big b{font-size:20px}.rules.big p{font-size:17px}
 .btn:disabled{opacity:.45}
+.txt{width:100%;border:0;border-radius:11px;background:var(--card2);color:var(--txt);font-family:inherit;font-size:18px;padding:13px 14px}
+.chips.rk .chip{min-width:62px;padding:10px 12px;background:var(--card2)}
+.chips.rk .chip.on{background:var(--acc)}
 .fq{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:10px}
 .fq-t{font-weight:600;margin-bottom:10px}
 .fq-o{font-weight:400;color:var(--dim);font-size:14px}
@@ -81,9 +84,9 @@ let IQ_ES=/^es/i.test(navigator.language||'');
 try{const u=new URLSearchParams(location.search).get('lang');if(u)IQ_ES=u==='es';}catch(e){}
 const T=(e,s)=>IQ_ES?s:e;
 let q,step;
-function reset(){q={v:1,a:'',d:'',w:null,r:null,rw:null,s:null,j:null,f:[],n:'',x:{}};step=0;clearTimeout(rulesT);draw();}
+function reset(){q={v:1,a:'',d:'',w:null,r:null,rw:null,s:null,j:null,f:[],n:'',x:{},rk:'',ln:''};step=0;clearTimeout(rulesT);draw();}
 let rulesT=0,rulesLeft=0;
-const STEPS=['start','rules','area','fu','dur','worse','seen','seenw','sev','duty','flags','note','done'];
+const STEPS=['start','rules','who','area','fu','dur','worse','seen','seenw','sev','duty','flags','note','done'];
 function vis(){return STEPS.filter(s=>(s!=='seenw'||q.r===1)&&(s!=='fu'||!q.a||iqFU(q.a).length));}
 function next(){const v=vis();step=Math.min(v.indexOf(cur())+1,v.length-1);draw();scrollTo(0,0);}
 function prev(){const v=vis();step=Math.max(v.indexOf(cur())-1,0);draw();scrollTo(0,0);}
@@ -104,7 +107,7 @@ const backBtn=()=>'<button class="back" onclick="prev()">‹ '+T('Back','Atrás'
 function draw(){
   const s=cur();let h=head();
   if(s==='start'){
-    h+='<h1>'+T('Answer a few quick questions','Contesta unas preguntas rápidas')+'</h1><p class="sub">'+T('About 1 minute. Don\'t write your name or any ID. At the end you\'ll get a code to show the medic.','Más o menos 1 minuto. No escribas tu nombre ni ningún ID. Al final te sale un código para enseñarle al médico.')+'</p>'
+    h+='<h1>'+T('Answer a few quick questions','Contesta unas preguntas rápidas')+'</h1><p class="sub">'+T('About 1 minute. We only ask your rank and last name — no first name, no DoD ID. At the end you\'ll get a code to show the medic.','Más o menos 1 minuto. Solo pedimos tu rango y apellido — sin nombre de pila ni DoD ID. Al final te sale un código para enseñarle al médico.')+'</p>'
      +'<div class="warn" style="background:var(--card);color:var(--txt);font-size:16px;font-weight:600">🚨 '+T('Trouble breathing, chest pain, heavy bleeding or passed out? Don\'t fill this out — tell the medic or call 911 now.','¿Te cuesta respirar, dolor de pecho, sangrado fuerte o te desmayaste? No llenes esto — avísale al médico o llama al 911 ya.')+'</div>'
      +'<button class="btn" onclick="next()">'+T('Start','Empezar')+'</button>'
      +rulesBox()
@@ -113,6 +116,12 @@ function draw(){
     if(!rulesLeft&&!q._ok){rulesLeft=4;const tk=()=>{rulesLeft--;const b=document.getElementById('okB');if(b){if(rulesLeft>0){b.textContent=T('Read this first… ','Lee esto primero… ')+rulesLeft;rulesT=setTimeout(tk,1000);}else{b.disabled=false;b.textContent=T('I understand — continue','Entiendo — continuar');}}};rulesT=setTimeout(tk,1000);}
     h+='<h1>'+T('Before you start','Antes de empezar')+'</h1>'+rulesBox(true)
      +'<button class="btn" id="okB" '+(q._ok||rulesLeft<=0?'':'disabled')+' onclick="q._ok=1;next()">'+(q._ok||rulesLeft<=0?T('I understand — continue','Entiendo — continuar'):T('Read this first… ','Lee esto primero… ')+rulesLeft)+'</button>'+backBtn();
+  }else if(s==='who'){
+    const ok=q.rk&&q.ln.trim().length>=2;
+    h+='<h1>'+T('Your rank and last name','Tu rango y apellido')+'</h1><p class="sub">'+T('So the medic can find you in line. Nothing else — no first name, no DoD ID.','Para que el médico te encuentre en la fila. Nada más — sin nombre de pila ni DoD ID.')+'</p>'
+     +'<div class="fq"><div class="fq-t">'+T('Rank','Rango')+'</div><div class="chips rk">'+IQ_RANKS.map(r=>'<button class="chip'+(q.rk===r?' on':'')+'" onclick="q.rk=\''+r+'\';draw()">'+r+'</button>').join('')+'</div></div>'
+     +'<div class="fq"><div class="fq-t">'+T('Last name','Apellido')+'</div><input id="ln" class="txt" maxlength="30" autocomplete="family-name" autocapitalize="words" value="'+esc(q.ln)+'" placeholder="'+T('e.g. Smith','ej. García')+'" oninput="q.ln=this.value.replace(/[^A-Za-zÀ-ÿ\' -]/g,\'\');var b=document.getElementById(\'whoB\');var k=q.rk&&q.ln.trim().length>=2;b.disabled=!k;b.textContent=k?\''+T('Continue','Continuar')+'\':\''+T('Pick rank and write last name','Escoge rango y escribe apellido')+'\'"></div>'
+     +'<button class="btn" id="whoB" '+(ok?'':'disabled')+' onclick="q.ln=q.ln.trim();next()">'+(ok?T('Continue','Continuar'):T('Pick rank and write last name','Escoge rango y escribe apellido'))+'</button>'+backBtn();
   }else if(s==='fu'){
     const a=iqArea(q.a);
     h+='<h1>'+T('A few details','Unos detalles')+'</h1><p class="sub">'+(IQ_ES?a[2]:a[1])+' · '+T('This helps the medic understand what happened.','Esto ayuda al médico a entender qué pasó.')+'</p>';
@@ -147,20 +156,20 @@ function draw(){
      +'<p class="honest">'+T('Answer honestly — the medic will examine you and decide your care.','Contesta con la verdad — el médico te va a examinar y decidir tu atención.')+'</p>'
      +'<button class="btn" onclick="q.n=q.n.trim();next()">'+T('Get my code','Ver mi código')+'</button>'+backBtn();
   }else if(s==='done'){
-    const out={v:1,a:q.a,d:q.d,w:q.w?1:0,r:q.r?1:0,s:q.s||0,j:q.j?1:0,f:q.f,t:Math.round(Date.now()/60000),l:IQ_ES?'es':'en'};
+    const out={v:1,rk:q.rk,ln:q.ln.trim(),a:q.a,d:q.d,w:q.w?1:0,r:q.r?1:0,s:q.s||0,j:q.j?1:0,f:q.f,t:Math.round(Date.now()/60000),l:IQ_ES?'es':'en'};
     if(q.r)out.rw=q.rw?1:0;if(q.n)out.n=q.n.slice(0,100);if(Object.keys(q.x).length)out.x=q.x;
     const url=iqBase()+'#iq='+iqEncode(out);
     if(q.f.length)h+='<div class="warn">⚠️ '+T('Tell the medic NOW — don\'t wait in line.','Avísale al médico AHORA — no esperes en la fila.')
       +(q.f.includes('harm')?'<small>'+T('You are not alone. Military / Veterans Crisis Line: call 988, then press 1 — 24/7.','No estás solo. Línea de crisis militar / veteranos: llama al 988 y marca 1 — 24/7.')+'</small>':'')+'</div>';
     h+='<h1 style="text-align:center">'+T('Show this code to the medic','Enséñale este código al médico')+'</h1><div class="qr fr-'+iqTriage(out).c+'" id="qr"></div>';
-    const a=iqArea(q.a),rows=[[T('Problem','Problema'),IQ_ES?a[2]:a[1]],[T('Started','Empezó'),iqLbl(IQ_DUR,q.d,IQ_ES?2:1)],[T('Worse last 2–3 days','Peor en 2–3 días'),q.w?T('Yes','Sí'):'No'],[T('Seen before for this','Ya me vieron'),q.r?(T('Yes','Sí')+(q.rw?T(' — worse since',' — peor desde entonces'):'')):'No'],[T('Pain','Dolor'),(q.s||0)+'/10'],[T('Stops job / PT','Impide trabajo / PT'),q.j?T('Yes','Sí'):'No']];
+    const a=iqArea(q.a),rows=[[T('Soldier','Soldado'),iqWho(out)],[T('Problem','Problema'),IQ_ES?a[2]:a[1]],[T('Started','Empezó'),iqLbl(IQ_DUR,q.d,IQ_ES?2:1)],[T('Worse last 2–3 days','Peor en 2–3 días'),q.w?T('Yes','Sí'):'No'],[T('Seen before for this','Ya me vieron'),q.r?(T('Yes','Sí')+(q.rw?T(' — worse since',' — peor desde entonces'):'')):'No'],[T('Pain','Dolor'),(q.s||0)+'/10'],[T('Stops job / PT','Impide trabajo / PT'),q.j?T('Yes','Sí'):'No']];
     if(q.f.length)rows.push([T('Warning signs','Señales de alarma'),q.f.map(x=>iqLbl(IQ_FLAGS,x,IQ_ES?2:1)).join(', ')]);
     iqFUAns(out).forEach(x=>rows.push([x.k,x.v]));
     if(q.n)rows.push([T('Note','Nota'),q.n]);
     h+='<div class="sum">'+rows.map(r=>'<div><span>'+r[0]+'</span><b>'+esc(r[1])+'</b></div>').join('')+'</div>'
      +'<button class="btn sec" onclick="prev()">‹ '+T('Change an answer','Cambiar una respuesta')+'</button>'
      +'<button class="btn sec" onclick="reset()">'+T('Start over / clear','Empezar de nuevo / borrar')+'</button>'
-     +'<p class="note">'+T('Turn up your screen brightness if the medic can\'t scan it. Nothing was saved or sent.','Sube el brillo de la pantalla si el médico no lo puede escanear. No se guardó ni se envió nada.')+'</p>';
+     +'<p class="note">'+T('Turn up your screen brightness if the medic can\'t scan it. Can\'t be there in person? Take a screenshot and send it to your medic. Nothing was saved or sent by this page.','Sube el brillo de la pantalla si el médico no lo puede escanear. ¿No puedes ir en persona? Sácale captura y mándasela a tu médico. Esta página no guardó ni envió nada.')+'</p>';
     document.getElementById('app').innerHTML=h;
     try{const qr=qrcode(0,'M');qr.addData(url);qr.make();document.getElementById('qr').innerHTML=qr.createSvgTag({cellSize:4,margin:2,scalable:true});}
     catch(e){document.getElementById('qr').textContent=T('Could not draw the code — show this screen to the medic.','No se pudo dibujar el código — enséñale esta pantalla al médico.');}
