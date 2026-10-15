@@ -572,3 +572,154 @@ Object.assign(NOTE_TAGS,{
  }
  });
 })();
+// ---- batch 5 ----
+(function(){
+ const H=(y,n)=>({k:'hpi',y,n:n===undefined?y:n}), P=(y,n)=>({k:'pe',y,n:n===undefined?null:n}), Y=y=>({k:'hpi',y,n:null});
+ Object.assign(NOTE_TAGS,{
+ 'J-9':{
+  'Location over tailbone':P('Located over the tailbone',null),
+  'SIRS':P('Meets SIRS criteria',null),
+  'Worsening on antibiotics':H('worsening on antibiotics',null),
+  'Palm of hand':P('Located on the palm',null),
+  'Over a joint':P('Located over a joint',null),
+  'Black eschar':P('Black eschar','No eschar'),
+  'Fever':H('fever'),
+  'Rapid progression':H('rapid progression'),
+  'Cellulitis':P('Surrounding cellulitis','No surrounding cellulitis'),
+  'Indwelling medical device':Y('indwelling medical device'),
+  'Fluctuant mass':P('Fluctuant mass','Not fluctuant'),
+  'Multiple abscesses':P('Multiple abscesses',null),
+  'Drained abscess >5 cm':P('Drained abscess > 5 cm',null)
+ },
+ 'J-10':{
+  'Eye pain':H('eye pain'),
+  'Burns':Y('burns at the site'),
+  'Eczema':Y('history of eczema'),
+  'Fever':H('fever'),
+  'Severe pain':H('severe pain'),
+  'Sore throat':H('sore throat'),
+  'Sore on the hand':P('Sore on the hand',null),
+  'Pustule with yellow crusting':P('Pustule with yellow (honey) crusting','No honey-colored crusting')
+ },
+ 'J-11':{
+  'SIRS':P('Meets SIRS criteria',null),
+  'Animal bite / scratch':H('animal bite / scratch','animal bite or scratch'),
+  'Fever':H('fever'),
+  'Red streaks':P('Red streaking','No red streaking'),
+  'Oozing fluid':P('Oozing fluid','No drainage'),
+  'Tetanus risk':Y('tetanus not up to date / tetanus-prone wound'),
+  'High-risk wound':P('High-risk wound',null),
+  'Erythema >1 inch':P('Erythema > 1 inch','No surrounding erythema'),
+  'Increased warmth':P('Increased warmth','No increased warmth'),
+  'Increased tenderness':P('Increased tenderness',null),
+  'Laceration':P('Laceration',null)
+ },
+ 'J-12':{
+  'Fever':H('fever'),
+  'Pus / redness / swelling at the site':P('Pus / redness / swelling at the site','Site clean, no pus, redness or swelling'),
+  'Pus, redness or swelling at the site':P('Pus / redness / swelling at the site','Site clean, no pus, redness or swelling'),
+  'Incomplete wound closure':P('Incomplete wound closure','Wound edges well approximated')
+ },
+ 'J-13':{
+  'Airway swelling':P('Airway swelling','No airway swelling'),
+  'Wheezing':P('Wheezing','No wheezing'),
+  'Anaphylaxis':P('Signs of anaphylaxis',null),
+  'Blistering':P('Blistering','No blistering'),
+  'Oral involvement':P('Oral involvement','No oral involvement'),
+  'Petechiae':P('Petechiae','No petechiae'),
+  'Fever':H('fever'),
+  'No new medication within 2 weeks':Y('no new medication within 2 weeks'),
+  'Itchy rash with other symptoms':H('itchy rash with other symptoms',null)
+ },
+ 'J-14':{
+  'Trouble breathing':H('trouble breathing'),
+  'Altered mental status / drowsy':P('Altered mental status / drowsy','Alert, mental status normal'),
+  'High-risk location':P('Burn in high-risk location',null),
+  'Circumferential burn':P('Circumferential burn',null),
+  'Deep 2nd/3rd-degree burn':P('Deep 2nd/3rd-degree burn',null),
+  '>10% of body':P('> 10% BSA',null),
+  'Trauma':H('associated trauma','associated trauma'),
+  'Severe pain':H('severe pain'),
+  'Second-degree burn':P('Second-degree burn',null),
+  'Secondary infection':P('Signs of secondary infection','No signs of infection'),
+  'Sunburn >25% of body':P('Sunburn > 25% BSA',null),
+  'Exhaustion':H('exhaustion'),
+  'Unable to perform duties':H('unable to perform duties','inability to perform duties')
+ },
+ 'J-15':{
+  'Fever / malaise':H('fever / malaise','fever or malaise'),
+  'Epidermal sloughing':P('Epidermal sloughing','No epidermal sloughing'),
+  'Flu-like symptoms':H('flu-like symptoms'),
+  'Painful erythematous macules':P('Painful erythematous macules',null),
+  'Exposure to new medications':H('new medication exposure','new medications'),
+  'Large open blister':P('Large open blister',null),
+  'Erythema or other signs of infection':P('Erythema / signs of infection','No signs of infection')
+ },
+ 'J-18':{
+  'Red streaks up the foot':P('Red streaking up the foot','No red streaking'),
+  'Gangrene':P('Gangrene','No gangrene'),
+  'Black eschar':P('Black eschar','No eschar'),
+  'Cellulitis':P('Cellulitis','No cellulitis'),
+  'Immunocompromised':H('immunocompromise'),
+  'Diabetic':H('diabetes'),
+  'Severe infection':P('Severe infection',null),
+  'Recurrent ingrown nail':H('recurrent ingrown nail',null),
+  'Severe pain / limping':H('severe pain / limping','severe pain or limping'),
+  'Moderate infection':P('Moderate infection',null),
+  'Limitations to duty':H('limitation of duty',null)
+ },
+ 'K-1':{
+  'Altered mental status':P('Altered mental status','Alert, mental status normal'),
+  'Abnormal vital signs':P('Abnormal vital signs',null),
+  'Confused, delirious or unresponsive':P('Confused / delirious / unresponsive',null),
+  'Skin dry':P('Skin dry','Skin moist'),
+  'Temperature >103°F':P('Temp > 103 F',null),
+  'Sweating profusely with headache, weakness, dizziness and/or nausea':H('profuse sweating with headache / weakness / dizziness / nausea',null),
+  'Painful cramps of extremities/abdominal muscles with normal body temperature':H('painful muscle cramps with normal temperature',null)
+ },
+ 'K-2':{
+  'T <96°F':P('Temp < 96 F',null),
+  'Altered mental status':P('Altered mental status','Alert, mental status normal'),
+  'Abnormal vital signs':P('Abnormal vital signs',null),
+  'Frostbite':P('Frostbite','No frostbite'),
+  'Trauma':H('trauma'),
+  'Neurologic symptoms':H('neurologic symptoms'),
+  'Infection':H('signs of infection','infection'),
+  'History of psych meds or narcotics':Y('psychiatric medication / narcotic use'),
+  'History of alcohol abuse':Y('history of alcohol abuse'),
+  'Severe pain':H('severe pain'),
+  'Immersion foot':P('Immersion foot',null)
+ },
+ 'K-3':{
+  'Gangrene / necrosis':P('Gangrene / necrosis','No gangrene or necrosis'),
+  'Hemorrhagic blisters':P('Hemorrhagic blisters','No hemorrhagic blisters'),
+  'Hypothermia':P('Hypothermia',null),
+  'Frostbite':P('Frostbite','No frostbite'),
+  'Trauma':H('trauma'),
+  'Severe pain':H('severe pain'),
+  'Signs of infection':P('Signs of infection','No signs of infection'),
+  'Unable to perform duties':H('unable to perform duties','inability to perform duties'),
+  'Symptoms >1 week':H('symptoms > 1 week'),
+  'Pain not controlled':H('uncontrolled pain',null)
+ },
+ 'K-5':{
+  'Cold, numb, clumsy area':H('cold, numb, clumsy area','numbness or clumsiness'),
+  'White / grayish-yellow, hard or waxy skin':P('White / grayish-yellow, hard or waxy skin',null),
+  'Hypothermia':P('Hypothermia',null),
+  'White or grayish-yellow color':P('White / grayish-yellow color','Normal skin color'),
+  'Hard or waxy to touch':P('Hard / waxy to touch','Skin soft, not waxy'),
+  'Blisters or cyanosis after rewarming':P('Blisters / cyanosis after rewarming','No blisters or cyanosis after rewarming'),
+  'Trench foot suspected':P('Possible trench foot',null)
+ },
+ 'K-7':{
+  'Swelling of lips or tongue':P('Swelling of lips / tongue','No lip or tongue swelling'),
+  'Trouble breathing / wheezing':H('trouble breathing / wheezing','trouble breathing or wheezing'),
+  'Abnormal vital signs':P('Abnormal vital signs',null),
+  'Wheezing, shortness of breath':H('wheezing / shortness of breath','shortness of breath'),
+  'Hives or history of allergy / severe reaction':H('hives / history of severe allergic reaction','hives or history of severe allergic reaction'),
+  'Poisonous insect (brown recluse, black widow, etc.)':H('possible poisonous insect / spider','poisonous insect or spider'),
+  'No signs of bite':P('No visible bite',null),
+  'Blister, ulcer or moderate-severe pain':P('Blister / ulcer / moderate-severe pain','No blister or ulceration')
+ }
+ });
+})();
