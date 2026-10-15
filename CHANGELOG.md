@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **Feedback survey:** More → "Feedback — 2-min survey" opens a short external survey (Tally). After 10 saved notes the app asks once, politely, and never again. Also linked from the demo page and README. Nothing from the app is sent with it.
+  **Encuesta de opinión:** Más → "Opinión — encuesta de 2 min" abre una encuesta corta externa (Tally). Después de 10 notas guardadas la app lo pide una sola vez y no vuelve a salir. También en la página demo y el README. No se envía nada de la app.
 - **Questionnaire start screen:** the honesty / UCMJ notice now appears only on the screen after "Start", not on the first screen. Public pages (demo, README) describe the QR priority in general terms only; the full legend stays in the medic guide.
   **Pantalla inicial del cuestionario:** el aviso de honestidad / UCMJ ahora sale solo en la pantalla después de "Empezar", no en la primera. Las páginas públicas (demo, README) describen la prioridad del QR en términos generales; la leyenda completa queda en la guía del médico.
 - **QR check-in demo page:** new `demo.html` (More → "QR check-in demo") with the 1-minute video, the one-page guide and downloadable posters; the GitHub front page (README) now shows the guide and links to the demo.

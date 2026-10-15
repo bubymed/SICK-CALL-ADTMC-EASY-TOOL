@@ -21,7 +21,8 @@ Les sale un QR que **ayuda al médico a priorizar la fila de un vistazo**, y al 
 **[▶ Watch the 1-minute demo / Ver el demo](https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/demo.html)** ·
 [Open the app](https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/) ·
 [Try the questionnaire](https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/intake.html) ·
-[Patient poster (PNG)](docs/demo/Sick_Call_QR_Poster.png)
+[Patient poster (PNG)](docs/demo/Sick_Call_QR_Poster.png) ·
+[💬 2-min feedback survey](https://tally.so/r/WJ9ALJ)
 
 <a href="https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/demo.html"><img src="docs/demo/QR_Checkin_Guide_public.jpg" alt="QR check-in guide" width="560"></a>
 
