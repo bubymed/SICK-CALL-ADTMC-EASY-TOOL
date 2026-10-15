@@ -991,11 +991,11 @@ function dd(k,open){open?openDD.add(k):openDD.delete(k);}
 /* ---- persistence (sobrevive refresh / cierre accidental) ---- */
 function persist(){
   try{
-    const dump={cur,patient,day:new Date().toDateString(),state:{}};
+    const dump={cur,patient:(typeof piiFind==='function'&&piiFind(patient).length)?'':patient,day:new Date().toDateString(),state:{}};
     for(const k in state){const s=state[k];
-      dump.state[k]={cc:[...s.cc],ccCustom:s.ccCustom,
+      dump.state[k]={cc:[...s.cc],ccCustom:(typeof piiFind==='function'&&piiFind(String(s.ccCustom||'')).length)?'':s.ccCustom,
         fields:Object.fromEntries(Object.entries(s.fields).map(([a,b])=>[a,[...b]])),
-        custom:s.custom,sev:s.sev,duty:s.duty,plan:[...s.plan],dispo:s.dispo,dispoTxt:s.dispoTxt,rf:s.rf};}
+        custom:Object.fromEntries(Object.entries(s.custom||{}).map(([a,b])=>[a,(typeof piiFind==='function'&&piiFind(String(b||'')).length)?'':b])),sev:s.sev,duty:s.duty,plan:[...s.plan],dispo:s.dispo,dispoTxt:s.dispoTxt,rf:s.rf};}
     dump.gVitals=gVitals;
     localStorage.setItem('sc_state',JSON.stringify(dump));
   }catch(e){}
@@ -1044,7 +1044,7 @@ function renderNav(){
   h+=`<button class="${view==='guardados'?'active':''}" onclick="goRef('guardados')">💾 Saved${nSaved?' ('+nSaved+')':''}<span class="k">G</span></button>`;
   h+=`<button class="${view==='ajustes'?'active':''}" onclick="goRef('ajustes')">⚙️ Settings / Privacy</button>`;
   n.innerHTML=h;
-  updTabs();updPeek();updMulti();
+  updTabs();updPeek();updMulti();try{piiNoteWarn(piiFind(document.getElementById('note').textContent));}catch(e){}
 }
 /* ===== Phone: bottom tab bar + note sheet ===== */
 const TAB_OF={adtmc:'adtmc',tpl:'adtmc',admeds:'admeds',mace:'mace',guardados:'guardados',more:'more',preguntas:'more',assess:'more',perfiles:'more',ajustes:'more'};
@@ -1591,6 +1591,7 @@ function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 function savePatient(btn){
   const txt=document.getElementById('note').textContent.trim();
   if(!txt||txt.startsWith('Tap options'))return;
+  const pii=piiFind(txt);if(pii.length){piiNoteWarn(pii);if(btn){const o=btn.textContent;btn.textContent=L('Blocked — remove personal info','Bloqueado — quita datos personales');btn.classList.add('armed');setTimeout(()=>{btn.textContent=o;btn.classList.remove('armed');},2500);}return;}
   const arr=getSaved();
   arr.unshift({t:Date.now(),name:patient.trim()||'(no name)',txt,ad:adSnap()});
   setSaved(arr);
@@ -1786,6 +1787,31 @@ function renderNote(){
   }
   renderNav();
 }
+/* ===== PII guard: personal identifiers must not be typed into notes ===== */
+const PII_RX=[
+  [/(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)/,'SSN'],
+  [/(?<![\d.\/])\d{9}(?![\d.\/])/,'SSN (9 digits)'],
+  [/(?<![\d.\/])\d{10}(?![\d.\/])/,'DoD ID (10 digits)'],
+  [/\b(?:DOB|D\.O\.B\.?|date of birth|born on)\b/i,'Date of birth'],
+  [/(?<!\d)\(?\d{3}\)?[\s.\-]\d{3}[\s.\-]\d{4}(?!\d)/,'Phone number'],
+  [/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/,'Email'],
+  [/\b(?:SSN|social security|EDIPI|DoD ?ID)\b/i,'ID number'],
+  [/\b(?:MRN|medical record (?:number|no\.?))\b/i,'Medical record number']
+];
+function piiFind(t){if(!t||t.length<4)return[];const f=[];PII_RX.forEach(([rx,l])=>{if(rx.test(t)&&!f.includes(l))f.push(l);});return f;}
+function piiNoteWarn(list){const w=document.getElementById('piiWarn');if(!w)return;
+  if(!list||!list.length){w.style.display='none';w.innerHTML='';return;}
+  w.innerHTML='🛡️ <b>'+L('Personal info detected','Datos personales detectados')+':</b> '+list.map(q$).join(', ')+'. '+L('Remove it from the note before saving. Never store real patient identifiers.','Quítalos de la nota antes de guardar. Nunca guardes identificadores reales de pacientes.');w.style.display='block';}
+document.addEventListener('input',e=>{
+  const el=e.target;if(!el||!el.closest||el.closest('#slipOv')||el.dataset.piiOk)return;
+  if(!el.closest('#main')&&!el.closest('#aside'))return;
+  if(el.id==='note'){piiNoteWarn(piiFind(el.textContent));return;}
+  if(!/^(INPUT|TEXTAREA)$/.test(el.tagName)||el.type==='password')return;
+  const list=piiFind(el.value);let w=el.nextElementSibling;
+  if(!w||!w.classList||!w.classList.contains('pii-warn')){if(!list.length)return;w=document.createElement('div');w.className='pii-warn';el.after(w);}
+  w.textContent=list.length?'🛡️ '+L('Looks like personal info','Parece un dato personal')+' ('+list.join(', ')+'). '+L('Do not type patient identifiers here.','No escribas identificadores del paciente aquí.'):'';
+  w.style.display=list.length?'block':'none';
+},true);
 function copyNote(btn){
   const txt=document.getElementById('note').textContent;
   copyTxt(txt,btn);
@@ -2328,7 +2354,7 @@ function rfqUp(k,v){rfq[k]=v;const p=document.getElementById('rfqPrev');if(p)p.t
 function rfqCopy(b){copyTxt(rfqText(),b);}
 function rfqClear(){rfq={n:'',id:'',dob:'',med:''};renderMain();}
 function rfqHtml(){
-  const f=(lab,k,type,extra)=>'<label style="display:block;margin-top:6px;font-size:.85em">'+lab+'<input type="'+type+'" value="'+q$(rfq[k])+'" oninput="rfqUp(\''+k+'\',this.value)" autocomplete="off" '+(extra||'')+' style="margin-top:2px"></label>';
+  const f=(lab,k,type,extra)=>'<label style="display:block;margin-top:6px;font-size:.85em">'+lab+'<input type="'+type+'" value="'+q$(rfq[k])+'" data-pii-ok="1" oninput="rfqUp(\''+k+'\',this.value)" autocomplete="off" '+(extra||'')+' style="margin-top:2px"></label>';
   return '<details class="dd" '+(openDD.has('rfq')?'open':'')+' ontoggle="dd(\'rfq\',this.open)"><summary>'+L('📝 Medication refill request (fill and copy)','📝 Solicitud de resurtido de medicamento (llenar y copiar)')+'</summary><div class="field">'
    +'<div class="fuq">'+L('Name, DoD ID and date of birth are NOT saved — they stay on this screen only until you clear or leave it.','Nombre, DoD ID y fecha de nacimiento NO se guardan — solo están en esta pantalla hasta que la limpies o salgas.')+'</div>'
    +f(L('Full name','Nombre completo'),'n','text','')+f('DoD ID','id','text','inputmode="numeric"')+f(L('Date of birth','Fecha de nacimiento'),'dob','date','')

@@ -553,3 +553,8 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 .field.fcol.empty .fsum{font-style:italic;opacity:.7}
 .field.fcol .chev{color:var(--dim)}
 .field.fcur{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 55%,transparent)}
+
+/* PII guard */
+.pii-warn{margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--rfb-bg);color:var(--rfb-txt);font-size:13px;font-weight:600}
+#piiWarn{margin:10px 14px 0;padding:12px;border-radius:12px;background:var(--rfb-bg);color:var(--rfb-txt);font-size:14px;box-shadow:inset 4px 0 0 var(--red)}
+@media print{.pii-warn,#piiWarn{display:none!important}}
