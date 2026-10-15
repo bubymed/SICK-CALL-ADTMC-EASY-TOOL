@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>QR Check-in Demo</title>
-<meta name="description" content="1-minute demo of the Sick Call QR check-in: Soldiers answer on their phone, medics triage by color and the note starts itself.">
+<meta name="description" content="1-minute demo of the Sick Call QR check-in: Soldiers answer on their phone, medics prioritize at a glance and the note starts itself.">
 <meta name="theme-color" content="#000000">
 <style>
 :root{--bg:#F2F2F7;--card:#fff;--txt:#000;--dim:#6C6C70;--acc:#FF9500;--line:#E5E5EA}
@@ -41,18 +41,17 @@ h3{font-size:22px;margin:30px 0 10px}
   <div class="top"><span class="k">68W · ADTMC SICK CALL TOOL</span>
     <div class="lang"><button id="bEN" onclick="lang('en')">EN</button><button id="bES" onclick="lang('es')">ES</button></div></div>
   <h1><span class="en">QR Check-in for Sick Call</span><span class="es">Registro con QR para sick call</span></h1>
-  <p class="sub"><span class="en">Soldiers answer on their own phone before the line — medics triage by color and the note starts itself. 1-minute demo.</span><span class="es">Los soldados contestan en su teléfono antes de la fila — los médicos hacen triaje por color y la nota se empieza sola. Demo de 1 minuto.</span></p>
+  <p class="sub"><span class="en">Soldiers answer on their own phone before the line — medics prioritize at a glance and the note starts itself. 1-minute demo.</span><span class="es">Los soldados contestan en su teléfono antes de la fila — los médicos priorizan de un vistazo y la nota se empieza sola. Demo de 1 minuto.</span></p>
 
   <div class="vid">
-    <video src="docs/demo/QR_Checkin_Demo.mp4" poster="docs/demo/demo_poster.jpg" controls playsinline preload="metadata"></video>
+    <video src="docs/demo/QR_Checkin_Demo_public.mp4" poster="docs/demo/demo_poster.jpg" controls playsinline preload="metadata"></video>
     <div>
       <div class="card"><h2><span class="en">How it works</span><span class="es">Cómo funciona</span></h2>
-        <ol class="en"><li>Soldier scans the poster and answers ~1 minute of ADTMC-based questions (rank + last name only, no DoD ID).</li><li>They get a QR — the frame color is the triage. They aren't told what it means.</li><li>Medic says "show me your QR", scans it in the app and gets a sorted triage list.</li><li>"Start" opens the right ADTMC protocol with the history already in the note.</li></ol>
-        <ol class="es"><li>El soldado escanea el póster y contesta ~1 minuto de preguntas basadas en el ADTMC (solo rango + apellido, sin DoD ID).</li><li>Le sale un QR — el color del marco es el triaje. No se le dice qué significa.</li><li>El médico dice "enséñame tu QR", lo escanea en la app y obtiene una lista de triaje ordenada.</li><li>"Empezar" abre el protocolo ADTMC correcto con el historial ya en la nota.</li></ol></div>
-      <div class="card"><h2><span class="en">The colors</span><span class="es">Los colores</span></h2>
-        <div><span class="dot r"></span><b class="en">See now</b><b class="es">Ver ya</b> — <span class="en">warning sign or red-flag answer</span><span class="es">señal de alarma o respuesta de bandera roja</span></div>
-        <div><span class="dot y"></span><b>Sick call</b> — <span class="en">acute, worse in 2–3 days, or needs a look</span><span class="es">agudo, peor en 2–3 días, o necesita revisión</span></div>
-        <div><span class="dot g"></span><b class="en">Not a priority</b><b class="es">No es prioridad</b> — <span class="en">chronic &amp; unchanged, already seen, admin → appointment / PCM</span><span class="es">crónico sin cambios, ya visto, papeleo → cita / PCM</span></div></div>
+        <ol class="en"><li>Soldier scans the poster and answers ~1 minute of ADTMC-based questions (rank + last name only, no DoD ID).</li><li>They get a QR that helps the medic prioritize the line at a glance.</li><li>Medic scans it in the app and gets a sorted triage list.</li><li>"Start" opens the right ADTMC protocol with the history already in the note.</li></ol>
+        <ol class="es"><li>El soldado escanea el póster y contesta ~1 minuto de preguntas basadas en el ADTMC (solo rango + apellido, sin DoD ID).</li><li>Le sale un QR que ayuda al médico a priorizar la fila de un vistazo.</li><li>El médico lo escanea en la app y obtiene una lista de triaje ordenada.</li><li>"Empezar" abre el protocolo ADTMC correcto con el historial ya en la nota.</li></ol></div>
+      <div class="card"><h2><span class="en">Why it helps</span><span class="es">Por qué ayuda</span></h2>
+        <ul class="en"><li>Sickest Soldiers are seen first.</li><li>Sick call stays for acute problems.</li><li>Notes start themselves — less writing.</li><li>No server, no DoD ID; nothing to install.</li></ul>
+        <ul class="es"><li>Los más enfermos se ven primero.</li><li>Sick call se queda para lo agudo.</li><li>La nota se empieza sola — menos escritura.</li><li>Sin servidor ni DoD ID; nada que instalar.</li></ul></div>
       <div class="btns">
         <a class="btn" href="./"><span class="en">Open the app</span><span class="es">Abrir la app</span></a>
         <a class="btn sec" href="intake.html"><span class="en">Try the questionnaire</span><span class="es">Probar el cuestionario</span></a>
@@ -62,12 +61,12 @@ h3{font-size:22px;margin:30px 0 10px}
   </div>
 
   <h3><span class="en">One-page guide</span><span class="es">Guía de una página</span></h3>
-  <a href="docs/demo/QR_Checkin_Guide.jpg"><img class="guide" src="docs/demo/QR_Checkin_Guide.jpg" alt="QR check-in guide: Soldier steps, color code and medic steps" loading="lazy"></a>
+  <a href="docs/demo/QR_Checkin_Guide_public.jpg"><img class="guide" src="docs/demo/QR_Checkin_Guide_public.jpg" alt="QR check-in guide: Soldier steps and medic steps" loading="lazy"></a>
   <div class="btns" style="margin-top:14px">
-    <a class="btn sec" href="docs/demo/QR_Checkin_Guide.jpg" download>⬇ <span class="en">Guide</span><span class="es">Guía</span> (JPG)</a>
+    <a class="btn sec" href="docs/demo/QR_Checkin_Guide_public.jpg" download>⬇ <span class="en">Guide</span><span class="es">Guía</span> (JPG)</a>
     <a class="btn sec" href="docs/demo/Sick_Call_QR_Poster.png" download>⬇ <span class="en">Patient poster</span><span class="es">Póster pacientes</span> (PNG)</a>
     <a class="btn sec" href="docs/demo/Medic_App_QR.png" download>⬇ <span class="en">Medic app QR</span><span class="es">QR app médicos</span> (PNG)</a>
-    <a class="btn sec" href="docs/demo/QR_Checkin_Demo.mp4" download>⬇ Video (MP4)</a>
+    <a class="btn sec" href="docs/demo/QR_Checkin_Demo_public.mp4" download>⬇ Video (MP4)</a>
   </div>
   <p class="fine"><span class="en">Demo Soldiers are fictional. Suggested triage only — the medic and provider decide. No server: answers travel only inside the QR; the medic's list keeps rank + last name only and deletes itself after 12 h.</span><span class="es">Los soldados del demo son ficticios. El triaje es solo una sugerencia — el médico y el proveedor deciden. Sin servidor: las respuestas solo viajan dentro del QR; la lista del médico solo guarda rango + apellido y se borra sola a las 12 h.</span></p>
 </div>
