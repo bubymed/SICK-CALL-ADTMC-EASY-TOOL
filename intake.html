@@ -48,6 +48,20 @@ textarea{width:100%;min-height:90px;border:0;border-radius:14px;background:var(-
 .qr.fr-red{border-color:#FF3B30}.qr.fr-orange{border-color:#FFCC00}.qr.fr-gray{border-color:#8E8E93}
 .honest{color:var(--dim);font-size:14px;margin:14px 2px 0}
 .ucmj{color:var(--dim);font-size:12px;margin:6px 2px 0;opacity:.85}
+.rules{border:2px solid var(--acc);border-radius:16px;padding:14px 16px;margin-top:18px;background:var(--card)}
+.rules b{font-size:17px}
+.rules p{margin:8px 0 0;font-size:15px;color:var(--txt)}
+.rules .art{font-weight:600}
+.rules.big{margin-top:6px}.rules.big b{font-size:20px}.rules.big p{font-size:17px}
+.btn:disabled{opacity:.45}
+.fq{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.fq-t{font-weight:600;margin-bottom:10px}
+.fq-o{font-weight:400;color:var(--dim);font-size:14px}
+.fq .chip{background:var(--card2)}
+.fq .chip.on{background:var(--acc)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{border:0;background:var(--card2);color:var(--txt);font-family:inherit;font-size:17px;font-weight:600;border-radius:11px;padding:12px 0}
+.seg button.on{background:var(--acc);color:var(--acc-t)}
 .qr svg{display:block;width:100%;height:auto}
 .sum{background:var(--card);border-radius:14px;padding:12px 16px;margin-top:12px;font-size:15px}
 .sum div{display:flex;gap:10px;padding:5px 0;border-top:1px solid var(--line)}
@@ -67,15 +81,19 @@ let IQ_ES=/^es/i.test(navigator.language||'');
 try{const u=new URLSearchParams(location.search).get('lang');if(u)IQ_ES=u==='es';}catch(e){}
 const T=(e,s)=>IQ_ES?s:e;
 let q,step;
-function reset(){q={v:1,a:'',d:'',w:null,r:null,rw:null,s:null,j:null,f:[],n:''};step=0;draw();}
-const STEPS=['start','area','dur','worse','seen','seenw','sev','duty','flags','note','done'];
-function vis(){return STEPS.filter(s=>s!=='seenw'||q.r===1);}
+function reset(){q={v:1,a:'',d:'',w:null,r:null,rw:null,s:null,j:null,f:[],n:'',x:{}};step=0;clearTimeout(rulesT);draw();}
+let rulesT=0,rulesLeft=0;
+const STEPS=['start','rules','area','fu','dur','worse','seen','seenw','sev','duty','flags','note','done'];
+function vis(){return STEPS.filter(s=>(s!=='seenw'||q.r===1)&&(s!=='fu'||!q.a||iqFU(q.a).length));}
 function next(){const v=vis();step=Math.min(v.indexOf(cur())+1,v.length-1);draw();scrollTo(0,0);}
 function prev(){const v=vis();step=Math.max(v.indexOf(cur())-1,0);draw();scrollTo(0,0);}
 function cur(){return vis()[step]||vis()[0];}
 function setLang(es){IQ_ES=es;document.documentElement.lang=es?'es':'en';draw();}
-function pick(k,v){q[k]=v;if(k==='r'&&v===0)q.rw=null;next();}
+function pick(k,v){if(k==='a'&&q.a!==v)q.x={};q[k]=v;if(k==='r'&&v===0)q.rw=null;next();}
+function fuSet(id,v,multi){if(multi){const a=Array.isArray(q.x[id])?q.x[id]:[];const i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);q.x[id]=a;}else q.x[id]=v;draw();}
+function fuDone(){return iqFU(q.a).every(Q=>Q[3]==='multi'||q.x[Q[0]]!==undefined);}
 function flag(c){if(c==='none'){q.f=[];next();return;}const i=q.f.indexOf(c);i<0?q.f.push(c):q.f.splice(i,1);draw();}
+function rulesBox(big){return '<div class="rules'+(big?' big':'')+'"><b>⚖️ '+T('Be honest','Di la verdad')+'</b><p>'+T('The medic will examine you and decide your care — your answers only help us see you in the right order. Exaggerating will not change that.','El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto. Exagerar no cambia eso.')+'</p><p class="art">'+T('UCMJ Article 115 (Malingering): feigning illness, physical disablement or mental lapse to avoid work, duty or service is punishable under the UCMJ.','UCMJ Artículo 115 (Malingering / fingir enfermedad): fingir una enfermedad, incapacidad física o mental para evitar el trabajo, el deber o el servicio se castiga bajo el UCMJ.')+'</p><p>'+T('If your symptoms are real, always tell us — that is never a problem.','Si tus síntomas son reales, siempre dínoslo — eso nunca es un problema.')+'</p></div>';}
 function ucmj(){return '<p class="ucmj">'+T('UCMJ Art. 115 (Malingering): feigning illness, physical disablement or mental lapse to avoid work, duty or service is punishable under the UCMJ. If your symptoms are real, always tell us — that is never a problem.','UCMJ Art. 115 (Malingering / fingir enfermedad): fingir una enfermedad, incapacidad física o mental para evitar el trabajo, el deber o el servicio se castiga bajo el UCMJ. Si tus síntomas son reales, siempre dínoslo — eso nunca es un problema.')+'</p>';}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function head(){const v=vis(),i=v.indexOf(cur());
@@ -88,9 +106,21 @@ function draw(){
   if(s==='start'){
     h+='<h1>'+T('Answer a few quick questions','Contesta unas preguntas rápidas')+'</h1><p class="sub">'+T('About 1 minute. Don\'t write your name or any ID. At the end you\'ll get a code to show the medic.','Más o menos 1 minuto. No escribas tu nombre ni ningún ID. Al final te sale un código para enseñarle al médico.')+'</p>'
      +'<div class="warn" style="background:var(--card);color:var(--txt);font-size:16px;font-weight:600">🚨 '+T('Trouble breathing, chest pain, heavy bleeding or passed out? Don\'t fill this out — tell the medic or call 911 now.','¿Te cuesta respirar, dolor de pecho, sangrado fuerte o te desmayaste? No llenes esto — avísale al médico o llama al 911 ya.')+'</div>'
-     +'<p class="honest">'+T('Answer honestly. The medic will examine you and decide your care — your answers only help us see you in the right order.','Contesta con la verdad. El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto.')+'</p>'+ucmj()
      +'<button class="btn" onclick="next()">'+T('Start','Empezar')+'</button>'
+     +rulesBox()
      +'<p class="note">'+T('Nothing is saved or sent anywhere. Your answers stay on this phone until you close the page.','No se guarda ni se envía nada. Tus respuestas se quedan en este teléfono hasta que cierres la página.')+'</p>';
+  }else if(s==='rules'){
+    if(!rulesLeft&&!q._ok){rulesLeft=4;const tk=()=>{rulesLeft--;const b=document.getElementById('okB');if(b){if(rulesLeft>0){b.textContent=T('Read this first… ','Lee esto primero… ')+rulesLeft;rulesT=setTimeout(tk,1000);}else{b.disabled=false;b.textContent=T('I understand — continue','Entiendo — continuar');}}};rulesT=setTimeout(tk,1000);}
+    h+='<h1>'+T('Before you start','Antes de empezar')+'</h1>'+rulesBox(true)
+     +'<button class="btn" id="okB" '+(q._ok||rulesLeft<=0?'':'disabled')+' onclick="q._ok=1;next()">'+(q._ok||rulesLeft<=0?T('I understand — continue','Entiendo — continuar'):T('Read this first… ','Lee esto primero… ')+rulesLeft)+'</button>'+backBtn();
+  }else if(s==='fu'){
+    const a=iqArea(q.a);
+    h+='<h1>'+T('A few details','Unos detalles')+'</h1><p class="sub">'+(IQ_ES?a[2]:a[1])+' · '+T('This helps the medic understand what happened.','Esto ayuda al médico a entender qué pasó.')+'</p>';
+    iqFU(q.a).forEach(Q=>{const id=Q[0],v=q.x[id];h+='<div class="fq"><div class="fq-t">'+(IQ_ES?Q[2]:Q[1])+(Q[3]==='multi'?' <span class="fq-o">'+T('(tap all that apply)','(toca todos los que apliquen)')+'</span>':'')+'</div>';
+      if(Q[3]==='yn')h+='<div class="seg"><button class="'+(v===1?'on':'')+'" onclick="fuSet(\''+id+'\',1)">'+T('Yes','Sí')+'</button><button class="'+(v===0?'on':'')+'" onclick="fuSet(\''+id+'\',0)">No</button></div>';
+      else h+='<div class="chips">'+Q[4].map((o,i)=>{const on=Q[3]==='multi'?(Array.isArray(v)&&v.includes(i)):v===i;return '<button class="chip'+(on?' on':'')+'" onclick="fuSet(\''+id+'\','+i+','+(Q[3]==='multi')+')">'+(IQ_ES?o[1]:o[0])+'</button>';}).join('')+'</div>';
+      h+='</div>';});
+    h+='<button class="btn" '+(fuDone()?'':'disabled')+' onclick="next()">'+(fuDone()?T('Continue','Continuar'):T('Answer each question','Contesta cada pregunta'))+'</button>'+backBtn();
   }else if(s==='area'){
     h+='<h1>'+T('What\'s bothering you?','¿Qué te pasa?')+'</h1><p class="sub">'+T('Pick the main one.','Escoge el principal.')+'</p>';
     Object.keys(IQ_GROUPS).forEach(g=>{h+='<div class="grp">'+IQ_GROUPS[g][IQ_ES?1:0]+'</div><div class="chips">'+IQ_AREAS.filter(a=>a[4]===g).map(a=>'<button class="chip'+(q.a===a[0]?' on':'')+'" onclick="pick(\'a\',\''+a[0]+'\')">'+(IQ_ES?a[2]:a[1])+'</button>').join('')+'</div>';});
@@ -114,17 +144,18 @@ function draw(){
   }else if(s==='note'){
     h+='<h1>'+T('Anything else the medic should know?','¿Algo más que deba saber el médico?')+'</h1><p class="sub">'+T('Optional. A few words — no names, no ID numbers.','Opcional. Pocas palabras — sin nombres ni números de ID.')+'</p>'
      +'<textarea id="nt" maxlength="100" placeholder="'+T('e.g. hurt it running','ej. me lastimé corriendo')+'" oninput="q.n=this.value;document.getElementById(\'cn\').textContent=this.value.length+\'/100\'">'+esc(q.n)+'</textarea><div class="cnt" id="cn">'+q.n.length+'/100</div>'
-     +'<p class="honest">'+T('Answer honestly. The medic will examine you and decide your care — your answers only help us see you in the right order.','Contesta con la verdad. El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto.')+'</p>'+ucmj()
+     +'<p class="honest">'+T('Answer honestly — the medic will examine you and decide your care.','Contesta con la verdad — el médico te va a examinar y decidir tu atención.')+'</p>'
      +'<button class="btn" onclick="q.n=q.n.trim();next()">'+T('Get my code','Ver mi código')+'</button>'+backBtn();
   }else if(s==='done'){
     const out={v:1,a:q.a,d:q.d,w:q.w?1:0,r:q.r?1:0,s:q.s||0,j:q.j?1:0,f:q.f,t:Math.round(Date.now()/60000),l:IQ_ES?'es':'en'};
-    if(q.r)out.rw=q.rw?1:0;if(q.n)out.n=q.n.slice(0,100);
+    if(q.r)out.rw=q.rw?1:0;if(q.n)out.n=q.n.slice(0,100);if(Object.keys(q.x).length)out.x=q.x;
     const url=iqBase()+'#iq='+iqEncode(out);
     if(q.f.length)h+='<div class="warn">⚠️ '+T('Tell the medic NOW — don\'t wait in line.','Avísale al médico AHORA — no esperes en la fila.')
       +(q.f.includes('harm')?'<small>'+T('You are not alone. Military / Veterans Crisis Line: call 988, then press 1 — 24/7.','No estás solo. Línea de crisis militar / veteranos: llama al 988 y marca 1 — 24/7.')+'</small>':'')+'</div>';
     h+='<h1 style="text-align:center">'+T('Show this code to the medic','Enséñale este código al médico')+'</h1><div class="qr fr-'+iqTriage(out).c+'" id="qr"></div>';
     const a=iqArea(q.a),rows=[[T('Problem','Problema'),IQ_ES?a[2]:a[1]],[T('Started','Empezó'),iqLbl(IQ_DUR,q.d,IQ_ES?2:1)],[T('Worse last 2–3 days','Peor en 2–3 días'),q.w?T('Yes','Sí'):'No'],[T('Seen before for this','Ya me vieron'),q.r?(T('Yes','Sí')+(q.rw?T(' — worse since',' — peor desde entonces'):'')):'No'],[T('Pain','Dolor'),(q.s||0)+'/10'],[T('Stops job / PT','Impide trabajo / PT'),q.j?T('Yes','Sí'):'No']];
     if(q.f.length)rows.push([T('Warning signs','Señales de alarma'),q.f.map(x=>iqLbl(IQ_FLAGS,x,IQ_ES?2:1)).join(', ')]);
+    iqFUAns(out).forEach(x=>rows.push([x.k,x.v]));
     if(q.n)rows.push([T('Note','Nota'),q.n]);
     h+='<div class="sum">'+rows.map(r=>'<div><span>'+r[0]+'</span><b>'+esc(r[1])+'</b></div>').join('')+'</div>'
      +'<button class="btn sec" onclick="prev()">‹ '+T('Change an answer','Cambiar una respuesta')+'</button>'
