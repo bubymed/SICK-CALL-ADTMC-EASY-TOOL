@@ -12,18 +12,18 @@ and get a suggested plan and disposition. The note is plain English text ready t
 ## ▶ New: QR Check-in for Sick Call / Registro con QR
 
 Soldiers scan a poster and answer ~1 minute of ADTMC-based questions on their own phone (rank + last name only).
-They get a QR whose **frame color is the triage** — 🔴 see now · 🟡 sick call · ⚪ not a priority — so medics can sort the line at a glance.
+They get a QR that **helps the medic prioritize the line at a glance**.
 The medic scans it and the app opens the right ADTMC protocol with the history already in the note.
 
 Los soldados escanean un póster y contestan ~1 minuto de preguntas del ADTMC en su teléfono (solo rango + apellido).
-Les sale un QR cuyo **color de marco es el triaje**, y al escanearlo la app abre el protocolo correcto con el historial ya en la nota.
+Les sale un QR que **ayuda al médico a priorizar la fila de un vistazo**, y al escanearlo la app abre el protocolo correcto con el historial ya en la nota.
 
 **[▶ Watch the 1-minute demo / Ver el demo](https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/demo.html)** ·
 [Open the app](https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/) ·
 [Try the questionnaire](https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/intake.html) ·
 [Patient poster (PNG)](docs/demo/Sick_Call_QR_Poster.png)
 
-<a href="https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/demo.html"><img src="docs/demo/QR_Checkin_Guide.jpg" alt="QR check-in guide" width="560"></a>
+<a href="https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/demo.html"><img src="docs/demo/QR_Checkin_Guide_public.jpg" alt="QR check-in guide" width="560"></a>
 
 ## Privacy
 - Everything runs in your browser. **Nothing is sent to any server.**

@@ -110,7 +110,6 @@ function draw(){
     h+='<h1>'+T('Answer a few quick questions','Contesta unas preguntas rápidas')+'</h1><p class="sub">'+T('About 1 minute. We only ask your rank and last name — no first name, no DoD ID. At the end you\'ll get a code to show the medic.','Más o menos 1 minuto. Solo pedimos tu rango y apellido — sin nombre de pila ni DoD ID. Al final te sale un código para enseñarle al médico.')+'</p>'
      +'<div class="warn" style="background:var(--card);color:var(--txt);font-size:16px;font-weight:600">🚨 '+T('Trouble breathing, chest pain, heavy bleeding or passed out? Don\'t fill this out — tell the medic or call 911 now.','¿Te cuesta respirar, dolor de pecho, sangrado fuerte o te desmayaste? No llenes esto — avísale al médico o llama al 911 ya.')+'</div>'
      +'<button class="btn" onclick="next()">'+T('Start','Empezar')+'</button>'
-     +rulesBox()
      +'<p class="note">'+T('Nothing is saved or sent anywhere. Your answers stay on this phone until you close the page.','No se guarda ni se envía nada. Tus respuestas se quedan en este teléfono hasta que cierres la página.')+'</p>';
   }else if(s==='rules'){
     if(!rulesLeft&&!q._ok){rulesLeft=4;const tk=()=>{rulesLeft--;const b=document.getElementById('okB');if(b){if(rulesLeft>0){b.textContent=T('Read this first… ','Lee esto primero… ')+rulesLeft;rulesT=setTimeout(tk,1000);}else{b.disabled=false;b.textContent=T('I understand — continue','Entiendo — continuar');}}};rulesT=setTimeout(tk,1000);}
