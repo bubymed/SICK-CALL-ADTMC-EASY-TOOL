@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sick Call Check-in</title>
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#F2F2F7;--card:#FFFFFF;--card2:#E9E9EE;--txt:#000;--dim:#6C6C70;--acc:#FF9500;--acc-t:#000;--red:#FF3B30;--green:#34C759;--line:#E5E5EA}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1C1C1E;--card2:#2C2C2E;--txt:#fff;--dim:#8E8E93;--acc:#FF9F0A;--red:#FF453A;--green:#30D158;--line:#38383A}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:17px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom))}
+.wrap{max-width:520px;margin:0 auto}
+.top{display:flex;align-items:center;gap:10px;padding:14px 0 6px}
+.top b{font-size:17px}
+.lang{margin-left:auto;display:flex;background:var(--card2);border-radius:9px;padding:2px}
+.lang button{border:0;background:none;color:var(--dim);font-family:inherit;font-size:14px;font-weight:600;padding:6px 12px;border-radius:7px}
+.lang button.on{background:var(--acc);color:var(--acc-t)}
+.bar{height:4px;background:var(--card2);border-radius:2px;margin:6px 0 18px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc);transition:width .2s}
+h1{font-size:28px;line-height:1.15;margin:8px 0 8px}
+p.sub{color:var(--dim);margin:0 0 18px}
+.grp{font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin:16px 4px 8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:0;background:var(--card);color:var(--txt);font-family:inherit;font-size:16px;padding:12px 16px;border-radius:22px;min-height:46px}
+.chip.on{background:var(--acc);color:var(--acc-t);font-weight:600}
+.list{background:var(--card);border-radius:14px;overflow:hidden}
+.opt{display:flex;align-items:center;width:100%;border:0;background:none;color:var(--txt);font-family:inherit;font-size:17px;text-align:left;padding:15px 16px;min-height:54px;border-top:1px solid var(--line)}
+.opt:first-child{border-top:0}
+.opt .ck{margin-left:auto;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);flex:none}
+.opt.on .ck{background:var(--acc);border-color:var(--acc)}
+.opt.on .ck::after{content:"✓";display:block;text-align:center;line-height:20px;color:var(--acc-t);font-weight:700;font-size:14px}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.yn button,.sev button{border:0;background:var(--card);color:var(--txt);font-family:inherit;font-size:18px;font-weight:600;border-radius:14px;padding:18px 0}
+.sev{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.sev button{padding:14px 0}
+.sev .lg{grid-column:span 6;display:flex;justify-content:space-between;color:var(--dim);font-size:13px;padding:0 2px}
+.btn{display:block;width:100%;border:0;border-radius:14px;background:var(--acc);color:var(--acc-t);font-family:inherit;font-size:17px;font-weight:700;padding:16px;margin-top:18px}
+.btn.sec{background:var(--card);color:var(--txt);font-weight:600}
+.back{border:0;background:none;color:var(--acc);font-family:inherit;font-size:16px;padding:8px 0;margin-top:6px}
+textarea{width:100%;min-height:90px;border:0;border-radius:14px;background:var(--card);color:var(--txt);font-family:inherit;font-size:17px;padding:14px;resize:vertical}
+.cnt{color:var(--dim);font-size:13px;text-align:right;margin-top:4px}
+.warn{background:var(--red);color:#fff;border-radius:14px;padding:16px;font-weight:700;font-size:19px;line-height:1.3;margin-bottom:14px}
+.warn small{display:block;font-weight:500;font-size:15px;margin-top:6px}
+.qr{background:#fff;border-radius:22px;padding:14px;margin:6px auto 10px;max-width:340px;border:12px solid #8E8E93}
+.qr.fr-red{border-color:#FF3B30}.qr.fr-orange{border-color:#FFCC00}.qr.fr-gray{border-color:#8E8E93}
+.honest{color:var(--dim);font-size:14px;margin:14px 2px 0}
+.ucmj{color:var(--dim);font-size:12px;margin:6px 2px 0;opacity:.85}
+.qr svg{display:block;width:100%;height:auto}
+.sum{background:var(--card);border-radius:14px;padding:12px 16px;margin-top:12px;font-size:15px}
+.sum div{display:flex;gap:10px;padding:5px 0;border-top:1px solid var(--line)}
+.sum div:first-child{border-top:0}
+.sum span{color:var(--dim);flex:none;width:42%}
+.note{color:var(--dim);font-size:13px;margin-top:16px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script src="data/intake.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script>
+/* Patient side. Nothing is saved or sent: answers live in this page only and leave inside the QR.
+   Lado del paciente. No se guarda ni se envía nada: las respuestas viven solo en esta página y salen dentro del QR. */
+let IQ_ES=/^es/i.test(navigator.language||'');
+try{const u=new URLSearchParams(location.search).get('lang');if(u)IQ_ES=u==='es';}catch(e){}
+const T=(e,s)=>IQ_ES?s:e;
+let q,step;
+function reset(){q={v:1,a:'',d:'',w:null,r:null,rw:null,s:null,j:null,f:[],n:''};step=0;draw();}
+const STEPS=['start','area','dur','worse','seen','seenw','sev','duty','flags','note','done'];
+function vis(){return STEPS.filter(s=>s!=='seenw'||q.r===1);}
+function next(){const v=vis();step=Math.min(v.indexOf(cur())+1,v.length-1);draw();scrollTo(0,0);}
+function prev(){const v=vis();step=Math.max(v.indexOf(cur())-1,0);draw();scrollTo(0,0);}
+function cur(){return vis()[step]||vis()[0];}
+function setLang(es){IQ_ES=es;document.documentElement.lang=es?'es':'en';draw();}
+function pick(k,v){q[k]=v;if(k==='r'&&v===0)q.rw=null;next();}
+function flag(c){if(c==='none'){q.f=[];next();return;}const i=q.f.indexOf(c);i<0?q.f.push(c):q.f.splice(i,1);draw();}
+function ucmj(){return '<p class="ucmj">'+T('UCMJ Art. 115 (Malingering): feigning illness, physical disablement or mental lapse to avoid work, duty or service is punishable under the UCMJ. If your symptoms are real, always tell us — that is never a problem.','UCMJ Art. 115 (Malingering / fingir enfermedad): fingir una enfermedad, incapacidad física o mental para evitar el trabajo, el deber o el servicio se castiga bajo el UCMJ. Si tus síntomas son reales, siempre dínoslo — eso nunca es un problema.')+'</p>';}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function head(){const v=vis(),i=v.indexOf(cur());
+  return '<div class="top"><b>🩺 '+T('Sick call check-in','Registro para sick call')+'</b><div class="lang"><button class="'+(IQ_ES?'':'on')+'" onclick="setLang(false)">EN</button><button class="'+(IQ_ES?'on':'')+'" onclick="setLang(true)">ES</button></div></div>'
+   +'<div class="bar"><i style="width:'+Math.round(i/(v.length-1)*100)+'%"></i></div>';}
+const yn=(k)=>'<div class="yn"><button onclick="pick(\''+k+'\',1)">'+T('Yes','Sí')+'</button><button onclick="pick(\''+k+'\',0)">No</button></div>';
+const backBtn=()=>'<button class="back" onclick="prev()">‹ '+T('Back','Atrás')+'</button>';
+function draw(){
+  const s=cur();let h=head();
+  if(s==='start'){
+    h+='<h1>'+T('Answer a few quick questions','Contesta unas preguntas rápidas')+'</h1><p class="sub">'+T('About 1 minute. Don\'t write your name or any ID. At the end you\'ll get a code to show the medic.','Más o menos 1 minuto. No escribas tu nombre ni ningún ID. Al final te sale un código para enseñarle al médico.')+'</p>'
+     +'<div class="warn" style="background:var(--card);color:var(--txt);font-size:16px;font-weight:600">🚨 '+T('Trouble breathing, chest pain, heavy bleeding or passed out? Don\'t fill this out — tell the medic or call 911 now.','¿Te cuesta respirar, dolor de pecho, sangrado fuerte o te desmayaste? No llenes esto — avísale al médico o llama al 911 ya.')+'</div>'
+     +'<p class="honest">'+T('Answer honestly. The medic will examine you and decide your care — your answers only help us see you in the right order.','Contesta con la verdad. El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto.')+'</p>'+ucmj()
+     +'<button class="btn" onclick="next()">'+T('Start','Empezar')+'</button>'
+     +'<p class="note">'+T('Nothing is saved or sent anywhere. Your answers stay on this phone until you close the page.','No se guarda ni se envía nada. Tus respuestas se quedan en este teléfono hasta que cierres la página.')+'</p>';
+  }else if(s==='area'){
+    h+='<h1>'+T('What\'s bothering you?','¿Qué te pasa?')+'</h1><p class="sub">'+T('Pick the main one.','Escoge el principal.')+'</p>';
+    Object.keys(IQ_GROUPS).forEach(g=>{h+='<div class="grp">'+IQ_GROUPS[g][IQ_ES?1:0]+'</div><div class="chips">'+IQ_AREAS.filter(a=>a[4]===g).map(a=>'<button class="chip'+(q.a===a[0]?' on':'')+'" onclick="pick(\'a\',\''+a[0]+'\')">'+(IQ_ES?a[2]:a[1])+'</button>').join('')+'</div>';});
+    h+=backBtn();
+  }else if(s==='dur'){
+    h+='<h1>'+T('When did it start?','¿Desde cuándo?')+'</h1><div class="list">'+IQ_DUR.map(d=>'<button class="opt'+(q.d===d[0]?' on':'')+'" onclick="pick(\'d\',\''+d[0]+'\')">'+(IQ_ES?d[2]:d[1])+'<span class="ck"></span></button>').join('')+'</div>'+backBtn();
+  }else if(s==='worse'){
+    h+='<h1>'+T('Has it gotten worse in the last 2–3 days?','¿Ha empeorado en los últimos 2–3 días?')+'</h1>'+yn('w')+backBtn();
+  }else if(s==='seen'){
+    h+='<h1>'+T('Have you already been seen for this same problem?','¿Ya te vieron por este mismo problema?')+'</h1><p class="sub">'+T('At sick call, the clinic or the ER.','En sick call, la clínica o el ER.')+'</p>'+yn('r')+backBtn();
+  }else if(s==='seenw'){
+    h+='<h1>'+T('Is it worse since you were seen?','¿Está peor desde que te vieron?')+'</h1>'+yn('rw')+backBtn();
+  }else if(s==='sev'){
+    h+='<h1>'+T('How bad is it right now?','¿Qué tan fuerte es ahora?')+'</h1><div class="sev">'+[0,1,2,3,4,5,6,7,8,9,10].map(n=>'<button onclick="pick(\'s\','+n+')"'+(n===10?' style="grid-column:span 2"':'')+'>'+n+'</button>').join('')+'<div class="lg"><span>0 = '+T('nothing','nada')+'</span><span>10 = '+T('worst ever','lo peor')+'</span></div></div>'+backBtn();
+  }else if(s==='duty'){
+    h+='<h1>'+T('Does it stop you from doing your job or PT?','¿Te impide hacer tu trabajo o PT?')+'</h1>'+yn('j')+backBtn();
+  }else if(s==='flags'){
+    h+='<h1>'+T('Do you have any of these right now?','¿Tienes alguno de estos ahora?')+'</h1><p class="sub">'+T('Tap all that apply.','Toca todos los que tengas.')+'</p><div class="list">'
+     +IQ_FLAGS.map(f=>'<button class="opt'+(q.f.includes(f[0])?' on':'')+'" onclick="flag(\''+f[0]+'\')">'+(IQ_ES?f[2]:f[1])+'<span class="ck"></span></button>').join('')+'</div>'
+     +(q.f.length?'<button class="btn" onclick="next()">'+T('Continue','Continuar')+'</button>':'<button class="btn sec" onclick="flag(\'none\')">'+T('None of these','Ninguno de estos')+'</button>')+backBtn();
+  }else if(s==='note'){
+    h+='<h1>'+T('Anything else the medic should know?','¿Algo más que deba saber el médico?')+'</h1><p class="sub">'+T('Optional. A few words — no names, no ID numbers.','Opcional. Pocas palabras — sin nombres ni números de ID.')+'</p>'
+     +'<textarea id="nt" maxlength="100" placeholder="'+T('e.g. hurt it running','ej. me lastimé corriendo')+'" oninput="q.n=this.value;document.getElementById(\'cn\').textContent=this.value.length+\'/100\'">'+esc(q.n)+'</textarea><div class="cnt" id="cn">'+q.n.length+'/100</div>'
+     +'<p class="honest">'+T('Answer honestly. The medic will examine you and decide your care — your answers only help us see you in the right order.','Contesta con la verdad. El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto.')+'</p>'+ucmj()
+     +'<button class="btn" onclick="q.n=q.n.trim();next()">'+T('Get my code','Ver mi código')+'</button>'+backBtn();
+  }else if(s==='done'){
+    const out={v:1,a:q.a,d:q.d,w:q.w?1:0,r:q.r?1:0,s:q.s||0,j:q.j?1:0,f:q.f,t:Math.round(Date.now()/60000),l:IQ_ES?'es':'en'};
+    if(q.r)out.rw=q.rw?1:0;if(q.n)out.n=q.n.slice(0,100);
+    const url=iqBase()+'#iq='+iqEncode(out);
+    if(q.f.length)h+='<div class="warn">⚠️ '+T('Tell the medic NOW — don\'t wait in line.','Avísale al médico AHORA — no esperes en la fila.')
+      +(q.f.includes('harm')?'<small>'+T('You are not alone. Military / Veterans Crisis Line: call 988, then press 1 — 24/7.','No estás solo. Línea de crisis militar / veteranos: llama al 988 y marca 1 — 24/7.')+'</small>':'')+'</div>';
+    h+='<h1 style="text-align:center">'+T('Show this code to the medic','Enséñale este código al médico')+'</h1><div class="qr fr-'+iqTriage(out).c+'" id="qr"></div>';
+    const a=iqArea(q.a),rows=[[T('Problem','Problema'),IQ_ES?a[2]:a[1]],[T('Started','Empezó'),iqLbl(IQ_DUR,q.d,IQ_ES?2:1)],[T('Worse last 2–3 days','Peor en 2–3 días'),q.w?T('Yes','Sí'):'No'],[T('Seen before for this','Ya me vieron'),q.r?(T('Yes','Sí')+(q.rw?T(' — worse since',' — peor desde entonces'):'')):'No'],[T('Pain','Dolor'),(q.s||0)+'/10'],[T('Stops job / PT','Impide trabajo / PT'),q.j?T('Yes','Sí'):'No']];
+    if(q.f.length)rows.push([T('Warning signs','Señales de alarma'),q.f.map(x=>iqLbl(IQ_FLAGS,x,IQ_ES?2:1)).join(', ')]);
+    if(q.n)rows.push([T('Note','Nota'),q.n]);
+    h+='<div class="sum">'+rows.map(r=>'<div><span>'+r[0]+'</span><b>'+esc(r[1])+'</b></div>').join('')+'</div>'
+     +'<button class="btn sec" onclick="prev()">‹ '+T('Change an answer','Cambiar una respuesta')+'</button>'
+     +'<button class="btn sec" onclick="reset()">'+T('Start over / clear','Empezar de nuevo / borrar')+'</button>'
+     +'<p class="note">'+T('Turn up your screen brightness if the medic can\'t scan it. Nothing was saved or sent.','Sube el brillo de la pantalla si el médico no lo puede escanear. No se guardó ni se envió nada.')+'</p>';
+    document.getElementById('app').innerHTML=h;
+    try{const qr=qrcode(0,'M');qr.addData(url);qr.make();document.getElementById('qr').innerHTML=qr.createSvgTag({cellSize:4,margin:2,scalable:true});}
+    catch(e){document.getElementById('qr').textContent=T('Could not draw the code — show this screen to the medic.','No se pudo dibujar el código — enséñale esta pantalla al médico.');}
+    return;
+  }
+  document.getElementById('app').innerHTML=h;
+}
+document.documentElement.lang=IQ_ES?'es':'en';
+reset();
+</script>
+</body>
+</html>
