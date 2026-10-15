@@ -565,3 +565,5 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 #toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translate(-50%,-90px);max-width:92vw;background:var(--panel);color:var(--txt);box-shadow:0 8px 28px rgba(0,0,0,.3);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:200;transition:transform .25s;text-align:center}
 #toast.on{transform:translate(-50%,0)}
 .hwrap{position:relative}
+
+#slipOv .sl-bar .pdfbtn{background:var(--blue);color:#fff;border:none;border-radius:8px;font-weight:600}

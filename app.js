@@ -2475,7 +2475,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v10';
+const APP_VER='v11';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -2568,7 +2568,7 @@ function slipOpen(){
   o=document.createElement('div');o.id='slipOv';
   const cb=(id,l)=>`<label class="sl-cb"><input type="checkbox" id="${id}"><span class="bx"></span>${l}</label>`;
   o.innerHTML=`<div class="sl-bar"><b>DD Form 689 — Individual Sick Slip</b><span class="spacer"></span>
-    <button onclick="slipHist(this)" id="slipHistBtn">History below: ON</button><button onclick="slipPrint()">🖨 Print</button><button class="xbtn" onclick="slipClose()" aria-label="Close" title="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <button onclick="slipHist(this)" id="slipHistBtn">History below: ON</button><button class="pdfbtn" onclick="slipPdf(this)">📄 Official PDF</button><button onclick="slipPrint()">🖨 Print</button><button class="xbtn" onclick="slipClose()" aria-label="Close" title="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="sl-hint">Fill-in only for printing. Name, DoD ID, rank and signature are NOT saved. Tick the boxes in blocks 10–11 and draw your signature in block 13 with your finger if your SOP authorizes you to sign. Blocks 7–9 stay blank for the Commander.</div>
     <div class="sl-form"><div class="sl-title">INDIVIDUAL SICK SLIP</div>
     <div class="sl-row"><div class="sl-c w65"><label>1. MEDICAL CONDITION <i>(Brief Description)</i></label>${cb('slIll','ILLNESS')}${cb('slInj','INJURY')}<textarea id="slCond" rows="2">${D.cond.replace(/</g,'&lt;')}</textarea></div>
@@ -2594,7 +2594,7 @@ let _sigCtx=null;
 function slSigInit(){
   const c=document.getElementById('slSig');if(!c)return;
   const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=Math.max(200,r.width)*dpr;c.height=70*dpr;
-  const x=c.getContext('2d');x.scale(dpr,dpr);x.lineWidth=2;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#000';_sigCtx=x;
+  const x=c.getContext('2d');x.scale(dpr,dpr);x.lineWidth=3;x.lineCap='round';x.lineJoin='round';x.strokeStyle='#000';_sigCtx=x;
   let d=false,lx=0,ly=0;
   const pt=e=>{const b=c.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top];};
   c.onpointerdown=e=>{d=true;[lx,ly]=pt(e);c.setPointerCapture(e.pointerId);e.preventDefault();};
@@ -2604,6 +2604,55 @@ function slSigInit(){
 function slSigClear(){const c=document.getElementById('slSig');if(c&&_sigCtx){_sigCtx.save();_sigCtx.setTransform(1,0,0,1,0,0);_sigCtx.clearRect(0,0,c.width,c.height);_sigCtx.restore();}}
 function slFit(el){if(!el)return;el.style.height='auto';el.style.overflow='hidden';el.style.height=(el.scrollHeight+2)+'px';}
 function slFitAll(){const o=document.getElementById('slipOv');if(!o)return;const r=document.getElementById('slRem');if(r){const n=r.value.length;r.style.fontSize=n>1500?'9px':n>900?'10px':n>500?'11px':'';}const hh=document.getElementById('slHist');if(hh){const n=hh.value.length;hh.style.fontSize=n>2200?'8px':n>1400?'9px':n>800?'10px':'';}o.querySelectorAll('textarea').forEach(slFit);const w=document.getElementById('slWarn');if(w&&r){w.style.display=r.value.length>1800?'block':'none';}}
+/* ---- Official DD 689 PDF: values drawn on the real form (forms/DD689.pdf) with pdf-lib (vendor/, MIT) ---- */
+function loadPdfLib(){return window.PDFLib?Promise.resolve(window.PDFLib):new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='vendor/pdf-lib.min.js';sc.onload=()=>ok(window.PDFLib);sc.onerror=()=>no(new Error('pdf-lib not available offline yet'));document.head.appendChild(sc);});}
+function winAnsi(t){return String(t||'').replace(/→/g,'->').replace(/←/g,'<-').replace(/≥/g,'>=').replace(/≤/g,'<=').replace(/↓/g,'decreased ').replace(/↑/g,'increased ').replace(/[✓✔]/g,'v').replace(/[•●]/g,'-').replace(/×/g,'x').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\u00FF\u2013\u2014\u2026]/g,'');}
+function pdfWrap(font,text,size,width){const out=[];String(text||'').split('\n').forEach(par=>{let line='';par.split(/\s+/).forEach(w=>{const t=line?line+' '+w:w;if(font.widthOfTextAtSize(t,size)<=width)line=t;else{if(line)out.push(line);line=w;}});out.push(line);});return out;}
+async function slipPdf(btn){
+  const o=btn&&btn.textContent;if(btn)btn.textContent=L('Building…','Generando…');
+  try{
+    const P=await loadPdfLib();const {PDFDocument,StandardFonts,rgb}=P;
+    const tpl=await fetch('forms/DD689.pdf').then(r=>{if(!r.ok)throw new Error('form');return r.arrayBuffer();});
+    const doc=await PDFDocument.load(tpl);const pg=doc.getPages()[0];const H=pg.getHeight();
+    const f=await doc.embedFont(StandardFonts.Helvetica),fb=await doc.embedFont(StandardFonts.HelveticaBold);
+    const ink=rgb(0.05,0.1,0.35);
+    const v=id=>{const e=document.getElementById(id);return e?winAnsi(e.value||''):'';};
+    const ck=id=>{const e=document.getElementById(id);return !!(e&&e.checked);};
+    const txt=(t,x,yTop,size,font)=>{if(t)pg.drawText(t,{x,y:H-yTop,size:size||10,font:font||f,color:ink});};
+    const box=(t,x,yTop,w,hMax,maxSize,minSize)=>{if(!t)return;let sz=maxSize||10,lines;for(;sz>=(minSize||6);sz-=0.5){lines=pdfWrap(f,t,sz,w);if(lines.length*sz*1.2<=hMax)break;}lines.forEach((l,i)=>txt(l,x,yTop+sz+i*sz*1.2,sz));};
+    const X=(labelX,yTop)=>txt('X',labelX-11.5,yTop+8,9,fb);
+    // block 1-6
+    if(ck('slIll'))X(219,58);if(ck('slInj'))X(277,58);
+    box(v('slCond'),47,69,300,24,10,7);
+    txt(v('slDate'),371,82,10);
+    txt(v('slName'),47,118,10);
+    box(v('slOrg'),363,106,215,56,10,7);
+    txt(v('slId'),47,154,10);txt(v('slRk'),209,154,10);
+    // block 10-11
+    if(ck('slL1'))X(340,200);if(ck('slL2'))X(424,200);
+    [['slD1',340,234],['slD2',424,234],['slD3',509,234],['slD4',340,251],['slD5',424,251],['slD6',509,251]].forEach(a=>{if(ck(a[0]))X(a[1],a[2]);});
+    // block 12 (+ other-specify)
+    const oth=v('slOth');box((oth?'Other: '+oth+'\n':'')+v('slRem'),317,280,262,124,9,6);
+    // block 13 signature + printed name
+    const c=document.getElementById('slSig');
+    if(c){const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let ink2=false;for(let i=3;i<d.length;i+=4){if(d[i]){ink2=true;break;}}
+      if(ink2){const png=await doc.embedPng(c.toDataURL('image/png'));const w=150,h=w*c.height/c.width;pg.drawImage(png,{x:320,y:H-424-Math.min(h,26),width:w,height:Math.min(h,26)});}}
+    txt(v('slSigName'),317,449,8);
+    // clinical history in the white space below the form
+    const hist=document.getElementById('slCont');
+    if(hist&&!hist.classList.contains('off')){const ht=v('slHist').trim();if(ht){
+      txt('CLINICAL HISTORY - continuation of block 12 ('+v('slDate')+')',42,486,8,fb);
+      pg.drawLine({start:{x:42,y:H-490},end:{x:574,y:H-490},thickness:0.6,color:rgb(0,0,0)});
+      const colW=258,top=500,bottom=770;let sz=9,cols;
+      for(;sz>=6;sz-=0.5){const lines=pdfWrap(f,ht,sz,colW);const per=Math.floor((bottom-top)/(sz*1.25));if(lines.length<=per*2){cols=[lines.slice(0,per),lines.slice(per)];break;}}
+      if(!cols){sz=6;const lines=pdfWrap(f,ht,sz,colW);const per=Math.floor((bottom-top)/(sz*1.25));cols=[lines.slice(0,per),lines.slice(per,per*2)];}
+      cols.forEach((col,ci)=>col.forEach((l,i)=>txt(l,42+ci*(colW+16),top+sz+i*sz*1.25,sz)));
+    }}
+    const bytes=await doc.save();const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+    const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download='DD689_'+(v('slDate')||'slip')+'.pdf';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(url);},60000);
+    if(btn)btn.textContent=o;
+  }catch(e){if(btn){btn.textContent=L('PDF failed — use Print','PDF falló — usa Imprimir');setTimeout(()=>btn.textContent=o,3000);}console.error(e);}
+}
 function slipHist(b){const c=document.getElementById('slCont');if(!c)return;c.classList.toggle('off');b.textContent='History below: '+(c.classList.contains('off')?'OFF':'ON');}
 function slipRem(b){const o=document.getElementById('slipOv'),r=document.getElementById('slRem');o._full=!o._full;r.value=o._full?o._d.full:o._d.rem;b.textContent=o._full?'Remarks: full note':'Remarks: A/P/Dispo';slFitAll();}
 function slipPrint(){
