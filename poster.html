@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sick Call QR Poster</title>
+<meta name="robots" content="noindex">
+<style>
+@page{size:letter;margin:0.5in}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:#000;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.bar{display:flex;gap:10px;justify-content:center;padding:14px;background:#F2F2F7}
+.bar button{border:0;border-radius:12px;background:#FF9500;color:#000;font:700 16px inherit;padding:12px 20px}
+.bar button.sec{background:#fff;color:#000;font-weight:600}
+.page{max-width:7.5in;margin:0 auto;padding:24px 16px;text-align:center}
+.k{display:inline-block;background:#000;color:#fff;font-weight:800;letter-spacing:.06em;font-size:15px;padding:6px 12px;border-radius:8px}
+h1{font-size:64px;line-height:1;margin:14px 0 6px;letter-spacing:-.01em}
+h2{font-size:26px;margin:0;font-weight:700}
+h2.es{color:#555;font-weight:600;margin-top:4px}
+.qr{width:4.2in;max-width:86vw;margin:22px auto 12px;padding:10px;border:3px solid #000;border-radius:18px}
+.qr svg{display:block;width:100%;height:auto}
+.url{font-size:11px;color:#666;word-break:break-all;margin-bottom:18px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:left;margin:0 auto 18px}
+.st{border:2px solid #000;border-radius:14px;padding:12px}
+.st b{display:block;font-size:26px}
+.st span{display:block;font-size:15px;font-weight:600;margin-top:2px}
+.st i{display:block;font-style:normal;font-size:13px;color:#555;margin-top:2px}
+.em{background:#FF3B30;color:#fff;border-radius:14px;padding:12px 14px;font-weight:700;font-size:17px;line-height:1.3}
+.em i{display:block;font-style:normal;font-weight:600;font-size:15px;opacity:.95}
+.fine{font-size:12px;color:#555;margin-top:14px}
+@media print{.bar{display:none}.page{padding:0}}
+@media (max-width:560px){h1{font-size:44px}.steps{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="bar"><button onclick="print()">🖨 Print / Imprimir</button><button class="sec" onclick="history.length>1?history.back():close()">Close / Cerrar</button></div>
+<div class="page">
+  <span class="k">68W · ADTMC</span>
+  <h1>SICK CALL</h1>
+  <h2>Scan before you get in line</h2>
+  <h2 class="es">Escanea antes de hacer fila</h2>
+  <div class="qr" id="qr"></div>
+  <div class="url" id="url"></div>
+  <div class="steps">
+    <div class="st"><b>1</b><span>Scan with your camera</span><i>Escanea con tu cámara</i></div>
+    <div class="st"><b>2</b><span>Answer ~1 minute of questions</span><i>Contesta ~1 minuto de preguntas</i></div>
+    <div class="st"><b>3</b><span>Show your code to the medic</span><i>Enséñale tu código al médico</i></div>
+  </div>
+  <div class="em">🚨 Trouble breathing, chest pain, heavy bleeding or passed out? Tell the medic NOW or call 911.
+    <i>¿Te cuesta respirar, dolor de pecho, sangrado fuerte o te desmayaste? Avísale al médico YA o llama al 911.</i></div>
+  <p class="fine">No names. Nothing is saved or sent — your answers stay on your phone. · Sin nombres. No se guarda ni se envía nada — tus respuestas se quedan en tu teléfono.</p>
+</div>
+<script src="data/intake.js"></script>
+<script src="vendor/qrcode.min.js"></script>
+<script>
+const url=iqBase()+'intake.html';
+document.getElementById('url').textContent=url;
+try{const q=qrcode(0,'H');q.addData(url);q.make();document.getElementById('qr').innerHTML=q.createSvgTag({cellSize:8,margin:2,scalable:true});}catch(e){document.getElementById('qr').textContent=url;}
+</script>
+</body>
+</html>

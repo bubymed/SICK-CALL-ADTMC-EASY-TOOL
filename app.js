@@ -1064,7 +1064,7 @@ function renderNav(){
   updTabs();updPeek();updMulti();try{piiNoteWarn(piiFind(document.getElementById('note').textContent));}catch(e){}
 }
 /* ===== Phone: bottom tab bar + note sheet ===== */
-const TAB_OF={adtmc:'adtmc',tpl:'adtmc',admeds:'admeds',mace:'mace',guardados:'guardados',more:'more',preguntas:'more',assess:'more',perfiles:'more',ajustes:'more'};
+const TAB_OF={adtmc:'adtmc',tpl:'adtmc',queue:'adtmc',admeds:'admeds',mace:'mace',guardados:'guardados',more:'more',preguntas:'more',assess:'more',perfiles:'more',ajustes:'more'};
 function updTabs(){const t=TAB_OF[view]||'adtmc';document.querySelectorAll('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.v===t));}
 function tabGo(v){sheetTog(false);if(v==='adtmc'&&ad.pid&&view!=='tpl'&&view!=='adtmc'){const m=protoTpl(ad.pid);cur=m.tid;view='tpl';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;return;}goRef(v);}
 function sheetTog(open){const a=document.getElementById('aside');if(!a)return;const o=open===undefined?!a.classList.contains('open'):!!open;a.classList.toggle('open',o);document.body.classList.toggle('sheet-open',o);}
@@ -1080,6 +1080,8 @@ function updPeek(){
 function renderMore(){
   const row=(ic,txt,on)=>'<div class="prow" onclick="'+on+'"><span class="ptit">'+ic+' '+txt+'</span><span class="dim">›</span></div>';
   let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
+  h+=row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')");
+  h+='</div><div class="plist" style="margin-top:14px">';
   h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
   h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag o">⌫</span><span class="name">'+L('Clear','Borrar')+'</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="resetTpl()">Clear section</button><button class="danger" onclick="clearAllAsk(this)">Clear all</button></div></div>';
@@ -1127,6 +1129,7 @@ function renderMain(){
   if(view==='assess'){m.innerHTML=renderAssess();return;}
   if(view==='mace'){m.innerHTML=renderMace();return;}
   if(view==='more'){m.innerHTML=renderMore();return;}
+  if(view==='queue'){m.innerHTML=renderQueue();return;}
   if(guided&&view==='tpl'&&guided.tpl===cur){m.innerHTML=renderGuided();return;}
   const t=TPLS.find(x=>x.id===cur), s=state[cur];
   const _hlab={quick:'Reason for visit',focus:'Focused history'}[hmode()]||'History — OPQRST / AMPLE';
@@ -1891,7 +1894,7 @@ const LV={
 const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · GU',f:'F · Neuro/BH',g:'G · General',h:'H · Eyes',i:'I · Women',j:'J · Skin',k:'K · Environment',l:'L · Misc',m:'M · Return'};
 const gFlags={female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
 let ad={pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{}};
-function adResetProto(){ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
+function adResetProto(){ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
 function adResetAll(){adResetProto();ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 /* Screening answers -> history / exam wording (data/notetags.js) */
@@ -2170,7 +2173,7 @@ function renderAD(){
   let h='<h2 class="tpl">🧭 Sick call — pick the complaint</h2><p class="tpl-sub">Organized by ADTMC letter (MEDCOM Pam 40-7-21). Each complaint opens one page: red-flag screening, OPQRST/AMPLE interview, plan and disposition.</p>';
   h+=prevHtml();
   if(ad.log.length)h+='<div class="note-hint">In the note: '+ad.log.map(e=>e.id+' '+q$(e.title)).join(' · ')+'</div>';
-  h+='<div class="field"><input type="text" placeholder="Search: knee, sore throat, rash, fever, A-1…" value="'+q$(ad.q)+'" oninput="adSearch(this.value)" style="margin-top:0"></div><div id="adlist" class="plist">'+adListItems()+'</div>';
+  h+='<div class="field"><input type="text" placeholder="Search: knee, sore throat, rash, fever, A-1…" value="'+q$(ad.q)+'" oninput="adSearch(this.value)" style="margin-top:0"></div>'+iqIndexRow()+'<div id="adlist" class="plist">'+adListItems()+'</div>';
   return h;
 }
 function adPatientCard(){return '<details class="dd" ontoggle="dd(\'adpt\',this.open)" '+(openDD.has('adpt')?'open':'')+'><summary>Optional data: female / LMP / pregnancy / MRC</summary>'+adPatientInner()+'</details>';}
@@ -2217,6 +2220,7 @@ function adHeadHtml(p){
   let h='<div class="algo-actions" style="margin:0 0 10px"><button class="ghost" onclick="adBack()">← Index</button></div>';
   h+='<h2 class="tpl"><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2>'+(foldOn()?'':'<p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>');
   h+=adLiveCard(p);
+  if(ad.iq)h+=iqBanner(ad.iq);
   return h;
 }
 function adLiveCard(p){
@@ -2231,6 +2235,83 @@ function adLiveCard(p){
   if(foldOn())return '<div class="livecard lc1 lv-wait" onclick="'+go+'"><div class="lc-r"><b>'+L('Disposition','Disposición')+'</b><span class="lc-s">'+(pend.length?L('Pending · ','Pendiente · ')+pend.join(' · '):L('Answer the decision points','Responde los puntos de decisión'))+'</span></div></div>';
   return '<div class="livecard lv-wait" onclick="'+go+'"><div class="lc-k">'+L('Suggested disposition','Disposición sugerida')+'<span>'+L('live','en vivo')+'</span></div><div class="lc-h">'+L('In progress','En progreso')+'</div><div class="lc-m">'+(pend.length?L('Pending: ','Pendiente: ')+pend.join(' · '):L('Answer the decision points below.','Responde los puntos de decisión abajo.'))+'</div></div>';
 }
+/* ===== Patient QR questionnaire — medic side (data/intake.js) =====
+   Scanned answers live in a short list on this device (no names/IDs), auto-deleted after 12 h or with "Clear list".
+   Las respuestas escaneadas viven en una lista corta en este equipo (sin nombres/IDs), se borran solas a las 12 h o con "Borrar lista". */
+let iqList=[];
+function iqLoad(){try{const a=JSON.parse(localStorage.getItem('sc_iq')||'[]'),now=Date.now();iqList=Array.isArray(a)?a.filter(e=>e&&e.q&&now-e.at<12*3600e3):[];}catch(e){iqList=[];}}
+function iqSave(){try{localStorage.setItem('sc_iq',JSON.stringify(iqList));}catch(e){}}
+function iqToast(t){const el=document.getElementById('toast')||Object.assign(document.createElement('div'),{id:'toast'});if(!el.parentNode)document.body.appendChild(el);el.textContent=t;el.className='on';clearTimeout(el._h);el._h=setTimeout(()=>el.className='',2600);}
+function iqAdd(q){const key=iqEncode(q);if(iqList.some(e=>e.key===key)){iqToast(L('Already in the triage list','Ya está en la lista de triaje'));return false;}
+  iqList.push({id:Date.now()+Math.floor(Math.random()*1000),key,q,at:Date.now(),seen:false});iqSave();
+  const tr=iqTriage(q);iqToast(L('Added: ','Agregado: ')+iqLvl(tr.c)+' · '+iqAreaTxt(q));return true;}
+function iqHash(){const h=location.hash||'';if(!/iq=/.test(h))return;const q=iqDecode(h);try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+  if(q){iqAdd(q);view='queue';ad.pid=ad.pid||null;}}
+function iqLvl(c){return L(IQ_LV[c][0],IQ_LV[c][1]);}
+function iqAreaTxt(q){const a=iqArea(q.a);return L(a[1],a[2]);}
+function iqDurTxt(q){return iqLbl(IQ_DUR,q.d,LANG==='es'?2:1);}
+function iqAgo(at){const m=Math.max(0,Math.round((Date.now()-at)/60000));return m<1?L('just now','ahora'):m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min';}
+function iqIndexRow(){const n=iqList.filter(e=>!e.seen).length;
+  return '<div class="iq-row"><button class="ghost" onclick="iqScan()">📷 '+L('Scan patient QR','Escanear QR del paciente')+'</button>'+(iqList.length?'<button class="ghost" onclick="goRef(\'queue\')">📋 '+L('Triage list','Lista de triaje')+(n?' <b class="iq-n">'+n+'</b>':'')+'</button>':'')+'</div>';}
+function iqFacts(q){const f=[iqDurTxt(q),q.s+'/10'];if(q.w)f.push(L('worse last 2–3 d','peor en 2–3 d'));if(q.r)f.push(L('seen before','ya lo vieron')+(q.rw?L(' — worse',' — peor'):''));if(q.j)f.push(L('stops duty/PT','impide trabajo/PT'));return f;}
+function renderQueue(){
+  const ord={red:0,orange:1,gray:2};
+  const list=iqList.map(e=>Object.assign({tr:iqTriage(e.q)},e)).sort((a,b)=>(a.seen-b.seen)||(ord[a.tr.c]-ord[b.tr.c])||(a.at-b.at));
+  let h='<h2 class="tpl">📋 '+L('Triage list','Lista de triaje')+'</h2>';
+  h+='<div class="algo-actions" style="margin:0 0 12px"><button onclick="iqScan()">📷 '+L('Scan patient QR','Escanear QR del paciente')+'</button><button class="ghost" onclick="window.open(\'poster.html\',\'_blank\')">🖨 '+L('Clinic poster','Póster')+'</button>'+(iqList.length?'<button class="ghost" onclick="iqClear(this)">'+L('Clear list','Borrar lista')+'</button>':'')+'</div>';
+  if(!list.length)return h+'<div class="iq-empty"><b>'+L('No patients yet','Todavía no hay pacientes')+'</b><span>'+L('Soldiers scan the clinic poster, answer ~1 minute of questions and show you their code. Tap “Scan patient QR” and point the camera at their phone.','Los soldados escanean el póster de la clínica, contestan ~1 minuto de preguntas y te enseñan su código. Toca “Escanear QR del paciente” y apunta la cámara a su teléfono.')+'</span></div>';
+  const cnt=c=>list.filter(e=>!e.seen&&e.tr.c===c).length;
+  h+='<div class="iq-sum"><span class="iq-d red"></span>'+cnt('red')+' '+iqLvl('red')+'<span class="iq-d orange"></span>'+cnt('orange')+' '+iqLvl('orange')+'<span class="iq-d gray"></span>'+cnt('gray')+' '+iqLvl('gray')+'</div>';
+  list.forEach(e=>{const q=e.q,pid=iqArea(q.a)[3],pii=piiFind(q.n||'');
+    h+='<div class="iq-card '+e.tr.c+(e.seen?' seen':'')+'"><div class="iq-top"><span class="iq-tag '+e.tr.c+'">'+iqLvl(e.tr.c)+'</span><b>'+q$(iqAreaTxt(q))+'</b><span class="iq-ago">'+iqAgo(e.at)+'</span></div>'
+     +'<div class="iq-why">'+q$(e.tr.why)+'</div><div class="iq-facts">'+iqFacts(q).map(q$).join(' · ')+'</div>'
+     +(q.n?'<div class="iq-note">“'+q$(q.n)+'”'+(pii.length?' <span class="pii-warn">⚠ '+L('may contain personal info','puede tener info personal')+'</span>':'')+'</div>':'')
+     +'<div class="iq-act"><button onclick="iqStart('+e.id+')">'+(e.seen?L('Open again','Abrir otra vez'):L('Start','Empezar'))+' '+pid+' ›</button><button class="ghost" onclick="iqDel('+e.id+')">'+L('Remove','Quitar')+'</button></div></div>';});
+  h+='<p class="note-hint foot">'+L('Suggested triage from the patient\'s own answers — you decide. No names are stored; the list deletes itself after 12 h.','Triaje sugerido con las respuestas del propio paciente — tú decides. No se guardan nombres; la lista se borra sola a las 12 h.')+'</p>';
+  return h;
+}
+function iqDel(id){iqList=iqList.filter(e=>e.id!==id);iqSave();renderMain();}
+function iqClear(b){if(b.dataset.arm!=='1'){b.dataset.arm='1';b.classList.add('danger');b.textContent=L('Tap again to clear','Toca otra vez para borrar');setTimeout(()=>{if(b.isConnected){b.dataset.arm='';b.classList.remove('danger');b.textContent=L('Clear list','Borrar lista');}},3000);return;}
+  iqList=[];iqSave();renderMain();}
+function iqStart(id){const e=iqList.find(x=>x.id===id);if(!e)return;const q=e.q,a=iqArea(q.a);
+  e.seen=true;iqSave();
+  adOpen(a[3]);
+  const s=state[cur];
+  if(!s.cc.size&&!(s.ccCustom||'').trim())s.ccCustom=a[1].toLowerCase();
+  if(s.fields&&s.fields.o&&!(s.custom.o||'').trim())s.custom.o=iqLbl(IQ_DUR,q.d,1).toLowerCase()+' (pt questionnaire)';
+  if(s.sev===null||s.sev===undefined)s.sev=q.s;
+  if(!s.duty)s.duty=q.j?'Yes':'No';
+  if(q.r){ad.ret=true;ad.worse=!!(q.rw||q.w);}
+  ad.iq={q,tr:iqTriage(q)};
+  renderMain();renderNote();document.getElementById('main').scrollTop=0;}
+function iqBanner(x){const q=x.q,f=q.f||[];
+  let h='<div class="iq-ban '+x.tr.c+'"><b>📋 '+L('Patient questionnaire','Cuestionario del paciente')+' · '+iqLvl(x.tr.c)+'</b><span>'+q$(iqFacts(q).join(' · '))+'</span>';
+  if(f.length)h+='<span class="iq-rf">🚩 '+L('Patient reported: ','El paciente marcó: ')+q$(f.map(c=>iqLbl(IQ_FLAGS,c,LANG==='es'?2:1)).join(', '))+' — '+L('screen the red flags below now.','revisa las banderas rojas ahora.')+'</span>';
+  if(q.n)h+='<span>“'+q$(q.n)+'”</span>';
+  return h+'<span class="iq-small">'+L('Onset, severity, duty impact and return visit were pre-filled — check them.','Inicio, severidad, impacto en el trabajo y regreso se prellenaron — revísalos.')+'</span></div>';}
+let iqStream=null,iqRaf=0;
+function iqLoadJs(src){return new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=src;sc.onload=ok;sc.onerror=no;document.head.appendChild(sc);});}
+async function iqScan(){
+  sheetTog(false);iqStop();
+  const o=document.createElement('div');o.id='scanOv';
+  o.innerHTML='<div class="sc-top"><b>'+L('Scan patient QR','Escanear QR del paciente')+'</b><button class="xbtn" onclick="iqStop()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="sc-box"><video id="scV" playsinline muted autoplay></video><div class="sc-frame"></div></div><div class="sc-msg" id="scM">'+L('Point the camera at the code on the Soldier\'s phone.','Apunta la cámara al código en el teléfono del soldado.')+'</div>';
+  document.body.appendChild(o);
+  const msg=t=>{const m=document.getElementById('scM');if(m)m.innerHTML=t;};
+  try{if(!window.jsQR)await iqLoadJs('vendor/jsQR.min.js');}catch(e){msg(L('Could not load the scanner. Connect to the internet once and try again.','No se pudo cargar el escáner. Conéctate a internet una vez e intenta otra vez.'));return;}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){msg(L('This browser has no camera access. Tip: scan the code with the iPhone Camera app — it opens this app with the answers.','Este navegador no tiene acceso a la cámara. Tip: escanea el código con la app Cámara del iPhone — abre esta app con las respuestas.'));return;}
+  try{iqStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});}
+  catch(e){msg(L('Camera blocked or not available. Allow camera access for this site in Settings, or scan the code with the iPhone Camera app.','Cámara bloqueada o no disponible. Permite la cámara para este sitio en Ajustes, o escanea el código con la app Cámara del iPhone.'));return;}
+  const v=document.getElementById('scV');if(!v){iqStop();return;}v.srcObject=iqStream;try{await v.play();}catch(e){}
+  const c=document.createElement('canvas'),cx=c.getContext('2d',{willReadFrequently:true});let bad=0;
+  const tick=()=>{if(!iqStream)return;
+    if(v.readyState>=2&&v.videoWidth){const sc=Math.min(1,640/v.videoWidth);c.width=Math.round(v.videoWidth*sc);c.height=Math.round(v.videoHeight*sc);cx.drawImage(v,0,0,c.width,c.height);
+      const r=jsQR(cx.getImageData(0,0,c.width,c.height).data,c.width,c.height,{inversionAttempts:'dontInvert'});
+      if(r&&r.data){const q=iqDecode(r.data);if(q){try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}iqStop();iqAdd(q);view='queue';renderNav();renderMain();document.getElementById('main').scrollTop=0;return;}
+        if(Date.now()-bad>2500){bad=Date.now();msg(L('That code isn\'t a sick-call questionnaire.','Ese código no es un cuestionario de sick call.'));}}}
+    iqRaf=requestAnimationFrame(tick);};
+  tick();
+}
+function iqStop(){cancelAnimationFrame(iqRaf);if(iqStream){iqStream.getTracks().forEach(t=>t.stop());iqStream=null;}const o=document.getElementById('scanOv');if(o)o.remove();}
 /* ===== How-to cards (data/howto.js) ===== */
 function htKey(t){if(typeof HOWTO_MATCH==='undefined')return null;const m=HOWTO_MATCH.find(([rx])=>rx.test(t));return m?m[1]:null;}
 function htBtn(t){const k=htKey(t);return k?'<span class="htb" role="button" aria-label="How to" title="How to do this" onclick="event.stopPropagation();htOpen(\''+k+'\')">ⓘ</span>':'';}
@@ -2544,7 +2625,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v13';
+const APP_VER='v14';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -2852,10 +2933,12 @@ function setLang(l){
 }
 new MutationObserver(ms=>{if(LANG!=='es')return;ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)trNode(n);else if(n.nodeType===3&&n.parentElement)trNode(n.parentElement);}));}).observe(document.body,{childList:true,subtree:true});
 applyTheme();syncFmtBtn();
-purgeOld();
+purgeOld();iqLoad();
 restore();adRestore();
 document.body.style.fontSize=fsBase+'px';showLockIfNeeded();
 if(ad.pid&&getP(ad.pid)){const _m=protoTpl(ad.pid);cur=_m.tid;view='tpl';}else{ad.pid=null;view='adtmc';}
+iqHash();
 renderNav();renderMain();renderNote();
+window.addEventListener('hashchange',()=>{if(/iq=/.test(location.hash)){iqHash();renderNav();renderMain();}});
 const _pi=document.getElementById('ptIn'); if(_pi)_pi.value=patient;
 setLang(LANG);
