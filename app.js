@@ -2264,12 +2264,13 @@ function renderQueue(){
   h+='<div class="iq-sum"><span class="iq-d red"></span>'+cnt('red')+' '+iqLvl('red')+'<span class="iq-d orange"></span>'+cnt('orange')+' '+iqLvl('orange')+'<span class="iq-d gray"></span>'+cnt('gray')+' '+iqLvl('gray')+'</div>';
   list.forEach(e=>{const q=e.q,pid=iqArea(q.a)[3],pii=piiFind(q.n||'');
     h+='<div class="iq-card '+e.tr.c+(e.seen?' seen':'')+'"><div class="iq-top"><span class="iq-tag '+e.tr.c+'">'+iqLvl(e.tr.c)+'</span><b>'+q$(iqAreaTxt(q))+'</b><span class="iq-ago">'+iqAgo(e.at)+'</span></div>'
-     +'<div class="iq-why">'+q$(e.tr.why)+'</div><div class="iq-facts">'+iqFacts(q).map(q$).join(' · ')+'</div>'
+     +'<div class="iq-why">'+q$(e.tr.why)+'</div><div class="iq-facts">'+iqFacts(q).map(q$).join(' · ')+'</div>'+iqFUHtml(q)
      +(q.n?'<div class="iq-note">“'+q$(q.n)+'”'+(pii.length?' <span class="pii-warn">⚠ '+L('may contain personal info','puede tener info personal')+'</span>':'')+'</div>':'')
      +'<div class="iq-act"><button onclick="iqStart('+e.id+')">'+(e.seen?L('Open again','Abrir otra vez'):L('Start','Empezar'))+' '+pid+' ›</button><button class="ghost" onclick="iqDel('+e.id+')">'+L('Remove','Quitar')+'</button></div></div>';});
   h+='<p class="note-hint foot">'+L('Suggested triage from the patient\'s own answers — you decide. No names are stored; the list deletes itself after 12 h.','Triaje sugerido con las respuestas del propio paciente — tú decides. No se guardan nombres; la lista se borra sola a las 12 h.')+'</p>';
   return h;
 }
+function iqFUHtml(q){const fu=iqFUAns(q);if(!fu.length)return'';return '<div class="iq-fu">'+fu.map(x=>'<span class="'+(x.lv?'lv-'+x.lv:'')+'">'+q$(x.k)+': <b>'+q$(x.v)+'</b></span>').join('')+'</div>';}
 function iqDel(id){iqList=iqList.filter(e=>e.id!==id);iqSave();renderMain();}
 function iqClear(b){if(b.dataset.arm!=='1'){b.dataset.arm='1';b.classList.add('danger');b.textContent=L('Tap again to clear','Toca otra vez para borrar');setTimeout(()=>{if(b.isConnected){b.dataset.arm='';b.classList.remove('danger');b.textContent=L('Clear list','Borrar lista');}},3000);return;}
   iqList=[];iqSave();renderMain();}
@@ -2278,7 +2279,9 @@ function iqStart(id){const e=iqList.find(x=>x.id===id);if(!e)return;const q=e.q,
   adOpen(a[3]);
   const s=state[cur];
   if(!s.cc.size&&!(s.ccCustom||'').trim())s.ccCustom=a[1].toLowerCase();
-  if(s.fields&&s.fields.o&&!(s.custom.o||'').trim())s.custom.o=iqLbl(IQ_DUR,q.d,1).toLowerCase()+' (pt questionnaire)';
+  const _fu=iqFUAns(q).map(x=>x.en+': '+x.ven).join('; ');
+  const _dt={'today':'today','1-3d':'1–3 days ago','4-7d':'4–7 days ago','1-4w':'1–4 weeks ago','1mo+':'more than 1 month ago'}[q.d]||q.d;
+  if(s.fields&&s.fields.o&&!(s.custom.o||'').trim())s.custom.o=_dt+(_fu?'. Pt questionnaire — '+_fu:' (pt questionnaire)');
   if(s.sev===null||s.sev===undefined)s.sev=q.s;
   if(!s.duty)s.duty=q.j?'Yes':'No';
   if(q.r){ad.ret=true;ad.worse=!!(q.rw||q.w);}
@@ -2287,6 +2290,7 @@ function iqStart(id){const e=iqList.find(x=>x.id===id);if(!e)return;const q=e.q,
 function iqBanner(x){const q=x.q,f=q.f||[];
   let h='<div class="iq-ban '+x.tr.c+'"><b>📋 '+L('Patient questionnaire','Cuestionario del paciente')+' · '+iqLvl(x.tr.c)+'</b><span>'+q$(iqFacts(q).join(' · '))+'</span>';
   if(f.length)h+='<span class="iq-rf">🚩 '+L('Patient reported: ','El paciente marcó: ')+q$(f.map(c=>iqLbl(IQ_FLAGS,c,LANG==='es'?2:1)).join(', '))+' — '+L('screen the red flags below now.','revisa las banderas rojas ahora.')+'</span>';
+  h+=iqFUHtml(q);
   if(q.n)h+='<span>“'+q$(q.n)+'”</span>';
   return h+'<span class="iq-small">'+L('Onset, severity, duty impact and return visit were pre-filled — check them.','Inicio, severidad, impacto en el trabajo y regreso se prellenaron — revísalos.')+'</span></div>';}
 let iqStream=null,iqRaf=0;
@@ -2625,7 +2629,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v14';
+const APP_VER='v15';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};

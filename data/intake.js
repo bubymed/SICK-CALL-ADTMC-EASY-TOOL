@@ -62,6 +62,13 @@ function iqArea(code){return IQ_AREAS.find(x=>x[0]===code)||IQ_AREAS[IQ_AREAS.le
    Already seen for the same thing and not worse → not sick call. Return + worse → AEM/clinic (ADTMC M-1).
    The medic decides; this is only a suggestion. */
 function iqTriage(q){
+  const b=iqTriage0(q);if(b.c==='red'||typeof iqFUAns!=='function')return b;
+  const ES=(typeof LANG!=='undefined'&&LANG==='es')||(typeof IQ_ES!=='undefined'&&IQ_ES);
+  const fu=iqFUAns(q),r=fu.filter(x=>x.lv==='r'),y=fu.filter(x=>x.lv==='y');
+  if(r.length)return{c:'red',why:(ES?'Respuesta de alarma: ':'Concerning answer: ')+r.map(x=>x.k+' — '+x.v).join('; ')};
+  if(b.c==='gray'&&y.length)return{c:'orange',why:(ES?'Necesita revisión: ':'Needs a look: ')+y.map(x=>x.k+' — '+x.v).join('; ')};
+  return b;}
+function iqTriage0(q){
   const ES=(typeof LANG!=='undefined'&&LANG==='es')||(typeof IQ_ES!=='undefined'&&IQ_ES);const t=(e,s)=>ES?s:e;
   const f=q.f||[];
   if(f.length)return{c:'red',why:t('Red flag: ','Bandera roja: ')+f.map(x=>iqLbl(IQ_FLAGS,x,ES?2:1)).join(', ')};
@@ -79,7 +86,63 @@ function iqDecode(txt){
     const q=JSON.parse(decodeURIComponent(escape(atob(b+'==='.slice((b.length+3)%4)))));
     if(!q||q.v!==1||typeof q.a!=='string')return null;
     q.f=Array.isArray(q.f)?q.f.filter(x=>IQ_FLAGS.some(y=>y[0]===x)):[];q.s=Math.max(0,Math.min(10,+q.s||0));q.n=String(q.n||'').slice(0,100);
+    const x={};if(q.x&&typeof q.x==='object')Object.keys(q.x).slice(0,20).forEach(k=>{const v=q.x[k];if(/^[a-z]{1,8}$/.test(k)&&(v===0||v===1||(Number.isInteger(v)&&v>=0&&v<10)||(Array.isArray(v)&&v.every(n=>Number.isInteger(n)&&n>=0&&n<10))))x[k]=v;});q.x=x;
     return q;}catch(e){return null;}
 }
 const IQ_HOME='https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/';
 function iqBase(){try{if(location.protocol==='https:')return new URL('./',location.href).href;}catch(e){}return IQ_HOME;}
+/* ===== Follow-up questions by problem (v15) / Preguntas específicas por problema =====
+   Each: [id, EN, ES, type, options]. type 'yn' = yes/no (level applies to Yes, or to No if lvNo);
+   'one' = single choice; 'multi' = several. Level: 'r' → red (see now), 'y' → at least yellow.
+   Built from ADTMC red flags / decision points; pending review by the supervising provider. */
+const YN=(id,en,es,lv,lvNo)=>[id,en,es,'yn',null,lv||'',lvNo||''];
+const ONE=(id,en,es,opts)=>[id,en,es,'one',opts];
+const MULTI=(id,en,es,opts)=>[id,en,es,'multi',opts];
+const IQ_GEN=[
+ ONE('how','How did it start?','¿Cómo empezó?',[['Injury / accident','Lesión / accidente'],['Suddenly, no injury','De repente, sin lesión'],['Little by little','Poco a poco'],['During PT / training / field','En PT / entrenamiento / campo']]),
+ MULTI('try','What have you tried?','¿Qué has probado?',[['Nothing yet','Nada todavía'],['Rest','Descanso'],['Ice / heat','Hielo / calor'],['OTC meds (Tylenol, Motrin…)','Medicina sin receta (Tylenol, Motrin…)'],['Saw a medic / provider already','Ya me vio un médico / proveedor']])];
+const MSK=(extra)=>[
+ ONE('mech','What happened?','¿Qué pasó?',[['Twisted / rolled it','Me lo torcí / doblé'],['Fell','Me caí'],['Got hit','Me golpeé / me pegaron'],['Overuse (running, ruck, lifting)','Sobreuso (correr, ruck, pesas)'],['No injury','Sin lesión']]),
+ YN('swell','Is it swollen?','¿Está hinchado?'),
+ YN('use','Can you put weight on it / use it normally?','¿Puedes apoyarlo / usarlo normal?','','y'),
+ YN('pop','Did you hear or feel a "pop"?','¿Oíste o sentiste un "pop"?','y'),
+ YN('numb','Numbness or tingling?','¿Adormecimiento u hormigueo?','y')].concat(extra||[]);
+const IQ_FU={
+ throat:[YN('fev','Fever?','¿Fiebre?','y'),YN('spot','White spots on the tonsils?','¿Manchas blancas en las anginas?','y'),YN('saliva','Trouble swallowing your own saliva / drooling?','¿No puedes tragar tu saliva / babeas?','r'),YN('cough','Cough or runny nose too?','¿También tos o mocos?')],
+ ear:[YN('drain','Fluid or pus coming out of the ear?','¿Sale líquido o pus del oído?','y'),YN('hear','Can\'t hear well?','¿No oyes bien?','y'),YN('loud','After a loud noise or blast?','¿Después de un ruido fuerte o explosión?','y'),YN('behind','Swelling or redness behind the ear?','¿Hinchazón o enrojecimiento detrás de la oreja?','r')],
+ cold:[YN('fev','Fever?','¿Fiebre?','y'),YN('wheeze','Wheezing or chest tightness?','¿Silbido en el pecho o pecho apretado?','y'),YN('blood','Coughing up blood?','¿Toses sangre?','r'),YN('ten','More than 10 days?','¿Más de 10 días?','y')],
+ eye:[YN('trauma','Something hit it, got in it, or a chemical?','¿Te pegó algo, te entró algo o un químico?','r'),YN('blur','Blurry vision?','¿Visión borrosa?','y'),YN('light','Hurts to look at light?','¿Te duele ver la luz?','y'),YN('cont','Do you wear contact lenses?','¿Usas lentes de contacto?','y')],
+ tooth:[YN('face','Swelling of the face or jaw?','¿Hinchazón de la cara o la mandíbula?','y'),YN('fev','Fever?','¿Fiebre?','y'),YN('broke','Broken or knocked-out tooth?','¿Diente roto o se cayó?','y'),YN('open','Trouble opening your mouth or swallowing?','¿No puedes abrir la boca o tragar?','r')],
+ head:[YN('hit','Did you hit your head?','¿Te golpeaste la cabeza?','y'),YN('neck','Fever with a stiff neck?','¿Fiebre con el cuello rígido?','r'),YN('vis','Vision changes or vomiting?','¿Cambios en la vista o vómito?','y'),YN('usual','Like your usual headaches?','¿Como tus dolores de cabeza de siempre?')],
+ dizzy:[YN('stand','Only when you stand up?','¿Solo cuando te levantas?'),YN('heat','After heat, PT or not drinking enough?','¿Después de calor, PT o no tomar suficiente agua?','y'),YN('heart','Heart racing or chest pain?','¿El corazón acelerado o dolor de pecho?','r'),YN('spin','Room spinning?','¿Sientes que todo da vueltas?','y')],
+ back:MSK([YN('bowel','Trouble controlling bladder/bowels or numb groin?','¿No controlas la orina/heces o adormecimiento en la ingle?','r'),YN('leg','Pain going down the leg?','¿El dolor baja por la pierna?','y')]),
+ neck:MSK([YN('crash','After a fall from height or vehicle crash?','¿Después de una caída de altura o choque?','r'),YN('arm','Pain or weakness going down the arm?','¿Dolor o debilidad que baja por el brazo?','y')]),
+ shoulder:MSK(),elbow:MSK(),wrist:MSK(),hip:MSK(),
+ knee:MSK([YN('lock','Knee locks or gives out?','¿La rodilla se traba o se dobla sola?','y')]),
+ ankle:MSK(),foot:MSK(),leg:MSK([YN('calf','Calf swollen, warm and painful?','¿Pantorrilla hinchada, caliente y con dolor?','r')]),
+ belly:[ONE('where','Where does it hurt most?','¿Dónde te duele más?',[['Upper belly','Parte de arriba'],['Lower right','Abajo a la derecha'],['Lower left','Abajo a la izquierda'],['All over','Todo el estómago']]),YN('fev','Fever?','¿Fiebre?','y'),YN('blood','Blood in vomit or stool, or black stool?','¿Sangre en el vómito o heces, o heces negras?','r'),YN('jump','Hurts more when you walk, jump or cough?','¿Duele más al caminar, brincar o toser?','y')],
+ nausea:[YN('fluid','Can you keep water down?','¿Puedes retener el agua?','','y'),YN('blood','Blood in the vomit?','¿Sangre en el vómito?','r'),YN('dia','Diarrhea too?','¿También diarrea?'),YN('others','Others in your unit sick too?','¿Hay otros enfermos en tu unidad?','y')],
+ diarrhea:[YN('blood','Blood in the stool?','¿Sangre en las heces?','r'),YN('fev','Fever?','¿Fiebre?','y'),YN('fluid','Can you keep water down?','¿Puedes retener el agua?','','y'),YN('many','More than 6 times today?','¿Más de 6 veces hoy?','y')],
+ heartburn:[YN('exert','Chest pain when you exercise?','¿Dolor de pecho al hacer ejercicio?','r'),YN('swal','Food gets stuck when you swallow?','¿Se te atora la comida al tragar?','y'),YN('black','Black stool?','¿Heces negras?','r')],
+ urine:[YN('fev','Fever or back / side pain?','¿Fiebre o dolor de espalda / costado?','y'),YN('blood','Blood in the urine?','¿Sangre en la orina?','y'),YN('disch','Discharge?','¿Secreción?','y')],
+ chest:[YN('exert','Worse with exercise or effort?','¿Peor con ejercicio o esfuerzo?','r'),YN('sob','Short of breath?','¿Falta de aire?','r'),YN('press','Hurts more when you press on it or breathe deep?','¿Duele más al presionar o respirar hondo?')],
+ breath:[YN('rest','Short of breath even at rest?','¿Falta de aire aun en reposo?','r'),YN('asthma','Wheezing or asthma history?','¿Silbido o historia de asma?','y'),YN('fev','Fever or cough?','¿Fiebre o tos?','y')],
+ rash:[YN('fast','Spreading fast, or with fever?','¿Se extiende rápido o con fiebre?','y'),YN('face','Blisters near the eye or mouth?','¿Ampollas cerca del ojo o la boca?','y'),YN('new','New soap, medicine or plant contact?','¿Jabón, medicina nueva o contacto con plantas?')],
+ blister:[YN('inf','Red streaks, pus or warmth?','¿Rayas rojas, pus o calor?','y'),YN('feet','On the feet?','¿En los pies?')],
+ cut:[YN('dirty','Dirty or rusty object?','¿Objeto sucio u oxidado?','y'),YN('deep','Deep or gaping?','¿Profunda o abierta?','y'),YN('numb','Numb past the cut?','¿Adormecido después de la cortada?','y')],
+ toenail:[YN('pus','Red, swollen or pus?','¿Rojo, hinchado o con pus?','y'),YN('fev','Fever?','¿Fiebre?','y')],
+ bite:[YN('face','Face or throat swelling, or trouble breathing?','¿Hinchazón de cara o garganta, o te cuesta respirar?','r'),YN('spread','Redness spreading?','¿Lo rojo se está extendiendo?','y'),YN('tick','Was it a tick?','¿Fue una garrapata?','y')],
+ burn:[YN('big','Blisters bigger than your palm?','¿Ampollas más grandes que tu palma?','y'),YN('where','On face, hands, feet or groin?','¿En cara, manos, pies o ingle?','y'),YN('chem','Chemical or electrical burn?','¿Quemadura química o eléctrica?','r')],
+ fever:[YN('high','Measured 101°F (38.3°C) or more?','¿Medida de 101°F (38.3°C) o más?','y'),YN('neck','Stiff neck or new rash?','¿Cuello rígido o sarpullido nuevo?','r'),YN('field','Recent field, travel or deployment?','¿Campo, viaje o despliegue reciente?','y')],
+ tired:[YN('sleep','Sleeping less than 5 hours?','¿Duermes menos de 5 horas?'),YN('mood','Feeling down or hopeless?','¿Te sientes triste o sin esperanza?','y'),YN('sob','Short of breath or chest pain?','¿Falta de aire o dolor de pecho?','r')],
+ mood:[YN('today','Do you want to talk to someone today?','¿Quieres hablar con alguien hoy?','y'),YN('sleep','Can\'t sleep or eat?','¿No puedes dormir o comer?','y'),YN('alc','Drinking more than usual?','¿Tomas más alcohol de lo normal?','y')],
+ women:[YN('preg','Could you be pregnant?','¿Podrías estar embarazada?','y'),YN('heavy','Soaking a pad or tampon every hour?','¿Empapas una toalla o tampón cada hora?','r'),YN('pain','Severe pain?','¿Dolor muy fuerte?','y')]
+};
+function iqFU(a){const ar=iqArea(a);if(ar[4]==='a')return[];return (IQ_FU[a]||[]).concat(IQ_GEN);}
+function iqFUAns(q){/* → [{t:text EN/ES, lv}] for answered follow-ups */
+  const ES=(typeof LANG!=='undefined'&&LANG==='es')||(typeof IQ_ES!=='undefined'&&IQ_ES);const out=[];const x=q.x||{};
+  iqFU(q.a).forEach(Q=>{const v=x[Q[0]];if(v===undefined||v===null)return;const lbl=ES?Q[2]:Q[1];
+    if(Q[3]==='yn'){const lv=v?Q[5]:Q[6];out.push({k:lbl.replace(/\?$/,''),v:v?(ES?'Sí':'Yes'):'No',lv,id:Q[0],en:Q[1].replace(/\?$/,''),ven:v?'yes':'no'});}
+    else if(Q[3]==='one'){const o=Q[4][v];if(o)out.push({k:lbl.replace(/\?$/,''),v:ES?o[1]:o[0],lv:'',id:Q[0],en:Q[1].replace(/\?$/,''),ven:o[0]});}
+    else if(Array.isArray(v)&&v.length){const os=v.map(i=>Q[4][i]).filter(Boolean);out.push({k:lbl.replace(/\?$/,''),v:os.map(o=>ES?o[1]:o[0]).join(', '),lv:'',id:Q[0],en:Q[1].replace(/\?$/,''),ven:os.map(o=>o[0]).join(', ')});}
+  });return out;}
