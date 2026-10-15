@@ -19,6 +19,9 @@ and get a suggested plan and disposition. The note is plain English text ready t
 - On a phone, open the link once and add it to the home screen — it then works offline.
 - Prefer a single file? Run `python3 tools/build_single.py` and use `dist/SICK_CALL_TOOL.html`.
 
+## Third-party / Terceros
+See [THIRD_PARTY.md](THIRD_PARTY.md).
+
 ## Changelog / Registro de cambios
 See [CHANGELOG.md](CHANGELOG.md) (EN/ES). Contribution rules: [CONTRIBUTING.md](CONTRIBUTING.md).
 Ver [CHANGELOG.md](CHANGELOG.md) (EN/ES). Reglas para contribuir: [CONTRIBUTING.md](CONTRIBUTING.md).
