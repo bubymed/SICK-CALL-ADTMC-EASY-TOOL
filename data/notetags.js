@@ -417,3 +417,158 @@ Object.assign(NOTE_TAGS,{
  }
  });
 })();
+// ---- batch 4 ----
+(function(){
+ const H=(y,n)=>({k:'hpi',y,n:n===undefined?y:n}), P=(y,n)=>({k:'pe',y,n:n===undefined?null:n}), Y=y=>({k:'hpi',y,n:null});
+ Object.assign(NOTE_TAGS,{
+ 'E-2':{
+  'Pain with testes supported':P('Pain persists with testes supported','Pain relieved / not worse with testes supported'),
+  'Suspected stress fracture (increased weight bearing or exercise, endurance training, change in routine)':Y('risk factors for stress fracture (increased load / endurance training / change in routine)'),
+  'Severe pain':H('severe pain'),
+  'Nausea and vomiting':H('nausea and vomiting','nausea or vomiting'),
+  'Hematuria':H('hematuria')
+ },
+ 'E-4':{
+  'Inability to void x12 hours':H('inability to void x12 h','inability to void'),
+  'Fever':H('fever'),
+  'Cola-colored urine':H('cola-colored urine'),
+  'Blood or clots in urine':H('blood / clots in urine','blood or clots in urine'),
+  'Vaginal symptoms':Y('vaginal symptoms'),
+  'Post-void dribbling':H('post-void dribbling'),
+  'Weak stream':H('weak stream'),
+  'Difficulty starting to urinate':H('difficulty starting urination'),
+  'Pregnant':Y('pregnancy'),
+  'Male >40 years old':Y('male > 40 years old')
+ },
+ 'G-1':{
+  'Suicide ideation':H('suicidal ideation','SI'),
+  'Homicide ideation':H('homicidal ideation','HI'),
+  'Shortness of breath':H('shortness of breath'),
+  'Stiff neck':H('stiff neck'),
+  'Melena':H('melena'),
+  'Depression':H('depressed mood'),
+  'Loss of libido':Y('loss of libido'),
+  'Weight change':H('weight change'),
+  'Menorrhagia / anemia >3 weeks':Y('menorrhagia / anemia > 3 weeks'),
+  'Snoring':H('snoring'),
+  'USPSTF screening / PHA out of date':Y('screening / PHA out of date'),
+  'Cold, sore throat symptoms':H('cold / sore throat symptoms','cold or sore throat symptoms'),
+  'Rectal bleeding':H('rectal bleeding')
+ },
+ 'G-2':{
+  'Heat injury':H('possible heat injury','heat exposure / heat injury'),
+  'Stiff neck':H('stiff neck'),
+  'Light sensitivity':H('light sensitivity'),
+  'Pregnant':Y('pregnancy'),
+  'Seizure':H('seizure'),
+  'Lightheaded':H('lightheadedness'),
+  'Abnormal vitals':P('Abnormal vital signs',null),
+  'HIV positive':Y('HIV positive'),
+  'Immunosuppression':H('immunosuppression'),
+  'Overseas travel within 6 months':H('overseas travel within 6 months','recent overseas travel'),
+  'Tick or mosquito bite':H('tick / mosquito bite','tick or mosquito bites'),
+  'Malaria area':H('travel to a malaria area','malaria-area travel'),
+  'Animal exposure':H('animal exposure'),
+  'IV drug use':Y('IV drug use'),
+  'Cold':H('cold symptoms'),
+  'Sore throat symptoms':H('sore throat'),
+  'Ear pain':H('ear pain'),
+  'Diarrhea':H('diarrhea'),
+  'Pain with urination':H('dysuria')
+ },
+ 'H-1':{
+  'Fixed, abnormal pupil':P('Fixed / abnormal pupil','Pupils equal and reactive'),
+  'Visual acuity change':P('Visual acuity change','Visual acuity unchanged'),
+  'Observed foreign body':P('Foreign body observed','No foreign body seen'),
+  'Penetration, rupture':P('Penetrating injury / rupture','No penetration or rupture'),
+  'Chemical exposure':H('chemical exposure'),
+  'Fluid level over iris, pupil':P('Fluid level over iris / pupil (hyphema/hypopyon)','No fluid level over iris'),
+  'Contact lens wearer':H('contact lens wear','contact lens use'),
+  'Fluorescein uptake':P('Fluorescein uptake','No fluorescein uptake'),
+  'Recent eye surgery':H('recent eye surgery'),
+  'Associated head trauma':H('associated head trauma','head trauma'),
+  'Double vision':H('double vision'),
+  'Thick yellow or green discharge':P('Thick yellow / green discharge','No purulent discharge'),
+  'Painful':H('eye pain'),
+  'Light sensitivity':H('light sensitivity'),
+  'Inability to keep eye open':H('inability to keep the eye open',null),
+  'Trauma':H('eye trauma'),
+  'History of foreign body, getting better':Y('foreign body sensation, improving')
+ },
+ 'H-2':{
+  'Open globe':P('Open globe','No open globe'),
+  'High-risk laceration':P('High-risk eyelid laceration','No high-risk laceration'),
+  'Decreased visual acuity':P('Decreased visual acuity','Visual acuity normal'),
+  'Double vision':H('double vision'),
+  'Fixed pupil':P('Fixed pupil','Pupils equal and reactive'),
+  'Moderate–severe pain':H('moderate to severe pain','moderate or severe pain'),
+  'Significant redness, swelling':P('Significant redness / swelling','No significant redness or swelling'),
+  'Rash >1 week':H('rash > 1 week',null)
+ },
+ 'H-3':{
+  'Trauma':H('trauma'),
+  'Recent surgery':H('recent eye surgery'),
+  'Chemical exposure':H('chemical exposure'),
+  'Fluid level over iris, pupil':P('Fluid level over iris / pupil','No fluid level over iris'),
+  'Neurologic deficits':P('Neurologic deficits','No neurologic deficits'),
+  'Observed foreign body':P('Foreign body observed','No foreign body seen'),
+  'Partial visual field affected':H('partial visual field loss','visual field loss'),
+  'Contact wearer':H('contact lens wear','contact lens use'),
+  'Onset within 7 days':H('onset within 7 days',null),
+  'Painful':H('eye pain'),
+  'Red':P('Red eye','No redness'),
+  'Headache':H('headache')
+ },
+ 'H-4':{
+  'Trauma':H('trauma'),
+  'Neurologic deficits':P('Neurologic deficits','No neurologic deficits'),
+  'Red eye':P('Red eye','No redness'),
+  'Associated pain':H('associated eye pain','eye pain'),
+  'Appears intoxicated':P('Appears intoxicated',null),
+  'Diplopia resolves with 1 eye shut':P('Diplopia resolves with one eye closed (binocular)','Diplopia persists with one eye closed (monocular)')
+ },
+ 'I-1':{
+  'Skin changes':P('Skin changes','No skin changes'),
+  'Mass':P('Mass','No mass palpated'),
+  'Bloody nipple discharge':H('bloody nipple discharge'),
+  'Temp >100.4':P('Temp > 100.4 F',null),
+  'Red, swollen breast':P('Red, swollen breast','No redness or swelling'),
+  'Focal breast pain but no other symptoms':Y('focal breast pain without other symptoms'),
+  'Family history of early breast cancer':H('family history of early breast cancer'),
+  'Male with history of testosterone supplement':Y('testosterone supplement use'),
+  'Female breastfeeding':Y('currently breastfeeding'),
+  'Repeat visit':Y('repeat visit for same complaint')
+ },
+ 'I-3':{
+  'Sexual assault':Y('sexual assault'),
+  'Trauma':H('trauma'),
+  'Severe pain':H('severe pain'),
+  'Pregnant':Y('pregnancy'),
+  'Non-midline pelvic pain':H('non-midline pelvic pain'),
+  'Pain with intercourse':Y('pain with intercourse'),
+  'Post-menopause':Y('post-menopausal'),
+  'Bleeding >10 days, not on birth control':H('bleeding > 10 days, not on birth control','bleeding > 10 days'),
+  'New problem':Y('new problem'),
+  'Failed previous self-care':Y('failed previous self-care'),
+  'Menstrual pain onset after age 25':Y('menstrual pain starting after age 25'),
+  'Progression of symptoms':H('progression of symptoms','worsening symptoms'),
+  'Menses <21 or >35 days':H('menses < 21 or > 35 days apart','irregular cycle length'),
+  'Spotting >1 pad / 2 hrs':H('bleeding > 1 pad / 2 h','heavy bleeding (> 1 pad / 2 h)'),
+  'Prevents normal duties':H('symptoms prevent normal duties','limitation of duties')
+ },
+ 'I-4':{
+  'Fever':H('fever'),
+  'Pregnant':Y('pregnancy'),
+  'Non-midline pelvic pain':H('non-midline pelvic pain'),
+  'Pain with intercourse':Y('pain with intercourse'),
+  'Recurrent vaginitis':H('recurrent vaginitis'),
+  'Presence of IUD':Y('IUD in place'),
+  'Vaginal discharge':H('vaginal discharge'),
+  'Genital lesion / ulcer':H('genital lesion / ulcer','genital lesions'),
+  'Vaginal lump / mass':H('vaginal lump / mass','vaginal mass'),
+  'Pelvic pain during exercise':H('pelvic pain with exercise'),
+  'Moderate vaginal pain':H('moderate vaginal pain','moderate pain'),
+  'Presentation different from the treatment-protocol descriptions':Y('atypical presentation')
+ }
+ });
+})();

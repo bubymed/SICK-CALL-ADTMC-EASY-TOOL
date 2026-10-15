@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **Screening → note, batch 4:** Groin/Testicular (E-2), Voiding (E-4), Fatigue (G-1), Fever/Chills (G-2), Eye (H-1), Eyelid (H-2), Vision (H-3), Double vision (H-4), Breast (I-1), Menstrual (I-3), Vaginal (I-4). 41 protocols covered.
+  **Screening → nota, grupo 4:** Ingle/Testículo (E-2), Micción (E-4), Fatiga (G-1), Fiebre/Escalofríos (G-2), Ojo (H-1), Párpado (H-2), Visión (H-3), Visión doble (H-4), Mama (I-1), Menstrual (I-3), Vaginal (I-4). 41 protocolos cubiertos.
 - **Screening → note, batch 3:** Ringing in ears (A-4), Nosebleed (A-5), Elbow (B-4), Wrist (B-5), Hand (B-6), Extremity (B-11), Abdominal/Flank (C-3), Constipation (C-5), Dysphagia (C-6), Heartburn (C-7), Chest Pain (D-2), Headache (F-2), Numbness/Weakness (F-3), Drowsiness/Confusion (F-4). 30 protocols covered.
   **Screening → nota, grupo 3:** Zumbido (A-4), Sangrado nasal (A-5), Codo (B-4), Muñeca (B-5), Mano (B-6), Extremidad (B-11), Abdomen/Flanco (C-3), Estreñimiento (C-5), Disfagia (C-6), Acidez (C-7), Dolor de pecho (D-2), Cefalea (F-2), Adormecimiento/Debilidad (F-3), Somnolencia/Confusión (F-4). 30 protocolos cubiertos.
 - **Screening → note, batch 2:** Ear Pain (A-2), Neck (B-2), Shoulder (B-3), Hip (B-7), Foot (B-10), Diarrhea (C-2), Shortness of Breath (D-1), Painful Urination (E-1), Dizziness (F-1), Skin (J-1). Sex-specific items are written only when positive.
