@@ -582,3 +582,24 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 .ht-res b{display:block;font-size:13px;margin-bottom:2px}
 .ht-act{margin:8px 0}.ht-unsure{font-size:13px;color:var(--dim)}.ht-src{font-size:12px;color:var(--dim);margin-top:8px}
 @media print{#htOv{display:none!important}}
+
+/* ===== Folded sections (v13) / Secciones plegadas ===== */
+.secbar.sb2{margin:22px 4px 6px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--dim)}
+.fold{display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:14px;padding:14px 16px;margin:8px 0;font-size:16px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-height:48px;box-sizing:border-box}
+.fold b{font-weight:600;flex:none;color:var(--txt)}
+.fold .chev{color:var(--dim);font-size:18px;line-height:1;transition:transform .15s;display:inline-block;width:12px}
+.fold.open .chev{transform:rotate(90deg)}
+.fold .fsum{margin-left:auto;min-width:0;color:var(--dim);font-size:14px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fold .fsum .ok{color:var(--green)}
+.fold.open{margin-bottom:6px}
+.fold.open b{color:var(--accent)}
+.fbody{margin-bottom:10px}
+.rf-head .rf-hint{font-size:13px;color:var(--dim);margin-right:auto}
+.gstart.sm{padding:11px;font-size:15px;border-radius:12px}
+.livecard.lc1{padding:12px 16px;margin:6px 0 10px}
+.livecard.lc1 .lc-r{display:flex;align-items:center;gap:10px}
+.livecard.lc1 .lc-r b{font-size:15px;font-weight:600;color:var(--txt)}
+.livecard.lc1 .lc-h{margin:0 0 0 auto;font-size:17px;font-weight:700}
+.livecard.lc1 .lc-s{margin-left:auto;font-size:14px;color:var(--dim);text-align:right}
+.livecard.lc1 .lc-m{font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note-hint.foot{background:none;border:none;font-size:12px;color:var(--dim);padding:4px;margin-top:14px}
