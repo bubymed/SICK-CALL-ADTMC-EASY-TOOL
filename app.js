@@ -724,14 +724,15 @@ let guided=null; // {tpl,i,steps}
 function buildSteps(t){
   const st=hmode()==='quick'?[{k:'rf'},{k:'vit'}]:[{k:'cc'},{k:'rf'},{k:'vit'}];
   visFields(t).forEach(f=>{st.push({k:'f',f:f.id}); if(f.id==='sx')st.push({k:'sev'});});
-  st.push({k:'plan'},{k:'dispo'},{k:'done'});
+  if(ad.pid&&getP(ad.pid))st.push({k:'ads'},{k:'add'},{k:'done'});else st.push({k:'plan'},{k:'dispo'},{k:'done'});
   return st;
 }
 function startGuided(){guided={tpl:cur,i:0,steps:buildSteps(TPLS.find(t=>t.id===cur))};renderMain();document.getElementById('main').scrollTop=0;}
 function gNext(){if(!guided)return;guided.i=Math.min(guided.i+1,guided.steps.length-1);renderMain();document.getElementById('main').scrollTop=0;}
 function gBack(){if(!guided)return;guided.i=Math.max(guided.i-1,0);renderMain();document.getElementById('main').scrollTop=0;}
 function gExit(){guided=null;renderMain();}
-function gAllNeg(){allNegRf(guided.tpl);gNext();}
+function gAllNeg(){if(ad.pid&&getP(ad.pid))adRfAll();else allNegRf(guided.tpl);gNext();}
+function gToStep(k){if(!guided)return;const i=guided.steps.findIndex(x=>x.k===k);if(i>=0){guided.i=i;renderMain();document.getElementById('main').scrollTop=0;}}
 function gEscalate(){
   const t=TPLS.find(x=>x.id===guided.tpl), s=state[guided.tpl];
   const pos=(t.redFlags||[]).filter(f=>s.rf[f]==='pos');
@@ -765,7 +766,7 @@ function gFieldCard(t,s,f){
 function renderGuided(){
   const t=TPLS.find(x=>x.id===guided.tpl), s=state[guided.tpl];
   const step=guided.steps[guided.i], total=guided.steps.length;
-  let h=`<div class="gtop"><span>${t.icon} ${t.title.split('/')[0].trim()} — Entrevista guiada</span><span class="gn">${guided.i+1}/${total}</span><button class="xbtn" onclick="gExit()" aria-label="Close" title="Close guided interview"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`;
+  let h=`<div class="gtop"><span>${t.icon} ${t.title.split('/')[0].trim()} — ${L('Guided interview','Entrevista guiada')}</span><span class="gn">${guided.i+1}/${total}</span><button class="xbtn" onclick="gExit()" aria-label="Close" title="Close guided interview"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`;
   h+=`<div class="gbar"><div style="width:${Math.round((guided.i+1)/total*100)}%"></div></div>`;
   let inner='';
   let controls=true;
@@ -773,6 +774,15 @@ function renderGuided(){
     inner=`<div class="fname">CC</div><div class="qtxt">"What brings you in today?"</div><div class="chips">`;
     t.ccOpts.forEach(o=>inner+=chipHtml(guided.tpl,'__cc',o,s.cc.has(o)));
     inner+=`</div><input type="text" placeholder="other CC..." value="${s.ccCustom}" oninput="cust('${guided.tpl}','__cc',this.value)">`;
+  } else if(step.k==='rf'&&ad.pid&&getP(ad.pid)){
+    const P=getP(ad.pid),anyP=rfList(P).some(f=>ad.rf[f]==='pos');
+    inner='<div class="fname">🚩 '+L('Safety screening FIRST','Primero: seguridad')+' · '+P.id+'</div>'+adRfBlock(P);
+    inner+=anyP?'<div class="rfbanner" style="margin-top:12px">🚩 '+L('RED FLAG — go straight to the decision and escalate.','BANDERA ROJA — ve directo a la decisión y escala.')+'</div><div class="algo-actions"><button style="background:var(--red);color:var(--on-red)" onclick="gToStep(\'add\')">⚠ '+L('Escalate ➜ decision','Escalar ➜ decisión')+'</button></div>'
+      :'<div class="algo-actions"><button style="background:var(--green);color:var(--on-green)" onclick="gAllNeg()">✓ '+L('None — all negative, continue','Ninguna — todas negativas, continuar')+'</button></div>';
+  } else if(step.k==='ads'){
+    const P=getP(ad.pid);inner='<div class="fname">🩺 '+L('ADTMC screening','Tamizaje ADTMC')+' · '+P.id+' '+q$(P.title)+'</div>'+adScreenHtml(P,adEval(P),{noRf:true});
+  } else if(step.k==='add'){
+    const P=getP(ad.pid);inner='<div class="fname">✅ '+L('Decision and plan','Decisión y plan')+'</div>'+adDecisionHtml(P,adEval(P));
   } else if(step.k==='rf'){
     const anyPos=(t.redFlags||[]).some(f=>s.rf[f]==='pos');
     inner=`<div class="fname">🚩 Safety screening FIRST</div><div class="qtxt">Are any of these red flags present right now?</div><div class="chips">`;
@@ -787,7 +797,7 @@ function renderGuided(){
       inner+=`<div class="rfbanner" style="margin-top:12px">🚩 RED FLAG — skip the rest of the interview and escalate.</div>`;
       inner+=`<div class="algo-actions"><button style="background:var(--red);color:var(--on-red)" onclick="gEscalate()">⚠ Escalate ➜ disposition</button></div>`;
     } else {
-      inner+=`<div class="algo-actions"><button style="background:var(--green);color:var(--on-green)" onclick="gAllNeg()">✓ Ninguna — todas negativas, continuar</button></div>`;
+      inner+=`<div class="algo-actions"><button style="background:var(--green);color:var(--on-green)" onclick="gAllNeg()">✓ ${L('None — all negative, continue','Ninguna — todas negativas, continuar')}</button></div>`;
     }
   } else if(step.k==='vit'){
     const v=gVitals;
@@ -826,7 +836,7 @@ function renderGuided(){
       <div class="algo-actions">
         <button style="background:var(--green);color:var(--on-green)" onclick="savePatient(this);gExit();">💾 Save ➜ next Soldier</button>
         <button class="ghost" onclick="gExit()">➕ Another complaint (pick another template)</button>
-        <button class="ghost" onclick="gExit()">Abrir formulario</button>
+        <button class="ghost" onclick="gExit()">${L('Open form view','Abrir formulario')}</button>
       </div>`;
   }
   h+=`<div class="algoq gcard">${inner}</div>`;
@@ -2187,12 +2197,8 @@ function adLiveCard(p){
   const pend=[];if(rfs.length&&nScr<rfs.length)pend.push(L('red flags','banderas rojas')+' '+nScr+'/'+rfs.length);
   return '<div class="livecard lv-wait" onclick="'+go+'"><div class="lc-k">'+L('Suggested disposition','Disposición sugerida')+'<span>'+L('live','en vivo')+'</span></div><div class="lc-h">'+L('In progress','En progreso')+'</div><div class="lc-m">'+(pend.length?L('Pending: ','Pendiente: ')+pend.join(' · '):L('Answer the decision points below.','Responde los puntos de decisión abajo.'))+'</div></div>';
 }
-function adScreenHtml(p,R){
+function adRfBlock(p){
   let h='';
-  if(p.id==='F-6')h+='<div class="note-hint"><span class="chip" onclick="goRef(\'mace\')">🧠 Open MACE 2 tool (scoring)</span></div>';
-  if(p.note)h+='<div class="note-hint">'+scrLink(p.note)+'</div>';
-  if(p.ddx&&p.ddx.length)h+='<details class="dd"><summary>Differential (ADTMC)</summary><div style="padding:6px 10px;font-size:.9em;color:var(--dim)">'+p.ddx.map(q$).join(' · ')+'</div></details>';
-  h+=adVBanner();
   const rfs=rfList(p);
   if(rfs.length){
     const nPos=rfs.filter(f=>ad.rf[f]==='pos').length,nNeg=rfs.filter(f=>ad.rf[f]==='neg').length,allN=!nPos&&nNeg===rfs.length;
@@ -2203,6 +2209,15 @@ function adScreenHtml(p,R){
       h+='<div class="rf-row '+v+'" role="switch" aria-checked="'+(v==='pos')+'" onclick="adRfSet(decodeURIComponent(\''+k+'\'))"><span class="rf-ic">!</span><span class="rf-lbl">'+q$(f)+(v===''?'<small>'+L('not screened','sin revisar')+'</small>':'')+'</span><span class="tgl'+(v==='pos'?' on':'')+'"></span></div>';});
     h+='</div><div class="rf-help">'+L('Switch on = PRESENT (Provider Now). Mark the rest with “All negative”.','Encendido = PRESENTE (Provider Now). Marca el resto con “All negative”.')+'</div>';
   }
+  return h;
+}
+function adScreenHtml(p,R,opts){
+  let h='';
+  if(p.id==='F-6')h+='<div class="note-hint"><span class="chip" onclick="goRef(\'mace\')">🧠 Open MACE 2 tool (scoring)</span></div>';
+  if(p.note)h+='<div class="note-hint">'+scrLink(p.note)+'</div>';
+  if(p.ddx&&p.ddx.length)h+='<details class="dd"><summary>Differential (ADTMC)</summary><div style="padding:6px 10px;font-size:.9em;color:var(--dim)">'+p.ddx.map(q$).join(' · ')+'</div></details>';
+  h+=adVBanner();
+  if(!(opts&&opts.noRf))h+=adRfBlock(p);
   // flow
   let n=0;const last=R.cur!==-1?R.cur:R.end;
   for(let i=0;i<=last&&i<p.flow.length;i++){
@@ -2291,7 +2306,7 @@ function scrChip(t,cls){if(!/^[A-Z]-\d+$/.test(t))return q$(t);const done=ad.log
 function scrLink(txt){return q$(txt).replace(/\b([A-M]-\d{1,2})\b/g,(m,id)=>getP(id)&&id!==ad.pid?'<span class="scr-link" onclick="adScreen(\''+id+'\')">'+id+' ›</span>':m);}
 function adCommit(){
   const p=getP(ad.pid),R=adEval(p);
-  ad.log.push(adEntry(p,R));
+  ad.log.push(adEntry(p,R));guided=null;
   adResetProto();view='adtmc';renderNav();renderMain();renderNote();
 }
 function adProtoLines(p,R){
