@@ -997,6 +997,13 @@ let cur='msk';
 let view='adtmc'; // adtmc (index) | tpl (case: protocol + OPQRST/AMPLE) | admeds | preguntas | perfiles | guardados
 const openDD=new Set();
 function dd(k,open){open?openDD.add(k):openDD.delete(k);}
+/* Folded sections: each block is a one-line row with a summary; tap to open. Nothing is lost when closed.
+   Secciones plegadas: cada bloque es una línea con resumen; toca para abrir. No se pierde nada al cerrar. */
+let foldCur={},foldPid=null;
+function foldOn(){return settings.fold!==false;}
+function isFold(k,auto){if(!foldOn())return true;if(k in foldCur)return foldCur[k];const p=(settings.foldSt||{})[k];return p===undefined?!!auto:p;}
+function foldTog(k,auto){const o=!isFold(k,auto);foldCur[k]=o;if(k!=='cc'){settings.foldSt=Object.assign({},settings.foldSt||{},{[k]:o});saveSettings();}renderMain();}
+function foldRow(k,title,sum,open,auto){if(!foldOn())return'';return '<div class="fold'+(open?' open':'')+'" role="button" aria-expanded="'+open+'" onclick="foldTog(\''+k+'\','+(auto?1:0)+')"><span class="chev">›</span><b>'+title+'</b><span class="fsum">'+sum+'</span></div>';}
 
 /* ---- persistence (sobrevive refresh / cierre accidental) ---- */
 function persist(){
@@ -1124,8 +1131,10 @@ function renderMain(){
   const t=TPLS.find(x=>x.id===cur), s=state[cur];
   const _hlab={quick:'Reason for visit',focus:'Focused history'}[hmode()]||'History — OPQRST / AMPLE';
   const _rfTop=ad.pid&&getP(ad.pid)&&rfList(getP(ad.pid)).length;
-  let h=ad.pid?(adHeadHtml(getP(ad.pid))+'<div class="secbar">1 · '+(_rfTop?L('Chief complaint & red flags','Motivo de consulta y banderas rojas'):_hlab)+'</div>'):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:var(--chipx-txt)">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
-  if(hmode()!=='quick')h+=`<button class="gstart" onclick="startGuided()">▶ Guided interview — one question at a time</button>`;
+  const _fo=ad.pid&&foldOn();let _sn=0;const _sec=(t)=>'<div class="secbar sb2">'+(++_sn)+' · '+t+'</div>';
+  if(ad.pid&&foldPid!==ad.pid){foldPid=ad.pid;delete foldCur.cc;}
+  let h=ad.pid?(adHeadHtml(getP(ad.pid))+(_fo?_sec(L('Complaint','Motivo de consulta')):'<div class="secbar">1 · '+(_rfTop?L('Chief complaint & red flags','Motivo de consulta y banderas rojas'):_hlab)+'</div>')):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:var(--chipx-txt)">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
+  if(hmode()!=='quick')h+=_fo?'<button class="gstart sm" onclick="startGuided()">▶ '+L('Guided interview','Entrevista guiada')+'</button>':`<button class="gstart" onclick="startGuided()">▶ Guided interview — one question at a time</button>`;
   if(hmode()!=='quick')h+=`<div class="warn">${t.er}</div>`;
   if(hmode()!=='full')h+=`<div class="note-hint">${hmode()==='quick'?'This visit does not need a full history.':'Focused history for this complaint.'} <span class="chip" onclick="adFullHist()">+ Add full OPQRST / AMPLE</span></div>`;
   if(!ad.pid)h+=adPatientCard()+adVBanner();
@@ -1142,21 +1151,33 @@ function renderMain(){
   </div></div>`;
 
   // CC
-  h+=`<div class="field"><div class="lab"><span class="tag">CC</span><span class="name">${hmode()==='quick'?'Reason for visit':'Chief Complaint'}</span><span class="ask">${hmode()==='quick'?'':'"What brings you in today?"'}</span>${clrBtn(cur,'__cc')}</div>`;
+  let _ccOpen=true;
+  if(_fo){const _cs=[...s.cc].concat(s.ccCustom&&s.ccCustom.trim()?[s.ccCustom.trim()]:[]);
+    if(!('cc' in foldCur))foldCur.cc=!_cs.length;
+    _ccOpen=isFold('cc');
+    h+=foldRow('cc',hmode()==='quick'?L('Reason for visit','Motivo de la visita'):L('Chief complaint','Motivo de consulta'),_cs.length?'<span class="ok">'+q$(_cs.join(', '))+' ✓</span>':L('tap to choose','toca para elegir'),_ccOpen);}
+  if(_ccOpen){
+  h+=`<div class="field${_fo?' fbody':''}"><div class="lab"><span class="tag">CC</span><span class="name">${hmode()==='quick'?'Reason for visit':'Chief Complaint'}</span><span class="ask">${hmode()==='quick'?'':'"What brings you in today?"'}</span>${clrBtn(cur,'__cc')}</div>`;
   if(hmode()!=='quick'){h+=`<div class="chips">`;
   t.ccOpts.forEach(o=>h+=chipHtml(cur,'__cc',o,s.cc.has(o)));
   h+=`</div>`;}
   if(s.cc.size>=2)h+=`<div class="fuq">💡 ${s.cc.size} complaints in this section. If they share a mechanism (e.g. fall → knee + wrist), document them together and use "other/detail" to tell sides apart. If they are different systems, open them in separate templates — they combine on their own in the same note.</div>`;
   h+=`<input type="text" placeholder="other CC..." value="${s.ccCustom}" oninput="cust('${cur}','__cc',this.value)"></div>`;
+  }
   if(!ad.pid)h+=adSuggestHtml(t,s);
-  if(ad.pid&&getP(ad.pid)){const _pp=getP(ad.pid);if(rfList(_pp).length){h+='<div class="secbar">🚩 '+L('Red flags — screen first','Banderas rojas — primero')+'</div>'+adRfBlock(_pp);
+  if(ad.pid&&getP(ad.pid)){const _pp=getP(ad.pid);if(rfList(_pp).length){h+=(_fo?_sec('🚩 '+L('Red flags — screen first','Banderas rojas — primero')):'<div class="secbar">🚩 '+L('Red flags — screen first','Banderas rojas — primero')+'</div>')+adRfBlock(_pp);
     if(rfList(_pp).some(f=>ad.rf[f]==='pos'))h+='<div class="rfbanner">🚩 '+L('Red flag present → Provider Now. You can skip the rest of the history: ','Bandera roja → Provider Now. Puedes saltarte el resto de la historia: ')+'<span class="scr-link" onclick="var e=document.querySelector(\'.resbox\');if(e)e.scrollIntoView({behavior:\'smooth\',block:\'center\'})">'+L('go to decision','ir a la decisión')+' ›</span></div>';
-    h+='<div class="secbar">'+_hlab+'</div>';}}
+    if(!_fo)h+='<div class="secbar">'+_hlab+'</div>';}}
 
   // fields — answered letters collapse into a one-line summary as you move on (compact history)
   const vf=visFields(t),hasC=f=>s.fields[f.id].size>0||!!(s.custom[f.id]||'').trim();
   const fi=settings.hcompact===false||!s.focus?-1:vf.findIndex(f=>f.id===s.focus);
-  h+='<div class="hwrap">';
+  let _hOpen=true;
+  if(_fo){h+=_sec(L('History','Historia'));const _nd=vf.filter(hasC).length;
+    _hOpen=isFold('hist');
+    h+=foldRow('hist',hmode()==='full'?'OPQRST / AMPLE':_hlab,_nd+' '+L('of','de')+' '+vf.length+(s.sev!==null?' · '+s.sev+'/10':''),_hOpen);}
+  if(_hOpen){
+  h+='<div class="hwrap'+(_fo?' fbody':'')+'">';
   if(vf.length>2){
     h+='<div class="hprog">'+vf.map(f=>'<span class="hl'+(hasC(f)?' done':'')+(f.id===s.focus?' cur':'')+'" onclick="fOpen(\''+cur+'\',\''+f.id+'\')" title="'+q$(f.name)+'">'+f.tag+'</span>').join('')+(fi>0?'<span class="hall" onclick="fOpen(\''+cur+'\',null)">'+L('Show all','Ver todo')+'</span>':'')+'</div>';
   }
@@ -1196,6 +1217,7 @@ function renderMain(){
       <span class="chip ${s.duty==='Yes'?'on':''}" onclick="setDuty('${cur}','Yes')">interferes w/ duty/PT: Yes</span>
       <span class="chip ${s.duty==='No'?'on':''}" onclick="setDuty('${cur}','No')">No</span>
     </div>${s.sev!==null&&s.sev>=8?`<div class="fuq">⚠️ ${s.sev}/10 is high severity — review the red flags above and confirm vitals before deciding disposition.</div>`:''}</div>`;
+  }
 
   // Red Flags screening
   if(t.redFlags&&!ad.pid){
@@ -1229,8 +1251,8 @@ function renderMain(){
   h+=`<input type="text" placeholder="disposition text (editable)..." value="${s.dispoTxt}" oninput="dispoTxt('${cur}',this.value)"></div>`;
 
   }
-  if(ad.pid){const _p=getP(ad.pid),_R=adEval(_p);h+='<div class="secbar">2 · '+L('ADTMC decision points','Puntos de decisión ADTMC')+'</div>'+adScreenHtml(_p,_R,{noRf:true})+'<div class="secbar">3 · Decision and plan</div>'+adDecisionHtml(_p,_R);}
-  h+=`<div class="note-hint">💡 Remember: write it as a <b>recommendation</b> under CoC/provider supervision, not as a medical order. Meds → "to be picked up at Mendoza Pharmacy".</div>`;
+  if(ad.pid){const _p=getP(ad.pid),_R=adEval(_p);h+=(_fo?_sec(L('ADTMC decision points','Puntos de decisión ADTMC')):'<div class="secbar">2 · '+L('ADTMC decision points','Puntos de decisión ADTMC')+'</div>')+adScreenHtml(_p,_R,{noRf:true})+(_fo?_sec(L('Plan','Plan')):'<div class="secbar">3 · Decision and plan</div>')+adDecisionHtml(_p,_R);}
+  h+=`<div class="note-hint${_fo?' foot':''}">💡 Remember: write it as a <b>recommendation</b> under CoC/provider supervision, not as a medical order. Meds → "to be picked up at Mendoza Pharmacy".</div>`;
   m.innerHTML=h;
 }
 
@@ -1536,7 +1558,7 @@ function tog(tid,fid,opt,deny){
   if(fid!=='__cc')fKeep(fid);
 }
 function fKeep(fid){const el=document.getElementById('fld_'+fid);if(el&&el.scrollIntoView)el.scrollIntoView({block:'nearest'});}
-function fOpen(tid,fid){const s=state[tid];if(!s)return;s.focus=fid;renderMain();if(fid)setTimeout(()=>{const el=document.getElementById('fld_'+fid);if(el)el.scrollIntoView({block:'center',behavior:'smooth'});},0);}
+function fOpen(tid,fid){const s=state[tid];if(!s)return;s.focus=fid;if(foldOn()&&!isFold('hist'))foldCur.hist=true;renderMain();if(fid)setTimeout(()=>{const el=document.getElementById('fld_'+fid);if(el)el.scrollIntoView({block:'center',behavior:'smooth'});},0);}
 function cust(tid,fid,val){
   if(fid==='__cc'){state[tid].ccCustom=val;}else{state[tid].custom[fid]=val;}
   renderNote();
@@ -2052,7 +2074,7 @@ function protoTpl(id){
   return find(pref)||Object.keys(CCMAP).map(find).find(Boolean)||{tid:pref,ccs:[]};
 }
 function adOpen(id){
-  ccRawOff();const keep=ad.prev;adResetProto();ad.pid=id;ad.prev=keep;
+  foldPid=null;foldCur={};ccRawOff();const keep=ad.prev;adResetProto();ad.pid=id;ad.prev=keep;
   const m=protoTpl(id);if(guided&&guided.tpl!==m.tid)guided=null;
   cur=m.tid;view='tpl';
   if(m.ccs.length===1&&!state[cur].cc.size)state[cur].cc.add(m.ccs[0]);
@@ -2193,7 +2215,7 @@ function adOut(i,o){ad.out[i]=o;renderMain();renderNote();}
 function adUndo(i){delete ad.dpDone[i];delete ad.out[i];delete ad.out['x'+i];renderMain();renderNote();}
 function adHeadHtml(p){
   let h='<div class="algo-actions" style="margin:0 0 10px"><button class="ghost" onclick="adBack()">← Index</button></div>';
-  h+='<h2 class="tpl"><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2><p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>';
+  h+='<h2 class="tpl"><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2>'+(foldOn()?'':'<p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>');
   h+=adLiveCard(p);
   return h;
 }
@@ -2203,8 +2225,10 @@ function adLiveCard(p){
   const go="var e=document.querySelector('.resbox')||[...document.querySelectorAll('.secbar')].pop();if(e)e.scrollIntoView({behavior:'smooth',block:'center'})";
   if(R.final){const lv=LV[R.final];let why=(R.esc.find(e=>e.lv===R.final)||{}).why;
     if(!why){const fired=[];let dn=0;p.flow.forEach((st,i)=>{if(st.items)dn++;const a=ad.dp[i];if(st.items&&a&&a.length)fired.push('DP'+dn+': '+a.map(j=>st.items[j]).filter(Boolean).join(', '));});why=fired.length?fired[fired.length-1]:('Protocol endpoint '+p.id);}
+    if(foldOn())return '<div class="livecard lc1 lv-'+lv.c+'" onclick="'+go+'"><div class="lc-r"><b>'+L('Disposition','Disposición')+'</b><span class="lc-h">'+q$(lv.s)+'</span></div><div class="lc-m">'+q$(why)+'</div></div>';
     return '<div class="livecard lv-'+lv.c+'" onclick="'+go+'"><div class="lc-k">'+L('Suggested disposition','Disposición sugerida')+'<span>'+L('live','en vivo')+'</span></div><div class="lc-h">'+q$(lv.s)+'</div><div class="lc-m">'+q$(why)+' · '+L('see decision ↓','ver decisión ↓')+'</div></div>';}
   const pend=[];if(rfs.length&&nScr<rfs.length)pend.push(L('red flags','banderas rojas')+' '+nScr+'/'+rfs.length);
+  if(foldOn())return '<div class="livecard lc1 lv-wait" onclick="'+go+'"><div class="lc-r"><b>'+L('Disposition','Disposición')+'</b><span class="lc-s">'+(pend.length?L('Pending · ','Pendiente · ')+pend.join(' · '):L('Answer the decision points','Responde los puntos de decisión'))+'</span></div></div>';
   return '<div class="livecard lv-wait" onclick="'+go+'"><div class="lc-k">'+L('Suggested disposition','Disposición sugerida')+'<span>'+L('live','en vivo')+'</span></div><div class="lc-h">'+L('In progress','En progreso')+'</div><div class="lc-m">'+(pend.length?L('Pending: ','Pendiente: ')+pend.join(' · '):L('Answer the decision points below.','Responde los puntos de decisión abajo.'))+'</div></div>';
 }
 /* ===== How-to cards (data/howto.js) ===== */
@@ -2226,11 +2250,11 @@ function adRfBlock(p){
   if(rfs.length){
     const nPos=rfs.filter(f=>ad.rf[f]==='pos').length,nNeg=rfs.filter(f=>ad.rf[f]==='neg').length,allN=!nPos&&nNeg===rfs.length;
     const st=nPos?'<span class="rf-st pos">'+nPos+' PRESENT</span>':(allN?'<span class="rf-st neg">✓ All negative</span>':'<button class="rf-all" onclick="adRfAll()">All negative</button>');
-    h+='<div class="rf-head"><h3>Red flags</h3>'+st+(Object.keys(ad.rf).length?'<span class="clr" onclick="adClrRf()" title="Clear this section">✕ clear</span>':'')+'</div>';
+    h+='<div class="rf-head">'+(foldOn()?'<span class="rf-hint">'+L('Switch on = present','Encendido = presente')+'</span>':'<h3>Red flags</h3>')+st+(Object.keys(ad.rf).length?'<span class="clr" onclick="adClrRf()" title="Clear this section">✕ clear</span>':'')+'</div>';
     h+='<div class="rf-list">';
     rfs.forEach(f=>{const v=ad.rf[f]||'';const k=encodeURIComponent(f).replace(/'/g,'%27');
       h+='<div class="rf-row '+v+'" role="switch" aria-checked="'+(v==='pos')+'" onclick="adRfSet(decodeURIComponent(\''+k+'\'))"><span class="rf-ic">!</span><span class="rf-lbl">'+q$(f)+htBtn(f)+(v===''?'<small>'+L('not screened','sin revisar')+'</small>':'')+'</span><span class="tgl'+(v==='pos'?' on':'')+'"></span></div>';});
-    h+='</div><div class="rf-help">'+L('Switch on = PRESENT (Provider Now). Mark the rest with “All negative”.','Encendido = PRESENTE (Provider Now). Marca el resto con “All negative”.')+'</div>';
+    h+='</div>'+(foldOn()?'':'<div class="rf-help">'+L('Switch on = PRESENT (Provider Now). Mark the rest with “All negative”.','Encendido = PRESENTE (Provider Now). Marca el resto con “All negative”.')+'</div>');
   }
   return h;
 }
@@ -2238,7 +2262,8 @@ function adScreenHtml(p,R,opts){
   let h='';
   if(p.id==='F-6')h+='<div class="note-hint"><span class="chip" onclick="goRef(\'mace\')">🧠 Open MACE 2 tool (scoring)</span></div>';
   if(p.note)h+='<div class="note-hint">'+scrLink(p.note)+'</div>';
-  if(p.ddx&&p.ddx.length)h+='<details class="dd"><summary>Differential (ADTMC)</summary><div style="padding:6px 10px;font-size:.9em;color:var(--dim)">'+p.ddx.map(q$).join(' · ')+'</div></details>';
+  if(p.ddx&&p.ddx.length){if(foldOn()){const o=isFold('ddx');h+=foldRow('ddx',L('Differential','Diferencial'),p.ddx.length+' '+L('options','opciones'),o);if(o)h+='<div class="field fbody" style="font-size:.9em;color:var(--dim)">'+p.ddx.map(q$).join(' · ')+'</div>';}
+    else h+='<details class="dd"><summary>Differential (ADTMC)</summary><div style="padding:6px 10px;font-size:.9em;color:var(--dim)">'+p.ddx.map(q$).join(' · ')+'</div></details>';}
   h+=adVBanner();
   if(!(opts&&opts.noRf))h+=adRfBlock(p);
   // flow
@@ -2268,9 +2293,14 @@ function adScreenHtml(p,R,opts){
     if(done&&!fired&&st.none&&sel.length===0)h+='<div class="fuq">● None — see decision below.</div>';
     h+='</div>';
   }
-  h+='<details class="dd" ontoggle="dd(\'adopt\',this.open)" '+((openDD.has('adopt')||ad.ret)?'open':'')+'><summary>Optional: vitals (if taken), LMP, return for same complaint'+(ad.ret?' <b class="cnt">return</b>':'')+'</summary><div style="padding:8px 10px">'+adPatientInner()+adVitalsInputs();
+  const _fo=foldOn();
+  if(_fo){const vs=[['bp','BP'],['hr','HR'],['temp','T'],['spo2','SpO2']].filter(([k])=>(gVitals[k]||'').trim()).map(([k,l])=>l+' '+gVitals[k].trim());
+    if(ad.ret)vs.unshift(L('return visit','regreso'));
+    const o=isFold('opt',ad.ret);h+=foldRow('opt',L('Vitals · LMP · return visit','Vitales · FUM · regreso'),vs.length?q$(vs.join(' · ')):L('optional','opcional'),o,ad.ret);
+    if(!o)return h;h+='<div class="field fbody">'+adPatientInner()+adVitalsInputs();}
+  else h+='<details class="dd" ontoggle="dd(\'adopt\',this.open)" '+((openDD.has('adopt')||ad.ret)?'open':'')+'><summary>Optional: vitals (if taken), LMP, return for same complaint'+(ad.ret?' <b class="cnt">return</b>':'')+'</summary><div style="padding:8px 10px">'+adPatientInner()+adVitalsInputs();
   h+='<div class="field"><div class="lab"><span class="tag s2">↩</span><span class="name">Returning for the same complaint?</span><span class="ask">M-1: never re-screened below AEM</span></div><div class="chips"><span class="chip '+(ad.ret?'on':'')+'" onclick="ad.ret=!ad.ret;if(!ad.ret)ad.worse=false;renderMain();renderNote()">Return for same complaint (already treated)</span>'+(ad.ret?'<span class="chip '+(ad.worse?'on':'')+'" onclick="ad.worse=!ad.worse;renderMain();renderNote()">Worsening / already seen by provider or AEM → clinic</span>':'')+'</div></div>';
-  h+='</div></details>';
+  h+=_fo?'</div>':'</div></details>';
   return h;
 }
 function adDecisionHtml(p,R){
@@ -2291,7 +2321,8 @@ function adDecisionHtml(p,R){
     Object.keys(t.dispo).forEach(k=>{h+='<span class="chip '+(s.dispo===k?'on':'')+'" onclick="setDispo(\''+cur+'\',\''+k+'\')">'+k+'</span>';});
     h+='</div><input type="text" placeholder="duty status text (editable)..." value="'+q$(s.dispoTxt)+'" oninput="dispoTxt(\''+cur+'\',this.value)"></div>';
   }
-  h+='<div class="field"><div class="lab"><span class="tag s2">☎</span><span class="name">Notified at clinic (optional)</span></div><input type="text" style="margin-top:0" value="'+q$(ad.prov)+'" placeholder="Rank Last name, if you contacted them" oninput="ad.prov=this.value;renderNote()"></div>';
+  const _po=isFold('prov');h+=foldRow('prov',L('Notified at clinic','Avisado en la clínica'),ad.prov&&ad.prov.trim()?q$(ad.prov.trim()):L('optional','opcional'),_po);
+  if(_po)h+='<div class="field'+(foldOn()?' fbody':'')+'"><div class="lab"><span class="tag s2">☎</span><span class="name">Notified at clinic (optional)</span></div><input type="text" style="margin-top:0" value="'+q$(ad.prov)+'" placeholder="Rank Last name, if you contacted them" oninput="ad.prov=this.value;renderNote()"></div>';
   h+='<div class="algo-actions"><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
   return h;
 }
@@ -2513,7 +2544,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v12';
+const APP_VER='v13';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -2571,6 +2602,7 @@ function renderSettings(){
   h+='<div class="field"><div class="lab"><span class="tag">🎨</span><span class="name">Theme</span></div><div class="chips">'+THEMES.map(x=>'<span class="chip '+(settings.theme===x[0]?'on':'')+'" onclick="setTheme(\''+x[0]+'\')">'+x[1]+'</span>').join('')+'</div><div class="chips" style="margin-top:8px"><span class="chip '+(settings.mode!=='light'?'on':'')+'" onclick="setMode(\'dark\')">Dark</span><span class="chip '+(settings.mode==='light'?'on':'')+'" onclick="setMode(\'light\')">Light</span></div><div class="fuq">Color and brightness of the interface. Saved on this device only. The note text is not affected.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🩺</span><span class="name">'+L('AEM in my unit','AEM en mi unidad')+'</span><span class="ask">ADTMC II</span></div><div class="chips"><span class="chip '+(settings.aemOn?'on':'')+'" onclick="togAem()">'+(settings.aemOn?L('AEM available','AEM disponible'):L('No AEM — "AEM Now" goes to the clinic','Sin AEM — "AEM Now" va a la clínica'))+'</span></div>'+(settings.aemOn?'<input id="aemName" maxlength="60" autocomplete="off" placeholder="'+L('AEM rank / name (optional)','Rango / nombre del AEM (opcional)')+'" value="'+q$(settings.aemName||'')+'" oninput="setAemName(this.value)" style="margin-top:8px">':'')+'<div class="fuq">'+L('AEM = expeditionary combat medic, special operations medic, flight paramedic, or the supervising NCO when local policy delegates that authority. If no AEM is available, the Soldier is seen by the supervising privileged provider (ADTMC Category II).','AEM = expeditionary combat medic, special operations medic, flight paramedic, o el NCO supervisor cuando la política local le delega esa autoridad. Si no hay AEM disponible, al Soldado lo ve el proveedor privilegiado supervisor (ADTMC Categoría II).')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">✎</span><span class="name">'+L('Note detail (screening)','Detalle de la nota (screening)')+'</span></div><div class="chips">'+[['minimal',L('Minimal — positives only','Mínimo — solo positivos')],['short',L('Short — skip red-flag negatives','Corto — sin negativos de banderas rojas')],['full',L('Full — every pertinent negative','Completo — todos los negativos')]].map(([v,l])=>'<span class="chip '+((settings.noteDetail||'short')===v?'on':'')+'" onclick="settings.noteDetail=\''+v+'\';saveSettings();renderMain();renderNote()">'+l+'</span>').join('')+'</div><div class="fuq">'+L('When all red flags are negative the note already says "No red flags." Short leaves out the long "Denies…" list of each red flag.','Si todas las banderas rojas son negativas, la nota ya dice "No red flags." Corto quita la lista larga de "Denies…" de cada bandera.')+'</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">▸</span><span class="name">'+L('Folded sections','Secciones plegadas')+'</span></div><div class="chips"><span class="chip '+(foldOn()?'on':'')+'" onclick="settings.fold=!foldOn();saveSettings();renderMain()">'+(foldOn()?L('ON — sections show as one line; tap to open','ENCENDIDO — cada sección es una línea; toca para abrir'):L('Off — everything open (classic)','Apagado — todo abierto (clásico)'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">≡</span><span class="name">'+L('Compact history','Historial compacto')+'</span></div><div class="chips"><span class="chip '+(settings.hcompact!==false?'on':'')+'" onclick="settings.hcompact=settings.hcompact===false;saveSettings();renderMain()">'+(settings.hcompact!==false?L('ON — answered letters fold up as you move on','ENCENDIDO — las letras respondidas se pliegan al avanzar'):L('Off — show every letter open','Apagado — todas las letras abiertas'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🛡️</span><span class="name">Daily auto-delete</span></div><div class="chips"><span class="chip '+(settings.purge?'on':'')+'" onclick="togPurge()">'+(settings.purge?'ON — notes and data from previous days are deleted on open':'Off')+'</span></div><div class="fuq">Recommended: notes contain Soldier information (PII/PHI). Export what you need before the day ends.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🔒</span><span class="name">Lock PIN</span><span class="ask">'+(settings.pin?'active':'no PIN')+'</span></div>';
