@@ -723,3 +723,80 @@ Object.assign(NOTE_TAGS,{
  }
  });
 })();
+// ---- batch 6 ----
+(function(){
+ const H=(y,n)=>({k:'hpi',y,n:n===undefined?y:n}), P=(y,n)=>({k:'pe',y,n:n===undefined?null:n}), Y=y=>({k:'hpi',y,n:null});
+ Object.assign(NOTE_TAGS,{
+ 'F-5':{
+  'Homicidal intent or attempt':H('homicidal intent / attempt','HI'),
+  'Suicide intent or attempt':H('suicidal intent / attempt','SI'),
+  'Self-injury':H('self-injury','self-harm'),
+  'Altered mental status':P('Altered mental status','Alert, mental status normal'),
+  'Positive suicide screen':Y('positive suicide screen'),
+  'Abnormal vital signs':P('Abnormal vital signs',null),
+  'Severe emotional distress':P('Severe emotional distress',null),
+  'Positive depression screen':Y('positive depression screen'),
+  'Difficulty adjusting to injury or pain':Y('difficulty adjusting to injury / pain'),
+  'Escorted due to safety concerns':Y('escorted due to safety concerns'),
+  'Other indications of depression / anxiety':Y('other signs of depression / anxiety')
+ },
+ 'L-2':{
+  'Exposed pulp':P('Exposed pulp','No exposed pulp'),
+  'Avulsed tooth':P('Avulsed tooth',null),
+  'Severe pain':H('severe pain'),
+  'Trauma':H('dental trauma','trauma'),
+  'Chest pain / SOB':H('chest pain / SOB','chest pain or shortness of breath'),
+  'Loose tooth':P('Loose tooth','No loose teeth'),
+  'Abscess / infection':P('Abscess / signs of infection','No abscess or signs of infection'),
+  'Gingivitis, periodontitis':P('Gingivitis / periodontitis',null),
+  'Broken tooth (pulp not showing)':P('Broken tooth, pulp not exposed',null),
+  'Jaw pain not from trauma':H('jaw pain without trauma','jaw pain')
+ },
+ 'L-3':{
+  'Diffuse lesions':P('Diffuse lesions','Lesions not diffuse'),
+  'Bloody diarrhea':H('bloody diarrhea'),
+  'Painless lesion':P('Painless lesion',null),
+  'Also located in groin':Y('similar lesions in the groin'),
+  'History of bloody diarrhea':H('history of bloody diarrhea',null),
+  'Diffuse rash':P('Diffuse rash','No rash'),
+  'Present >2 weeks':H('lesions present > 2 weeks','lesions > 2 weeks'),
+  'Cluster of ulcers':P('Cluster of ulcers',null),
+  'Ulcer >5 mm':P('Ulcer > 5 mm',null)
+ },
+ 'L-7':{
+  'Multiple body areas':P('Enlarged nodes in multiple areas','Localized to one area'),
+  'Unexplained weight loss':H('unexplained weight loss'),
+  'Supraclavicular':P('Supraclavicular node',null),
+  'Posterior cervical':P('Posterior cervical node',null),
+  'Not mobile':P('Node fixed','Node mobile'),
+  'Not soft (hard / rubbery)':P('Node hard / rubbery','Node soft'),
+  'No recent infection (within 2 weeks)':Y('no infection in the last 2 weeks'),
+  'Infection / inflammation symptoms present':H('symptoms of infection / inflammation',null)
+ },
+ 'L-8':{
+  'BP >180/120 (severe / urgency)':P('BP > 180/120',null),
+  'BP greater than 150/90 (recheck after 5 min; still >150/90)':P('BP > 150/90 on recheck after 5 min',null),
+  'Systolic <90':P('SBP < 90',null),
+  'Difference >15 mmHg between arms':P('> 15 mmHg difference between arms','< 15 mmHg difference between arms'),
+  'Orthostatic hypotension (SBP drop ≥20, DBP drop ≥10 or HR rise ≥20 with standing)':P('Orthostatic hypotension',null)
+ },
+ 'L-11':{
+  'Appears sick / unstable (pale, sweaty, dazed)':P('Appears ill / unstable','Well-appearing'),
+  'Altered mental status':P('Altered mental status','Alert, mental status normal'),
+  'Uncomfortable (cannot stop moving)':P('Appears uncomfortable',null),
+  'Abnormal vital signs':P('Abnormal vital signs',null),
+  'Pain ≥5':H('pain ≥ 5/10',null),
+  'Moderate–severe pain':H('moderate to severe pain',null)
+ },
+ 'M-1':{
+  'Worsening on treatment':H('worsening on treatment'),
+  'Previously saw Provider or AEM':Y('previously seen by provider / AEM'),
+  'Previously screened as Self-Care or AEM':Y('previously screened as self-care / AEM')
+ },
+ 'M-2':{
+  'Condition worsening':H('worsening condition','worsening'),
+  'Not improving':H('no improvement',null),
+  'Previously seen by Provider or Specialty Clinic requesting follow-up':Y('follow-up requested by provider / specialty clinic')
+ }
+ });
+})();

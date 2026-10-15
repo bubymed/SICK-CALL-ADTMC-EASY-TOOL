@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **Screening → note, batch 6:** Behavioral health (F-5, writes "Denies HI, SI, self-harm"), Dental (L-2), Mouth sores (L-3), Lymph nodes (L-7), BP check (L-8), Complaint not on list (L-11), Not improving (M-1), Return requested (M-2). 62 protocols covered.
+  **Screening → nota, grupo 6:** Salud mental (F-5, escribe "Denies HI, SI, self-harm"), Dental (L-2), Llagas en la boca (L-3), Ganglios (L-7), Presión arterial (L-8), Queja no listada (L-11), Sin mejoría (M-1), Regreso pedido (M-2). 62 protocolos cubiertos.
 - **Screening → note, batch 5:** Boils (J-9), Cold sore (J-10), Laceration (J-11), Suture removal (J-12), Drug rash (J-13), Burns (J-14), Blisters (J-15), Ingrown toenail (J-18), Heat injury (K-1), Hypothermia (K-2), Immersion foot (K-3), Frostbite (K-5), Insect bites (K-7). 54 protocols covered.
   **Screening → nota, grupo 5:** Abscesos (J-9), Herpes labial (J-10), Laceración (J-11), Retiro de suturas (J-12), Erupción por medicamento (J-13), Quemaduras (J-14), Ampollas (J-15), Uña encarnada (J-18), Lesión por calor (K-1), Hipotermia (K-2), Pie de inmersión (K-3), Congelación (K-5), Picaduras (K-7). 54 protocolos cubiertos.
 - **Screening → note, batch 4:** Groin/Testicular (E-2), Voiding (E-4), Fatigue (G-1), Fever/Chills (G-2), Eye (H-1), Eyelid (H-2), Vision (H-3), Double vision (H-4), Breast (I-1), Menstrual (I-3), Vaginal (I-4). 41 protocols covered.
