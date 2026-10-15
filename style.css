@@ -558,3 +558,10 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 .pii-warn{margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--rfb-bg);color:var(--rfb-txt);font-size:13px;font-weight:600}
 #piiWarn{margin:10px 14px 0;padding:12px;border-radius:12px;background:var(--rfb-bg);color:var(--rfb-txt);font-size:14px;box-shadow:inset 4px 0 0 var(--red)}
 @media print{.pii-warn,#piiWarn{display:none!important}}
+
+/* Screen-another-protocol links */
+.chip.done{opacity:.6}
+.scr-link{display:inline-block;padding:1px 8px;margin:0 2px;border-radius:999px;background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--blue);font-weight:600;cursor:pointer}
+#toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translate(-50%,-90px);max-width:92vw;background:var(--panel);color:var(--txt);box-shadow:0 8px 28px rgba(0,0,0,.3);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:200;transition:transform .25s;text-align:center}
+#toast.on{transform:translate(-50%,0)}
+.hwrap{position:relative}
