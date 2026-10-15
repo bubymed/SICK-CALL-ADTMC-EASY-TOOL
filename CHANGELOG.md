@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **Auto-update:** the app now checks for a new version every time it opens or comes back to the screen (when online) and updates itself — no more Settings → "Update app". Your in-progress note is saved first, and it never reloads while you're typing. The manual button stays as a backup.
+  **Auto-actualización:** la app revisa si hay versión nueva cada vez que se abre o vuelve a la pantalla (con internet) y se actualiza sola — ya no hace falta Ajustes → "Actualizar app". Primero guarda la nota en curso y nunca recarga mientras escribes. El botón manual se queda de respaldo.
 - **Feedback survey:** More → "Feedback — 2-min survey" opens a short external survey (Tally). After the first saved note the app asks once, politely, and never again. Also linked from the demo page and README. Nothing from the app is sent with it.
   **Encuesta de opinión:** Más → "Opinión — encuesta de 2 min" abre una encuesta corta externa (Tally). Después de la primera nota guardada la app lo pide una sola vez y no vuelve a salir. También en la página demo y el README. No se envía nada de la app.
 - **Questionnaire start screen:** the honesty / UCMJ notice now appears only on the screen after "Start", not on the first screen. Public pages (demo, README) describe the QR priority in general terms only; the full legend stays in the medic guide.

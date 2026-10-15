@@ -2650,7 +2650,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v17';
+const APP_VER='v18';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -2910,7 +2910,27 @@ function prevHtml(){
   if(!ad.prev)return'';const p=ad.prev,d=new Date(p.t);
   return '<div class="sugbox"><div class="sughead">↩ Follow-up for '+q$(p.name)+' — visit of '+d.toLocaleDateString()+'</div><div class="fuq">Prior: '+(p.ids.length?p.ids.join(', '):'—')+(p.hi?' → '+LV[p.hi].s:'')+'. Return for the same complaint: not re-screened below AEM (M-1). Open the matching protocol or M-1/M-2.</div><div class="chips"><span class="chip on" onclick="adOpen(\'M-1\')">M-1 Not improving</span><span class="chip on" onclick="adOpen(\'M-2\')">M-2 Return requested by provider</span>'+p.ids.filter(x=>getP(x)).map(x=>'<span class="chip x" onclick="adOpen(\''+x+'\')">'+x+'</span>').join('')+'</div></div>';
 }
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){try{navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}}
+/* Auto-update: on open and whenever the app comes back to the screen, check version.json; if a newer
+   version is published, save state and reload once. Offline → keep using the cached copy.
+   Auto-actualización: al abrir y al volver a la app revisa version.json; si hay versión nueva, guarda y recarga una vez. */
+let swReg=null;
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){try{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{swReg=r;}).catch(()=>{});}catch(e){}}
+function autoUpd(){
+  if(!/^https?:/.test(location.protocol)||!navigator.onLine)return;
+  try{swReg&&swReg.update();}catch(e){}
+  fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{
+    if(!j||!j.v||j.v===APP_VER)return;
+    let k='';try{k=sessionStorage.getItem('sc_upd')||'';}catch(e){}
+    if(k===j.v)return; // already tried this version in this session — avoid loops
+    const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName))return; // don't interrupt typing
+    try{sessionStorage.setItem('sc_upd',j.v);}catch(e){}
+    try{persist();}catch(e){}
+    iqToast(L('Updating to ','Actualizando a ')+j.v+'…');
+    setTimeout(()=>{location.replace(location.pathname+'?v='+encodeURIComponent(j.v));},700);
+  }).catch(()=>{});
+}
+setTimeout(autoUpd,1500);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')autoUpd();});
 
 
 /* ===== Language (EN / ES) — interface only; the note stays in English ===== */
