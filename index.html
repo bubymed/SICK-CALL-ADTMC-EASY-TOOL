@@ -8,6 +8,9 @@
 <script>try{var _s=JSON.parse(localStorage.getItem("sc_settings")||"{}"),_r=document.documentElement;if(_s.theme&&_s.theme!=="green")_r.setAttribute("data-theme",_s.theme);if(_s.mode==="light")_r.setAttribute("data-mode","light");}catch(e){}</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<meta name="apple-mobile-web-app-title" content="Sick Call">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,6 +18,7 @@
 <header>
   <span class="brand">Sick Call</span><span class="langsw"><button id="lEN" onclick="setLang('en')" title="English">EN</button><button id="lES" onclick="setLang('es')" title="Español">ES</button></span><span class="sub">68W · ADTMC (MEDCOM Pam 40-7-21) — tap options, the note builds itself</span>
   <span class="spacer"></span>
+  <button id="instBtn" class="inst-btn" onclick="installApp()" style="display:none" title="Add to Home Screen">📲 Install</button>
   <button onclick="setFs(-1)" title="smaller text">A−</button>
   <button onclick="setFs(1)" title="larger text">A+</button>
   <button onclick="resetTpl()">Clear section</button>

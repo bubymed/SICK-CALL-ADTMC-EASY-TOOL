@@ -2665,7 +2665,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v20';
+const APP_VER='v21';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -3002,3 +3002,30 @@ renderNav();renderMain();renderNote();
 window.addEventListener('hashchange',()=>{if(/iq=/.test(location.hash)){iqHash();renderNav();renderMain();}else if(/(acc|areq|acert|aroot)=/.test(location.hash))acHashCheck();});
 const _pi=document.getElementById('ptIn'); if(_pi)_pi.value=patient;
 setLang(LANG);
+
+/* ===== Install / Add to Home Screen =====
+   Android & desktop Chrome/Edge: native install prompt (beforeinstallprompt).
+   iPhone/iPad: no prompt exists, so show step-by-step instructions.
+   Instalar: Android usa el aviso nativo; iPhone muestra instrucciones. */
+let instEvt=null;
+function isStandalone(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+function canInstall(){return !isStandalone()&&(instEvt||isIOS()||/android/i.test(navigator.userAgent));}
+function instUpd(){const b=document.getElementById('instBtn');if(b){b.style.display=canInstall()?'':'none';b.textContent='📲 '+L('Install','Instalar');}}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEvt=e;instUpd();});
+window.addEventListener('appinstalled',()=>{instEvt=null;instUpd();try{iqToast(L('Installed ✓ — open it from your home screen','Instalada ✓ — ábrela desde tu pantalla de inicio'));}catch(e){}});
+async function installApp(){
+  if(instEvt){instEvt.prompt();try{await instEvt.userChoice;}catch(e){}instEvt=null;instUpd();return;}
+  const ios=isIOS();let o=document.getElementById('instOv');if(o)o.remove();o=document.createElement('div');o.id='instOv';
+  const steps=ios?[
+    L('Open this page in <b>Safari</b> (or Chrome on iPhone).','Abre esta página en <b>Safari</b> (o Chrome en iPhone).'),
+    L('Tap <b>Share</b> <span class="ib">⬆︎</span> (in Safari it may be under <b>⋯</b>).','Toca <b>Compartir</b> <span class="ib">⬆︎</span> (en Safari puede estar en <b>⋯</b>).'),
+    L('Scroll and tap <b>Add to Home Screen</b> ➕.','Baja y toca <b>Agregar a pantalla de inicio</b> ➕.'),
+    L('Tap <b>Add</b>. Open <b>Sick Call</b> from your home screen from now on.','Toca <b>Agregar</b>. De ahora en adelante abre <b>Sick Call</b> desde tu pantalla de inicio.')]:[
+    L('Open this page in <b>Chrome</b>.','Abre esta página en <b>Chrome</b>.'),
+    L('Tap the menu <span class="ib">⋮</span> (top right).','Toca el menú <span class="ib">⋮</span> (arriba a la derecha).'),
+    L('Tap <b>Install app</b> or <b>Add to Home screen</b>.','Toca <b>Instalar app</b> o <b>Agregar a pantalla principal</b>.'),
+    L('Confirm. Open <b>Sick Call</b> from your home screen from now on.','Confirma. De ahora en adelante abre <b>Sick Call</b> desde tu pantalla de inicio.')];
+  o.innerHTML='<div class="inst-card" role="dialog"><button class="xbtn" onclick="document.getElementById(\'instOv\').remove()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><img src="icons/icon-192.png" alt="" class="inst-ic"><span class="inst-t">'+L('Add Sick Call to your Home Screen','Agrega Sick Call a tu pantalla de inicio')+'</span><p>'+L('It opens full screen, works offline and keeps your access approval.','Se abre en pantalla completa, funciona sin internet y conserva tu aprobación de acceso.')+'</p><ol>'+steps.map(x=>'<li>'+x+'</li>').join('')+'</ol>'+(ios?'<p class="inst-n">'+L('Important on iPhone: the home-screen app and Safari keep separate data. Request or paste your access <b>inside the home-screen app</b>.','Importante en iPhone: la app de inicio y Safari guardan datos separados. Pide o pega tu acceso <b>dentro de la app de la pantalla de inicio</b>.')+'</p>':'')+'</div>';
+  o.onclick=e=>{if(e.target===o)o.remove();};document.body.appendChild(o);}
+setTimeout(instUpd,0);

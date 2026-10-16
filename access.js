@@ -59,6 +59,7 @@ async function accGate(force){
    +'<button class="ac-skip" style="padding-top:8px" onclick="acReqView(\'appr\')">'+L('Medic NCO? Become an approver','¿NCO de médicos? Ser aprobador')+'</button>'
    +'<button class="mg-btn sec" onclick="location.href=\'intake.html\'">🤒 '+L('I\'m a Soldier and I feel sick','Soy soldado y me siento mal')+'</button>'
    +(acEnforced()?'':'<button class="ac-skip" onclick="acSkip()">'+L('Continue for now','Continuar por ahora')+' — '+L('approval required in ','aprobación obligatoria en ')+left+(left===1?L(' day',' día'):L(' days',' días'))+'</button>')
+   +((typeof canInstall==='function'&&canInstall())?'<button class="ac-skip" onclick="installApp()">📲 '+L('First time? Add the app to your Home Screen','¿Primera vez? Agrega la app a tu pantalla de inicio')+'</button>':'')
    +'<p class="mg-f">'+L('Medics get access once: your NCO approves your phone. No name or ID is stored. Soldiers: answer the sick call questions and show your code to the medic. Emergency? Tell a medic now or call 911.','Los médicos piden acceso una sola vez: tu NCO aprueba tu teléfono. No se guarda nombre ni ID. Soldados: contesten las preguntas de sick call y enséñenle su código al médico. ¿Emergencia? Avísale a un médico ya o llama al 911.')+'</p>');
 }
 function acSkip(){try{sessionStorage.setItem('sc_acskip','1');}catch(e){}acClose();}

@@ -269,7 +269,7 @@ nav button.sub .pid{font-family:var(--mono);color:var(--dim);font-size:11px;min-
   #note{overflow:visible;color:#000;background:#fff;font-size:11pt;padding:0}
 }
 .dpq .fname,.exq .fname{font-size:.78em;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:8px}
-@media(max-width:600px){header .spacer+button,header button:nth-of-type(3){display:none}}
+@media(max-width:600px){header button[onclick^="setFs"],header button[onclick="resetTpl()"]{display:none}}
 
 .dcbox{margin-top:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:8px}
 .dcrow{display:flex;gap:6px;align-items:center;margin-top:4px}
@@ -676,3 +676,13 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 #mgOv .ac-card div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line)}#mgOv .ac-card div:first-child{border-top:0}
 #mgOv .ac-card span{color:var(--dim)}
 .ac-log{font-size:14px;padding:8px 0;border-top:1px solid var(--line)}.ac-log:first-of-type{border-top:0}.ac-log span{display:block;font-size:12px;color:var(--dim)}
+/* Install button + sheet (v21) / Botón Instalar */
+.inst-btn{display:inline-block;background:var(--orange,#FF9F0A)!important;color:#000!important;font-weight:700;border-radius:10px}
+#instOv{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+#instOv .inst-card{position:relative;background:var(--panel);color:var(--txt);border-radius:20px;padding:20px 20px 16px;max-width:440px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+#instOv .inst-ic{width:56px;height:56px;border-radius:13px;display:block;margin-bottom:10px}
+#instOv .inst-t{display:block;font-size:19px;font-weight:700}#instOv p{color:var(--dim);font-size:15px;margin:6px 0 10px}
+#instOv ol{margin:0 0 6px;padding-left:22px}#instOv li{font-size:16px;margin-bottom:9px;line-height:1.4}
+#instOv .ib{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-weight:700}
+#instOv .inst-n{font-size:13px;background:var(--panel2);border-radius:10px;padding:8px 10px;color:var(--txt)}
+#instOv .xbtn{position:absolute;top:12px;right:12px}
