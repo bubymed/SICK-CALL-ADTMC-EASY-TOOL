@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **Cleaner MACE 2:** live screening result card at the top (Negative / POSITIVE, cognitive score, neuro, VOMS) and folded sections — Screening, Cognitive, Neuro + VOMS, Summary, PRA and coding info — with progress on each. Script lines sit under each question; NSI symptoms take one line each with 0–4 buttons.
+  **MACE 2 más limpio:** tarjeta de resultado en vivo arriba (Negativo / POSITIVO, puntaje cognitivo, neuro, VOMS) y secciones plegadas — Tamizaje, Cognitivo, Neuro + VOMS, Resumen, PRA e info de códigos — con progreso en cada una. El texto para leer va debajo de cada pregunta; los síntomas del NSI van en una línea con botones 0–4.
 - **Cleaner start screen + guest mode:** the access screen is simpler (less small text, EN/ES switch). New "Continue as a guest": reference tools only — Meds, MACE, Assessments and Questions. Protocols, dispositions, profiles, notes and the patient list stay locked for approved medics. A 👤 Guest button at the top returns to the access screen.
   **Pantalla de inicio más limpia + modo invitado:** la pantalla de acceso es más sencilla (menos letra chica, botón EN/ES). Nuevo "Continuar como invitado": solo referencias — Meds, MACE, Assessments y Preguntas. Protocolos, disposiciones, perfiles, notas y la lista de pacientes siguen bloqueados para médicos aprobados. Un botón 👤 Invitado arriba regresa a la pantalla de acceso.
 - **"What's new" popup:** after an update, medics see a short card with the new features once (with a button to jump to them). More → What's new shows it again.
