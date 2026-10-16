@@ -692,3 +692,6 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 .medf button.on{background:var(--accent);color:#000}
 .otcb{background:var(--panel2);color:var(--dim);border-radius:6px;padding:1px 6px;font-size:.78em;font-weight:700}
 .medsec{margin:0 0 12px 6px}
+.medsrc{margin:0 0 14px}
+.medsrc button{font-size:15.5px}
+.fold b{flex:0 1 auto;min-width:0}
