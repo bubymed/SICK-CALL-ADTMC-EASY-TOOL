@@ -2432,7 +2432,20 @@ function adDecisionHtml(p,R){
   h+='<div class="algo-actions"><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
   return h;
 }
-function adResultCard(p,R){
+function adResultCard(p,R){return adResultCard0(p,R)+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+/* Medic gate: first open shows who the app is for. Soldiers are sent to the sick call questionnaire.
+   Pantalla de entrada: la primera vez explica para quién es la app; los soldados van al cuestionario. */
+function medicGate(){if(settings.medicAck)return;if(document.getElementById('mgOv'))return;
+  const o=document.createElement('div');o.id='mgOv';
+  o.innerHTML='<div class="mg-card" role="dialog" aria-modal="true"><div class="mg-k">68W · ADTMC</div><h2>'+L('Sick Call — for medics','Sick Call — para médicos')+'</h2>'
+   +'<p>'+L('This tool is for trained 68W medics and medical personnel using the ADTMC under provider supervision.','Esta herramienta es para médicos 68W entrenados y personal médico que usa el ADTMC bajo supervisión de un proveedor.')+'</p>'
+   +'<p><b>'+L('It does not diagnose. It is not for self-diagnosis or self-treatment.','No diagnostica. No es para autodiagnóstico ni para automedicarse.')+'</b></p>'
+   +'<button class="mg-btn" onclick="medicAck()">🩺 '+L('I\'m a medic / medical personnel','Soy médico / personal médico')+'</button>'
+   +'<button class="mg-btn sec" onclick="location.href=\'intake.html\'">🤒 '+L('I\'m a Soldier and I feel sick','Soy soldado y me siento mal')+'</button>'
+   +'<p class="mg-f">'+L('Soldiers: answer the sick call questions and show your code to the medic. Emergency? Tell a medic now or call 911.','Soldados: contesten las preguntas de sick call y enséñenle su código al médico. ¿Emergencia? Avísale a un médico ya o llama al 911.')+'</p></div>';
+  document.body.appendChild(o);}
+function medicAck(){settings.medicAck=Date.now();saveSettings();const o=document.getElementById('mgOv');if(o)o.remove();}
+function adResultCard0(p,R){
   if(!R.final&&!R.tri.length)return R.cur===-1?'<div class="resbox lv-wait"><div class="resh">End of flow: this protocol does not assign a category by itself</div><div class="resn">Follow the actions listed above, consult the provider/AEM and document. The global rules (vitals, red flags, pain) still apply.</div></div>':'<div class="resbox lv-wait"><div class="resh">Answer the decision points to get the disposition</div></div>';
   let h='';
   if(R.final){
@@ -2650,7 +2663,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v18';
+const APP_VER='v19';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -2980,7 +2993,7 @@ new MutationObserver(ms=>{if(LANG!=='es')return;ms.forEach(m=>m.addedNodes.forEa
 applyTheme();syncFmtBtn();
 purgeOld();iqLoad();
 restore();adRestore();
-document.body.style.fontSize=fsBase+'px';showLockIfNeeded();
+document.body.style.fontSize=fsBase+'px';showLockIfNeeded();medicGate();
 if(ad.pid&&getP(ad.pid)){const _m=protoTpl(ad.pid);cur=_m.tid;view='tpl';}else{ad.pid=null;view='adtmc';}
 iqHash();
 renderNav();renderMain();renderNote();
