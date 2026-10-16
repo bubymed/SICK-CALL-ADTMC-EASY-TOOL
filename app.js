@@ -1064,7 +1064,7 @@ function renderNav(){
   updTabs();updPeek();updMulti();try{piiNoteWarn(piiFind(document.getElementById('note').textContent));}catch(e){}
 }
 /* ===== Phone: bottom tab bar + note sheet ===== */
-const TAB_OF={adtmc:'adtmc',tpl:'adtmc',queue:'adtmc',admeds:'admeds',mace:'mace',guardados:'guardados',more:'more',preguntas:'more',assess:'more',perfiles:'more',ajustes:'more'};
+const TAB_OF={adtmc:'adtmc',tpl:'adtmc',queue:'adtmc',access:'more',admeds:'admeds',mace:'mace',guardados:'guardados',more:'more',preguntas:'more',assess:'more',perfiles:'more',ajustes:'more'};
 function updTabs(){const t=TAB_OF[view]||'adtmc';document.querySelectorAll('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.v===t));}
 function tabGo(v){sheetTog(false);if(v==='adtmc'&&ad.pid&&view!=='tpl'&&view!=='adtmc'){const m=protoTpl(ad.pid);cur=m.tid;view='tpl';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;return;}goRef(v);}
 function sheetTog(open){const a=document.getElementById('aside');if(!a)return;const o=open===undefined?!a.classList.contains('open'):!!open;a.classList.toggle('open',o);document.body.classList.toggle('sheet-open',o);}
@@ -1080,7 +1080,7 @@ function updPeek(){
 function renderMore(){
   const row=(ic,txt,on)=>'<div class="prow" onclick="'+on+'"><span class="ptit">'+ic+' '+txt+'</span><span class="dim">›</span></div>';
   let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
-  h+=row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
+  h+=row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
   h+='</div><div class="plist" style="margin-top:14px">';
   h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
   h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
@@ -1130,6 +1130,7 @@ function renderMain(){
   if(view==='mace'){m.innerHTML=renderMace();return;}
   if(view==='more'){m.innerHTML=renderMore();return;}
   if(view==='queue'){m.innerHTML=renderQueue();return;}
+  if(view==='access'){m.innerHTML=renderAccess();return;}
   if(guided&&view==='tpl'&&guided.tpl===cur){m.innerHTML=renderGuided();return;}
   const t=TPLS.find(x=>x.id===cur), s=state[cur];
   const _hlab={quick:'Reason for visit',focus:'Focused history'}[hmode()]||'History — OPQRST / AMPLE';
@@ -2297,8 +2298,8 @@ function iqBanner(x){const q=x.q,f=q.f||[];
   return h+'<span class="iq-small">'+L('Onset, severity, duty impact and return visit were pre-filled — check them.','Inicio, severidad, impacto en el trabajo y regreso se prellenaron — revísalos.')+'</span></div>';}
 let iqStream=null,iqRaf=0;
 function iqLoadJs(src){return new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=src;sc.onload=ok;sc.onerror=no;document.head.appendChild(sc);});}
-async function iqScan(){
-  sheetTog(false);iqStop();
+async function iqScan(cb){
+  sheetTog(false);iqStop();window._scanCb=typeof cb==='function'?cb:null;
   const o=document.createElement('div');o.id='scanOv';
   o.innerHTML='<div class="sc-top"><b>'+L('Scan patient QR','Escanear QR del paciente')+'</b><button class="xbtn" onclick="iqStop()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="sc-box"><video id="scV" playsinline muted autoplay></video><div class="sc-frame"></div></div><div class="sc-msg" id="scM">'+L('Point the camera at the code on the Soldier\'s phone.','Apunta la cámara al código en el teléfono del soldado.')+'</div><label class="sc-photo">🖼 '+L('Choose a photo or screenshot','Elegir foto o captura')+'<input type="file" accept="image/*" onchange="iqPhoto(this)" hidden></label>';
   document.body.appendChild(o);
@@ -2312,6 +2313,7 @@ async function iqScan(){
   const tick=()=>{if(!iqStream)return;
     if(v.readyState>=2&&v.videoWidth){const sc=Math.min(1,640/v.videoWidth);c.width=Math.round(v.videoWidth*sc);c.height=Math.round(v.videoHeight*sc);cx.drawImage(v,0,0,c.width,c.height);
       const r=jsQR(cx.getImageData(0,0,c.width,c.height).data,c.width,c.height,{inversionAttempts:'dontInvert'});
+      if(r&&r.data&&window._scanCb){if(window._scanCb(r.data)){iqStop();return;}}
       if(r&&r.data){const q=iqDecode(r.data);if(q){try{navigator.vibrate&&navigator.vibrate(60);}catch(e){}iqStop();iqAdd(q);view='queue';renderNav();renderMain();document.getElementById('main').scrollTop=0;return;}
         if(Date.now()-bad>2500){bad=Date.now();msg(L('That code isn\'t a sick-call questionnaire.','Ese código no es un cuestionario de sick call.'));}}}
     iqRaf=requestAnimationFrame(tick);};
@@ -2321,7 +2323,7 @@ async function iqPhoto(inp){const f=inp.files&&inp.files[0];if(!f)return;const m
   try{if(!window.jsQR)await iqLoadJs('vendor/jsQR.min.js');
     const url=URL.createObjectURL(f),im=new Image();im.src=url;await im.decode();
     let q=null;for(const mx of [1600,1000,2400]){const sc=Math.min(1,mx/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);const cx=c.getContext('2d');cx.drawImage(im,0,0,c.width,c.height);
-      const r=jsQR(cx.getImageData(0,0,c.width,c.height).data,c.width,c.height);if(r&&r.data){q=iqDecode(r.data);if(q)break;}}
+      const r=jsQR(cx.getImageData(0,0,c.width,c.height).data,c.width,c.height);if(r&&r.data&&window._scanCb&&window._scanCb(r.data)){URL.revokeObjectURL(url);iqStop();inp.value='';return;}if(r&&r.data){q=iqDecode(r.data);if(q)break;}}
     URL.revokeObjectURL(url);
     if(q){iqStop();iqAdd(q);view='queue';renderNav();renderMain();document.getElementById('main').scrollTop=0;}
     else msg(L('No sick-call code found in that picture. Try a clearer screenshot.','No se encontró un código de sick call en esa imagen. Prueba con una captura más clara.'));
@@ -2432,7 +2434,20 @@ function adDecisionHtml(p,R){
   h+='<div class="algo-actions"><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
   return h;
 }
-function adResultCard(p,R){
+function adResultCard(p,R){return adResultCard0(p,R)+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+/* Medic gate: first open shows who the app is for. Soldiers are sent to the sick call questionnaire.
+   Pantalla de entrada: la primera vez explica para quién es la app; los soldados van al cuestionario. */
+function medicGate(){if(settings.medicAck)return;if(document.getElementById('mgOv'))return;
+  const o=document.createElement('div');o.id='mgOv';
+  o.innerHTML='<div class="mg-card" role="dialog" aria-modal="true"><div class="mg-k">68W · ADTMC</div><h2>'+L('Sick Call — for medics','Sick Call — para médicos')+'</h2>'
+   +'<p>'+L('This tool is for trained 68W medics and medical personnel using the ADTMC under provider supervision.','Esta herramienta es para médicos 68W entrenados y personal médico que usa el ADTMC bajo supervisión de un proveedor.')+'</p>'
+   +'<p><b>'+L('It does not diagnose. It is not for self-diagnosis or self-treatment.','No diagnostica. No es para autodiagnóstico ni para automedicarse.')+'</b></p>'
+   +'<button class="mg-btn" onclick="medicAck()">🩺 '+L('I\'m a medic / medical personnel','Soy médico / personal médico')+'</button>'
+   +'<button class="mg-btn sec" onclick="location.href=\'intake.html\'">🤒 '+L('I\'m a Soldier and I feel sick','Soy soldado y me siento mal')+'</button>'
+   +'<p class="mg-f">'+L('Soldiers: answer the sick call questions and show your code to the medic. Emergency? Tell a medic now or call 911.','Soldados: contesten las preguntas de sick call y enséñenle su código al médico. ¿Emergencia? Avísale a un médico ya o llama al 911.')+'</p></div>';
+  document.body.appendChild(o);}
+function medicAck(){settings.medicAck=Date.now();saveSettings();const o=document.getElementById('mgOv');if(o)o.remove();}
+function adResultCard0(p,R){
   if(!R.final&&!R.tri.length)return R.cur===-1?'<div class="resbox lv-wait"><div class="resh">End of flow: this protocol does not assign a category by itself</div><div class="resn">Follow the actions listed above, consult the provider/AEM and document. The global rules (vitals, red flags, pain) still apply.</div></div>':'<div class="resbox lv-wait"><div class="resh">Answer the decision points to get the disposition</div></div>';
   let h='';
   if(R.final){
@@ -2650,7 +2665,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v18';
+const APP_VER='v19';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -2984,6 +2999,6 @@ document.body.style.fontSize=fsBase+'px';showLockIfNeeded();
 if(ad.pid&&getP(ad.pid)){const _m=protoTpl(ad.pid);cur=_m.tid;view='tpl';}else{ad.pid=null;view='adtmc';}
 iqHash();
 renderNav();renderMain();renderNote();
-window.addEventListener('hashchange',()=>{if(/iq=/.test(location.hash)){iqHash();renderNav();renderMain();}});
+window.addEventListener('hashchange',()=>{if(/iq=/.test(location.hash)){iqHash();renderNav();renderMain();}else if(/(acc|areq|acert|aroot)=/.test(location.hash))acHashCheck();});
 const _pi=document.getElementById('ptIn'); if(_pi)_pi.value=patient;
 setLang(LANG);

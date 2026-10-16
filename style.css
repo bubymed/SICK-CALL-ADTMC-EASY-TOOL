@@ -653,3 +653,26 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 #svOv .sv-card b{font-size:18px;display:block;padding-right:36px}
 #svOv .sv-card p{color:var(--dim);font-size:15px;margin:8px 0 14px}
 #svOv .xbtn{position:absolute;top:12px;right:12px}
+/* Medic gate / Pantalla de entrada (v19) */
+#mgOv{position:fixed;inset:0;z-index:400;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));overflow:auto}
+#mgOv .mg-card{max-width:440px;width:100%}
+#mgOv .mg-k{display:inline-block;background:var(--orange);color:#000;font-weight:800;font-size:13px;padding:5px 10px;border-radius:7px;letter-spacing:.04em}
+#mgOv h2{font-size:30px;line-height:1.1;margin:14px 0 10px}
+#mgOv p{font-size:16px;color:var(--txt);margin:0 0 12px;line-height:1.4}
+#mgOv .mg-btn{display:block;width:100%;border:0;border-radius:14px;padding:16px;margin:12px 0 0;font-size:17px;font-weight:700;background:var(--orange);color:#000}
+#mgOv .mg-btn.sec{background:var(--panel);color:var(--txt);border:1px solid var(--line)}
+#mgOv .mg-f{font-size:13px;color:var(--dim);margin-top:16px}
+.medic-only{font-size:12px;color:var(--dim);margin:6px 2px 10px}
+/* Access (v19) / Acceso */
+#mgOv .ac-back{border:0;background:none;color:var(--orange);font-size:16px;padding:4px 0;margin-bottom:6px}
+#mgOv .ac-skip{display:block;width:100%;border:0;background:none;color:var(--dim);font-size:14px;text-decoration:underline;padding:14px 0 0}
+#mgOv .ac-l{display:block;font-size:14px;color:var(--dim);margin:12px 0 6px}
+#mgOv .ac-in{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--txt);font-size:17px;padding:12px;margin-top:10px;font-family:inherit}
+#mgOv .ac-qr{background:#fff;border-radius:16px;padding:10px;max-width:280px;margin:14px auto 4px}
+#mgOv .ac-qr svg{display:block;width:100%;height:auto}
+#mgOv .ac-row{display:flex;gap:10px}#mgOv .ac-row .mg-btn{flex:1}
+#mgOv .ac-msg{font-size:14px;margin-top:10px;color:var(--green)}#mgOv .ac-msg.bad{color:var(--red)}
+#mgOv .ac-card{background:var(--panel);border-radius:14px;padding:6px 14px;margin:10px 0}
+#mgOv .ac-card div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line)}#mgOv .ac-card div:first-child{border-top:0}
+#mgOv .ac-card span{color:var(--dim)}
+.ac-log{font-size:14px;padding:8px 0;border-top:1px solid var(--line)}.ac-log:first-of-type{border-top:0}.ac-log span{display:block;font-size:12px;color:var(--dim)}

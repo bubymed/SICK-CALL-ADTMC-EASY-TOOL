@@ -4,6 +4,8 @@ An  offline, single-page tool that helps a combat medic (68W) write a short, cle
 Interview with **OPQRST / AMPLE**, screen for **red flags** with the **ADTMC** (Algorithm-Directed Troop Medical Care, MEDCOM Pam 40-7-21, 13 Nov 2019),
 and get a suggested plan and disposition. The note is plain English text ready to copy to a slip.
 
+> **For trained medics and medical personnel only — not for self-diagnosis or self-treatment.** Soldiers who feel sick should use the [sick call questionnaire](https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/intake.html) and see their medic.
+>
 > **Not medical advice.** This is a documentation aid. It does not replace clinical judgment,
 > the official ADTMC, local SOPs or a provider. The ADTMC content was transcribed by hand and may
 > contain errors — always verify against your official copy. Check with your chain of command
