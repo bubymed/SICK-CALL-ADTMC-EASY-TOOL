@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **MACE result card pinned:** the screening card (result, answered count, cognitive/neuro/VOMS) stays at the top while scrolling.
+  **Tarjeta del MACE fija:** la tarjeta del tamizaje (resultado, preguntas contestadas, cognitivo/neuro/VOMS) se queda arriba al bajar.
 - **Cleaner MACE 2:** live screening result card at the top (Negative / POSITIVE, cognitive score, neuro, VOMS) and folded sections — Screening, Cognitive, Neuro + VOMS, Summary, PRA and coding info — with progress on each. Script lines sit under each question; NSI symptoms take one line each with 0–4 buttons.
   **MACE 2 más limpio:** tarjeta de resultado en vivo arriba (Negativo / POSITIVO, puntaje cognitivo, neuro, VOMS) y secciones plegadas — Tamizaje, Cognitivo, Neuro + VOMS, Resumen, PRA e info de códigos — con progreso en cada una. El texto para leer va debajo de cada pregunta; los síntomas del NSI van en una línea con botones 0–4.
 - **Cleaner start screen + guest mode:** the access screen is simpler (less small text, EN/ES switch). New "Continue as a guest": reference tools only — Meds, MACE, Assessments and Questions. Protocols, dispositions, profiles, notes and the patient list stay locked for approved medics. A 👤 Guest button at the top returns to the access screen.

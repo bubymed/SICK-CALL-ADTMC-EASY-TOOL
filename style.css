@@ -767,3 +767,9 @@ body.guest #aside,body.guest #mobileNoteBtn,body.guest #tabbar button[data-v="ad
 .nsirow>span{font-size:14.5px;line-height:1.3;min-width:0}
 .nsirow .nsiv{display:flex;gap:4px;flex:none}
 .nsirow .nsiv .chip{min-width:0;width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:9px;margin:0;font-size:14px}
+/* MACE status pinned (v27) / Tarjeta del MACE fija */
+.mace-status{position:sticky;top:0;z-index:6;padding:10px 14px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.mace-status .ms-k{display:flex;justify-content:space-between}
+.mace-status .ms-n{font-weight:700;color:var(--txt);letter-spacing:0}
+.mace-status .ms-v{font-size:21px;margin:0 0 2px}
+.mace-status .ms-hint{font-size:13px}

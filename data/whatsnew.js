@@ -3,6 +3,8 @@
    Add a new entry at the TOP for every feature release (same value as APP_VER). Keep it short: 1–3 items.
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
+ {v:'v27',items:[
+   {i:'📌',en:'<b>MACE result stays on top</b> — the screening card stays pinned while you scroll and answer.',es:'<b>El resultado del MACE se queda arriba</b> — la tarjeta del tamizaje queda fija mientras bajas y contestas.',go:'mace',btn:['Open MACE','Abrir MACE']}]},
  {v:'v26',items:[
    {i:'👤',en:'<b>Cleaner start screen + guest mode</b> — anyone can "Continue as a guest" with reference tools only (Meds, MACE, Assessments). Protocols, profiles and notes stay for approved medics.',es:'<b>Pantalla de inicio más limpia + modo invitado</b> — cualquiera puede "Continuar como invitado" solo con referencias (Meds, MACE, Assessments). Los protocolos, perfiles y notas siguen siendo para médicos aprobados.'},
    {i:'🧠',en:'<b>Cleaner MACE 2</b> — live result at the top and folded sections (screening, cognitive, neuro, PRA); NSI on one line per symptom.',es:'<b>MACE 2 más limpio</b> — resultado en vivo arriba y secciones plegadas (tamizaje, cognitivo, neuro, PRA); NSI en una línea por síntoma.',go:'mace',btn:['Open MACE','Abrir MACE']}]},

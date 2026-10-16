@@ -1432,7 +1432,7 @@ function renderMace(){
   const nN=m.neuro.filter(x=>x!==null).length,nsiV=Object.values(pra.nsi||{}),nsiT=nsiV.reduce((x,y)=>x+y,0);
   if(S.screen&&mcOpen.cog===undefined)mcOpen.cog=true;
   let o='<div class="mace-head"><div><h2 class="tpl" style="margin:0">🧠 MACE 2</h2><div class="mh-sub">'+L('Concussion evaluation · ADTMC F-6 / App. H','Evaluación de concusión · ADTMC F-6 / Apénd. H')+'</div></div><button class="mh-new" onclick="mcReset()">↺ '+L('New','Nuevo')+'</button></div>';
-  o+='<div class="mace-status ms-'+res+'"><div class="ms-k">'+L('Screening','Tamizaje')+'</div><div class="ms-v">'+(res==='pos'?L('POSITIVE','POSITIVO'):res==='neg'?L('Negative','Negativo'):L('Not started','Sin empezar'))+'</div>'
+  o+='<div class="mace-status ms-'+res+'"><div class="ms-k">'+L('Screening','Tamizaje')+'<span class="ms-n">'+answered+'/9</span></div><div class="ms-v">'+(res==='pos'?L('POSITIVE','POSITIVO'):res==='neg'?L('Negative','Negativo'):L('Not started','Sin empezar'))+'</div>'
     +(S.screen?'<div class="ms-row"><span>'+L('Cognitive','Cognitivo')+' <b>'+S.cog+'/30</b></span><span>'+L('Neuro','Neuro')+' <b>'+(nN?(S.nAb?S.nAb+' '+L('abn','anormal'):L('normal','normal')):'—')+'</b></span><span>VOMS <b>'+(m.voms==='A'?L('abn','anormal'):m.voms==='N'?'OK':m.voms==='D'?L('deferred','diferido'):'—')+'</b></span></div>':'<div class="ms-hint">'+(res==='neg'?L('Negative screen — stop MACE 2, 24 h rest, follow CMT.','Tamizaje negativo — termina MACE 2, 24 h de descanso, sigue el CMT.'):L('Answer 1D and 2A–2D. Positive = blow/jolt + AOC, LOC or PTA.','Contesta 1D y 2A–2D. Positivo = golpe + AOC, LOC o PTA.'))+'</div>')+'</div>';
   o+=mcFold('scr','1–4 · '+L('Screening','Tamizaje'),answered+'/9',secScr);
   if(S.screen){const cT=S.cog>0||m.mo!==null;o+=mcFold('cog','5–6, 15–16 · '+L('Cognitive exam','Examen cognitivo'),cT?S.cog+'/30'+(S.cogAb?' ⚠':''):'—',secCog);
@@ -2748,7 +2748,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v26';
+const APP_VER='v27';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
