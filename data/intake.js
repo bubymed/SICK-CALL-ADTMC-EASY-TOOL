@@ -28,6 +28,7 @@ const IQ_AREAS=[
  ['chest','Chest pain','Dolor de pecho','D-2','b'],
  ['breath','Short of breath','Falta de aire','D-1','b'],
  ['rash','Rash / skin problem','Sarpullido / piel','J-1','s'],
+ ['shave','Shaving profile / razor bumps','Perfil de afeitar / granitos por afeitarse','J-3','s'],
  ['blister','Blisters','Ampollas','J-15','s'],
  ['cut','Cut / scrape','Cortada / raspón','J-11','s'],
  ['toenail','Ingrown toenail','Uña enterrada','J-18','s'],
@@ -72,6 +73,7 @@ function iqTriage0(q){
   const ES=(typeof LANG!=='undefined'&&LANG==='es')||(typeof IQ_ES!=='undefined'&&IQ_ES);const t=(e,s)=>ES?s:e;
   const f=q.f||[];
   if(f.length)return{c:'red',why:t('Red flag: ','Bandera roja: ')+f.map(x=>iqLbl(IQ_FLAGS,x,ES?2:1)).join(', ')};
+  if(q.a==='shave'&&!q.r)return{c:'gray',why:t('Shaving profile / razor bumps — routine, after acute patients','Perfil de afeitar / granitos — rutina, después de los agudos')};
   if(iqArea(q.a)[4]==='a')return{c:'gray',why:t('Administrative — routine appointment','Administrativo — cita de rutina')};
   if(q.r){if(q.rw||q.w)return{c:'orange',why:t('Return visit, worse → AEM / clinic (ADTMC M-1)','Regreso, peor → AEM / clínica (ADTMC M-1)')};
     return{c:'gray',why:t('Already seen for this, not worse','Ya lo vieron por esto, no está peor')};}
@@ -128,6 +130,7 @@ const IQ_FU={
  chest:[YN('exert','Worse with exercise or effort?','¿Peor con ejercicio o esfuerzo?','r'),YN('sob','Short of breath?','¿Falta de aire?','r'),YN('press','Hurts more when you press on it or breathe deep?','¿Duele más al presionar o respirar hondo?')],
  breath:[YN('rest','Short of breath even at rest?','¿Falta de aire aun en reposo?','r'),YN('asthma','Wheezing or asthma history?','¿Silbido o historia de asma?','y'),YN('fev','Fever or cough?','¿Fiebre o tos?','y')],
  rash:[YN('fast','Spreading fast, or with fever?','¿Se extiende rápido o con fiebre?','y'),YN('face','Blisters near the eye or mouth?','¿Ampollas cerca del ojo o la boca?','y'),YN('new','New soap, medicine or plant contact?','¿Jabón, medicina nueva o contacto con plantas?')],
+ shave:[YN('swell','Face or neck swelling, spreading redness, or fever?','¿Hinchazón en la cara o el cuello, enrojecimiento que se extiende o fiebre?','r'),YN('pus','Bumps with pus, or painful lumps?','¿Granitos con pus o bolitas que duelen?','y'),YN('mask','Do the bumps keep your mask or protective gear from sealing?','¿Los granitos no dejan que tu máscara o equipo de protección selle bien?','y'),YN('renew','Renewing a shaving profile you already had?','¿Vienes a renovar un perfil de afeitar que ya tenías?'),YN('scar','Dark spots or scars from the bumps?','¿Manchas oscuras o cicatrices por los granitos?')],
  blister:[YN('inf','Red streaks, pus or warmth?','¿Rayas rojas, pus o calor?','y'),YN('feet','On the feet?','¿En los pies?')],
  cut:[YN('dirty','Dirty or rusty object?','¿Objeto sucio u oxidado?','y'),YN('deep','Deep or gaping?','¿Profunda o abierta?','y'),YN('numb','Numb past the cut?','¿Adormecido después de la cortada?','y')],
  toenail:[YN('pus','Red, swollen or pus?','¿Rojo, hinchado o con pus?','y'),YN('fev','Fever?','¿Fiebre?','y')],

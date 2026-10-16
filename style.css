@@ -700,3 +700,11 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 .mi-btn.on{background:var(--accent);color:#000}
 .minfo{background:var(--panel2);border-radius:10px;padding:9px 11px;margin:6px 0 8px;font-size:.93em;line-height:1.5}
 .minfo div+div{margin-top:5px}
+/* PFB shaving profile (v24) / Perfil de afeitar */
+.pfb .pfbsev{display:grid;grid-template-columns:1fr;gap:8px}
+.pfb .pfbsev .chip{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border-radius:12px;padding:10px 12px}
+.pfb .pfbsev .chip small{font-size:.82em;opacity:.8;font-weight:400;margin-top:2px}
+.pfb .rfmini{font-size:.85em;color:var(--red);margin:4px 0 10px;line-height:1.45}
+.pfb .pfbph{margin:12px 0 6px;line-height:1.5}
+.pfb .pfbplan{padding:6px 10px 10px;font-size:.92em;line-height:1.55}
+.pfb .pfbplan div+div{margin-top:4px}
