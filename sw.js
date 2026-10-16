@@ -1,4 +1,4 @@
-const C='sickcall-v19';
+const C='sickcall-v20';
 const FILES=['./','index.html','style.css','app.js','data/protocols.js','data/meds.js','data/plans.js','data/notetags.js','data/howto.js','data/es.js','manifest.json','vendor/pdf-lib.min.js','forms/DD689.pdf','data/intake.js','intake.html','poster.html','vendor/qrcode.min.js','vendor/jsQR.min.js','access.js','data/access.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(FILES.map(f=>new Request(f,{cache:'reload'})))).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
