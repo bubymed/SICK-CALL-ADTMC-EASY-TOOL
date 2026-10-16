@@ -3,6 +3,8 @@
    Add a new entry at the TOP for every feature release (same value as APP_VER). Keep it short: 1–3 items.
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
+ {v:'v28',items:[
+   {i:'🧠',en:'<b>Guest MACE = quick screen only</b> — guests answer 1D and 2A–2D and get Positive / Negative with "go to a medic". The full exam, scoring, PRA and notes stay for approved medics.',es:'<b>MACE de invitado = solo tamizaje</b> — el invitado contesta 1D y 2A–2D y recibe Positivo / Negativo con "ve con un médico". El examen completo, puntajes, PRA y notas siguen siendo para médicos aprobados.'}]},
  {v:'v27',items:[
    {i:'📌',en:'<b>MACE result stays on top</b> — the screening card stays pinned while you scroll and answer.',es:'<b>El resultado del MACE se queda arriba</b> — la tarjeta del tamizaje queda fija mientras bajas y contestas.',go:'mace',btn:['Open MACE','Abrir MACE']}]},
  {v:'v26',items:[

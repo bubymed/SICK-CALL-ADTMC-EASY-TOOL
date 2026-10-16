@@ -773,3 +773,6 @@ body.guest #aside,body.guest #mobileNoteBtn,body.guest #tabbar button[data-v="ad
 .mace-status .ms-n{font-weight:700;color:var(--txt);letter-spacing:0}
 .mace-status .ms-v{font-size:21px;margin:0 0 2px}
 .mace-status .ms-hint{font-size:13px}
+/* Guest MACE (v28) */
+.guest-mace{font-size:14px;color:var(--dim);margin:2px 4px 6px}
+.gm-neg{background:var(--panel);border-radius:14px;padding:12px 14px;font-size:14.5px;line-height:1.5;margin:10px 0}
