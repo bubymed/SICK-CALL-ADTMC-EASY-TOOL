@@ -1229,7 +1229,7 @@ function renderMain(){
   // Red Flags screening
   if(t.redFlags&&!ad.pid){
     const anyPos=t.redFlags.some(f=>s.rf[f]==='pos');
-    if(anyPos)h+=`<div class="rfbanner">🚩 POSITIVE RED FLAG — do NOT recommend RTD/Light Duty/H2F/quarters. Escalate to provider/ER per protocol and notify your NCO/provider.</div>`;
+  if(anyPos)h+=`<div class="rfbanner">🚩 POSITIVE RED FLAG — do NOT recommend RTD/Light Duty/H2F/quarters. Escalate to provider/ER per protocol and notify your NCO/provider.</div>`;
     h+=`<div class="field"><div class="lab"><span class="tag" style="color:var(--red)">🚩</span><span class="name">Red Flags — screening before disposition</span><span class="ask">tap once = negative (green) · twice = PRESENT (red)</span></div><div class="chips">`;
     h+=`<span class="chip" onclick="allNegRf('${cur}')">✓✓ all negative</span>`;
     t.redFlags.forEach(f=>{
@@ -1473,6 +1473,7 @@ function renderProfiles(){
   const sedating=TPLS.some(t=>[...state[t.id].plan].some(p=>/Benadryl|Actifed/.test(p)));
   const chip=(on,fn,label)=>`<span class="chip ${on?'on':''}" onclick="${fn}">${label}</span>`;
   let h=`<h2 class="tpl">🪖 Profiles — builder</h2><p class="tpl-sub">Build the recommendation: type, duration, restrictions and follow-up. The text generates itself — copy it or send it to the note's Disposition. Always as a recommendation, not a medical order.</p><div class="ref">`;
+  h+=pfbCard();
   if(anyPos)h+=`<div class="rfbanner">🚩 There is a POSITIVE red flag in a section — do NOT recommend RTD / light duty / quarters. Escalate to provider/ER per protocol.</div>`;
   h+=`<div class="field"><div class="lab"><span class="tag">⚡</span><span class="name">Shortcuts</span><span class="ask">load a combination and adjust it</span></div><div class="chips">`;
   PB_PRESETS.forEach((q,i)=>h+=chip(false,`pbPreset(${i})`,q.n));
@@ -1900,9 +1901,9 @@ const LV={
 };
 const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · GU',f:'F · Neuro/BH',g:'G · General',h:'H · Eyes',i:'I · Women',j:'J · Skin',k:'K · Environment',l:'L · Misc',m:'M · Return'};
 const gFlags={female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
-let ad={pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{}};
+let ad={pfb:'',pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{}};
 function adResetProto(){ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
-function adResetAll(){adResetProto();ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
+function adResetAll(){adResetProto();ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 /* Screening answers -> history / exam wording (data/notetags.js) */
 function adTagLines(p){
@@ -1925,7 +1926,7 @@ function adTagLines(p){
   return out;
 }
 function noteEntries(){const ex=new Set(ad.excl||[]);const e=ad.log.filter(x=>!ex.has('ad:'+x.id));
-  if(ad.pid&&!ex.has('ad:'+ad.pid)){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length)e.push(adEntry(p,R));}return e;}
+  if(ad.pid&&!ex.has('ad:'+ad.pid)){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length||(ad.pfb&&ad.pid==='J-3'))e.push(adEntry(p,R));}return e;}
 function noteActive(){const ex=new Set(ad.excl||[]);return TPLS.filter(t=>tplHasContent(t,state[t.id])&&!ex.has('tpl:'+t.id));}
 function noteTog(k){const a=ad.excl||(ad.excl=[]);const i=a.indexOf(k);const off=i<0;off?a.push(k):a.splice(i,1);
   if(k.startsWith('ad:')){try{const id=k.slice(3),tid=protoTpl(id).tid,tk='tpl:'+tid;
@@ -2439,7 +2440,23 @@ function adDecisionHtml(p,R){
   h+='<div class="algo-actions"><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
   return h;
 }
-function adResultCard(p,R){return adResultCard0(p,R)+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+function adResultCard(p,R){return adResultCard0(p,R)+(p.id==='J-3'?pfbCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+/* Shaving profile (PFB) builder — used on ADTMC J-3 and in Profiles. / Perfil de afeitar (PFB) */
+function pfbSet(k){ad.pfb=ad.pfb===k?'':k;renderMain();renderNote();}
+function pfbCard(){
+  const k=ad.pfb,x=PFB[k];
+  let h='<div class="field pfb"><div class="lab"><span class="tag">🪒</span><span class="name">'+L('Shaving profile (PFB)','Perfil de afeitar (PFB)')+'</span><span class="ask">'+L('pick the severity you see','escoge la severidad que ves')+'</span></div>';
+  h+='<div class="rfmini">🚩 '+L('Provider now if: ','Proveedor ya si: ')+PFB_RF.join(' · ')+'</div><div class="chips pfbsev">';
+  ['m','mo','s'].forEach(c=>{const y=PFB[c];h+='<span class="chip '+(k===c?'on':'')+'" onclick="pfbSet(\''+c+'\')"><b>'+L(y.n,y.es)+'</b><small>'+L(y.dx,y.dxes)+'</small></span>';});
+  h+='</div>';
+  if(x){
+    h+='<div class="pfbph"><b>'+x.ph+' — '+x.days+'</b> · '+L('Shaving: ','Afeitado: ')+q$(x.sh)+'</div>';
+    h+='<details class="dd" open><summary>'+L('Treatment plan','Plan de tratamiento')+'</summary><div class="pfbplan">'+x.plan.map(t=>t.startsWith('•')?'<div style="padding-left:18px">'+q$(t.replace(/^•\s*/,'◦ '))+'</div>':'<div>• '+q$(t)+'</div>').join('')+'</div></details>';
+    h+='<div class="sugbox"><div class="sughead">📄 '+L('Suggested e-Profile wording','Texto sugerido para el e-Profile')+'</div><div id="pfbOut" style="font-family:var(--mono);font-size:.9em;line-height:1.55;white-space:pre-wrap">'+q$(pfbProfile(k))+'</div><div class="algo-actions"><button onclick="copyTxt(document.getElementById(\'pfbOut\').textContent,this)">'+L('Copy','Copiar')+'</button></div></div>';
+    h+='<div class="note-hint" style="margin-top:8px">'+L('Added to the note as a recommendation. The provider/AEM decides and writes the e-Profile (ADTMC J-3: requesting profile → AEM).','Se agregó a la nota como recomendación. El proveedor/AEM decide y escribe el e-Profile (ADTMC J-3: pide perfil → AEM).')+'</div>';
+  }
+  return h+'</div>';
+}
 /* Medic gate: first open shows who the app is for. Soldiers are sent to the sick call questionnaire.
    Pantalla de entrada: la primera vez explica para quién es la app; los soldados van al cuestionario. */
 function medicGate(){if(settings.medicAck)return;if(document.getElementById('mgOv'))return;
@@ -2524,6 +2541,7 @@ function adNoteParts(){
     (e.pos||[]).forEach(x=>{if(!out.rfpos.includes(x))out.rfpos.push(x);});
     (e.plan||[]).forEach(x=>out.plan.push(x));
   });
+  if(ad.pfb&&typeof PFB!=='undefined'&&entries.some(e=>e.id==='J-3'))out.plan.push(pfbNote(ad.pfb));
   const hi=adHighest();
   const D={PN:'Sent to clinic — needs a provider now.',AEM:settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' — evaluation today.':'Sent to clinic — no AEM available; supervising provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
   if(hi&&hi!=='MCP')out.dispo=D[hi]||LV[hi].s;
@@ -2709,7 +2727,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v23';
+const APP_VER='v24';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
