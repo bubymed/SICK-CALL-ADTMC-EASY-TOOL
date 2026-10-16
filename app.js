@@ -853,45 +853,45 @@ function renderGuided(){
 const MEDS_UPD='Aug 2025';
 const MEDS = [
  ['🌡️ Fever & pain reducers',[
-  ['Tylenol (Acetaminophen) 325 mg tabs','2 tabs (650 mg) PO q6h PRN fever/pain','ADTMC: max 2,600 mg/24h (8 tabs) · NOT with liver disease/alcohol · kids (2+): 80 mg chewable or 160 mg/5 mL liquid, weight-based dose on the label'],
-  ['Motrin (Ibuprofen) 200 mg tabs','2 tabs (400 mg) PO q6h PRN pain/fever/swelling, with food','⚠️ NOT with NSAID allergy, ulcer/GI bleed, pregnancy, renal disease · ADTMC: max 1,600 mg/24h. OTC label says 1,200 mg: if the local pharmacy is stricter, follow it · kids (2+): 100 mg/5 mL liquid, dose on the label']]],
+  ['Tylenol (Acetaminophen) 325 mg tabs','2 tabs (650 mg) PO q6h PRN fever/pain','ADTMC: max 2,600 mg/24h (8 tabs) · NOT with liver disease/alcohol · kids (2+): 80 mg chewable or 160 mg/5 mL liquid, weight-based dose on the label','acetaminophen'],
+  ['Motrin (Ibuprofen) 200 mg tabs','2 tabs (400 mg) PO q6h PRN pain/fever/swelling, with food','⚠️ NOT with NSAID allergy, ulcer/GI bleed, pregnancy, renal disease · ADTMC: max 1,600 mg/24h. OTC label says 1,200 mg: if the local pharmacy is stricter, follow it · kids (2+): 100 mg/5 mL liquid, dose on the label','ibuprofen']]],
  ['👃 Nasal congestion / decongestants',[
-  ['Sudafed (Pseudoephedrine) 30 mg tabs · 6+','2 tabs (60 mg) PO q4–6h PRN congestion','max 8 tabs (240 mg)/24h · ⚠️ NOT in HTN, pregnancy, hyperthyroidism, BPH; may cause insomnia/palpitations'],
-  ['Actifed (Pseudoephedrine/triprolidine) tabs · 12+','1 tab PO q4–6h PRN congestion/allergy','exact dose per the box · ⚠️ sedating, NOT in HTN, do not drive'],
-  ['Saline 0.65% nasal spray','2 sprays each nostril PRN','safe, no practical limit'],
-  ['Afrin (Oxymetazoline) 0.05% nasal spray · 6+','2–3 sprays each nostril q10–12h PRN','⚠️ max 2 doses/24h and MAX 3 DAYS (rebound congestion)']]],
+  ['Sudafed (Pseudoephedrine) 30 mg tabs · 6+','2 tabs (60 mg) PO q4–6h PRN congestion','max 8 tabs (240 mg)/24h · ⚠️ NOT in HTN, pregnancy, hyperthyroidism, BPH; may cause insomnia/palpitations','pseudoephedrine'],
+  ['Actifed (Pseudoephedrine/triprolidine) tabs · 12+','1 tab PO q4–6h PRN congestion/allergy','exact dose per the box · ⚠️ sedating, NOT in HTN, do not drive','actifed'],
+  ['Saline 0.65% nasal spray','2 sprays each nostril PRN','safe, no practical limit','saline'],
+  ['Afrin (Oxymetazoline) 0.05% nasal spray · 6+','2–3 sprays each nostril q10–12h PRN','⚠️ max 2 doses/24h and MAX 3 DAYS (rebound congestion)','oxymetazoline']]],
  ['🤧 Sneezing / runny nose / itchy eyes',[
-  ['Benadryl (Diphenhydramine) 25 mg tabs · 12+','1–2 tabs (25–50 mg) PO q6h PRN allergy/itching','max 300 mg/24h · ⚠️ very sedating: no driving or armed duty · liquid 12.5 mg/5 mL (6+)'],
-  ['Claritin (Loratadine) 10 mg tabs · 6+','1 tab PO daily','low sedation · liquid 1 mg/mL (2+)'],
-  ['Zyrtec (Cetirizine) 10 mg tabs · 6+','1 tab PO daily','⚠️ may cause mild drowsiness · liquid 1 mg/mL (2+)'],
-  ['Allegra (Fexofenadine) 180 mg tabs · 12+','1 tab PO daily with water','do NOT take with fruit juice (↓ absorption)'],
-  ['Flonase (Fluticasone) 50 mcg/spray · 4+','Adults: 2 sprays each nostril daily, then 1 spray daily for maintenance','full effect takes days · ages 4–11: 1 spray each nostril daily']]],
+  ['Benadryl (Diphenhydramine) 25 mg tabs · 12+','1–2 tabs (25–50 mg) PO q6h PRN allergy/itching','max 300 mg/24h · ⚠️ very sedating: no driving or armed duty · liquid 12.5 mg/5 mL (6+)','diphenhydramine'],
+  ['Claritin (Loratadine) 10 mg tabs · 6+','1 tab PO daily','low sedation · liquid 1 mg/mL (2+)','loratadine'],
+  ['Zyrtec (Cetirizine) 10 mg tabs · 6+','1 tab PO daily','⚠️ may cause mild drowsiness · liquid 1 mg/mL (2+)','cetirizine'],
+  ['Allegra (Fexofenadine) 180 mg tabs · 12+','1 tab PO daily with water','do NOT take with fruit juice (↓ absorption)','fexofenadine'],
+  ['Flonase (Fluticasone) 50 mcg/spray · 4+','Adults: 2 sprays each nostril daily, then 1 spray daily for maintenance','full effect takes days · ages 4–11: 1 spray each nostril daily','fluticasone']]],
  ['😮‍💨 Sore throat',[
-  ['Cepacol (Benzocaine/menthol) lozenges · 5+','1 lozenge dissolved slowly q2h PRN','daily max per label · sx >2 days or with fever → provider']]],
+  ['Cepacol (Benzocaine/menthol) lozenges · 5+','1 lozenge dissolved slowly q2h PRN','daily max per label · sx >2 days or with fever → provider','benzocaine']]],
  ['🫁 Cough / chest congestion',[
-  ['Robitussin (Guaifenesin) 100 mg/5 mL · 12+','10–20 mL PO q4h PRN chest congestion','max 6 doses/24h · drink fluids'],
-  ['Mucinex (Guaifenesin) ER 600 mg tab · 12+','1–2 tabs PO q12h with water','max 4 tabs (2,400 mg)/24h · swallow whole, do not crush/chew'],
-  ['Robitussin DM (Guaifenesin/dextromethorphan) 100-10 mg/5 mL · 12+','10–20 mL PO q4h PRN cough + congestion','max 6 doses/24h · ⚠️ NOT with SSRI/antidepressant or MAOI; cough w/ blood/SOB → provider']]],
+  ['Robitussin (Guaifenesin) 100 mg/5 mL · 12+','10–20 mL PO q4h PRN chest congestion','max 6 doses/24h · drink fluids','guaifenesin'],
+  ['Mucinex (Guaifenesin) ER 600 mg tab · 12+','1–2 tabs PO q12h with water','max 4 tabs (2,400 mg)/24h · swallow whole, do not crush/chew','mucinex'],
+  ['Robitussin DM (Guaifenesin/dextromethorphan) 100-10 mg/5 mL · 12+','10–20 mL PO q4h PRN cough + congestion','max 6 doses/24h · ⚠️ NOT with SSRI/antidepressant or MAOI; cough w/ blood/SOB → provider','robdm']]],
  ['🧴 Topical preparations',[
-  ['Bacitracin ointment (first aid antibiotic)','thin layer 1–3x/day on clean minor wound/abrasion','max 7 days · not on deep wounds, bites or severe burns'],
-  ['Clotrimazole 1% vaginal cream (7-day) · 12+','1 full applicator intravaginally HS x7 nights','⚠️ first time, atypical sx or pregnancy → refer to provider first'],
-  ['Lotrimin (Clotrimazole) 1% cream · 2+','thin layer BID. Athlete\'s foot x4 wk · jock itch/ringworm x2 wk','no improvement in 2 wk or worsening → provider'],
-  ['Hydrocortisone 1% cream (anti-itch) · 2+','thin layer to itchy area up to 3–4x/day','max 7 days · avoid face, genitals, broken/infected skin · not for fungal rash']]],
+  ['Bacitracin ointment (first aid antibiotic)','thin layer 1–3x/day on clean minor wound/abrasion','max 7 days · not on deep wounds, bites or severe burns','bacitracin'],
+  ['Clotrimazole 1% vaginal cream (7-day) · 12+','1 full applicator intravaginally HS x7 nights','⚠️ first time, atypical sx or pregnancy → refer to provider first','clotvag'],
+  ['Lotrimin (Clotrimazole) 1% cream · 2+','thin layer BID. Athlete\'s foot x4 wk · jock itch/ringworm x2 wk','no improvement in 2 wk or worsening → provider','clotcream'],
+  ['Hydrocortisone 1% cream (anti-itch) · 2+','thin layer to itchy area up to 3–4x/day','max 7 days · avoid face, genitals, broken/infected skin · not for fungal rash','hc1']]],
  ['🤢 Upset stomach / constipation',[
-  ['Mylanta oral liquid · 2+','10–20 mL PO between meals and HS PRN heartburn/gas','daily max per label · sx >2 wk → provider · ⚠️ renal disease → provider'],
-  ['Pepto-Bismol (Bismuth subsalicylate) 262 mg tabs · 12+','2 tabs (524 mg) PO q30–60 min PRN diarrhea/nausea','max 8 doses/24h, no more than 2 days · ⚠️ NOT with ASA/NSAID allergy, anticoagulants, pregnancy · darkens stool/tongue (masks melena)'],
-  ['Colace (Docusate sodium) 100 mg caps · 12+','1 cap PO BID PRN constipation','with water · >1 wk → provider'],
-  ['Simethicone 80 mg chewable tab · 12+','1–2 tabs chewed PO after meals and HS PRN gas/bloating','max 6 tabs (480 mg)/24h'],
-  ['Simethicone 40 mg/0.6 mL oral drops · 2+','pediatric drops — dose on the label','for adults use the 80 mg chewable']]],
+  ['Mylanta oral liquid · 2+','10–20 mL PO between meals and HS PRN heartburn/gas','daily max per label · sx >2 wk → provider · ⚠️ renal disease → provider','mylanta'],
+  ['Pepto-Bismol (Bismuth subsalicylate) 262 mg tabs · 12+','2 tabs (524 mg) PO q30–60 min PRN diarrhea/nausea','max 8 doses/24h, no more than 2 days · ⚠️ NOT with ASA/NSAID allergy, anticoagulants, pregnancy · darkens stool/tongue (masks melena)','bismuth'],
+  ['Colace (Docusate sodium) 100 mg caps · 12+','1 cap PO BID PRN constipation','with water · >1 wk → provider','docusate'],
+  ['Simethicone 80 mg chewable tab · 12+','1–2 tabs chewed PO after meals and HS PRN gas/bloating','max 6 tabs (480 mg)/24h','simethicone'],
+  ['Simethicone 40 mg/0.6 mL oral drops · 2+','pediatric drops — dose on the label','for adults use the 80 mg chewable','simethicone']]],
  ['💊 Supplements',[
-  ['Vitamin D3 (Cholecalciferol) 25 mcg tabs (1,000 IU)','1 tab PO daily with food','supplement, does not treat an acute symptom']]],
+  ['Vitamin D3 (Cholecalciferol) 25 mcg tabs (1,000 IU)','1 tab PO daily with food','supplement, does not treat an acute symptom','vitd']]],
  ['⛔ NOT on the pharmacy list — verify before recommending',[
-  ['Aspirin 325 mg','325 mg PO q6h PRN pain','⚠️ avoid if GI bleed / <18yo — not on self-care list'],
-  ['Imodium (Loperamide)','4 mg initial, then 2 mg after each loose stool','max 8 mg/24h · ADTMC Rx'],
-  ['Melatonin','3–5 mg PO HS PRN insomnia',''],
-  ['Miconazole OTC','per label','replaced by Clotrimazole 1% vaginal cream'],
-  ['Debrox (carbamide peroxide)','drops BID x3–4d','cerumen: irrigation by provider'],
-  ['Artificial tears','1–2 drops PRN','ocular: verify with pharmacy']]]
+  ['Aspirin 325 mg','325 mg PO q6h PRN pain','⚠️ avoid if GI bleed / <18yo — not on self-care list','aspirin'],
+  ['Imodium (Loperamide)','4 mg initial, then 2 mg after each loose stool','max 8 mg/24h · ADTMC Rx','loperamide'],
+  ['Melatonin','3–5 mg PO HS PRN insomnia','','melatonin'],
+  ['Miconazole OTC','per label','replaced by Clotrimazole 1% vaginal cream','clotvag'],
+  ['Debrox (carbamide peroxide)','drops BID x3–4d','cerumen: irrigation by provider','debrox'],
+  ['Artificial tears','1–2 drops PRN','ocular: verify with pharmacy','tears']]]
 ];
 
 const QBANK = [
@@ -1272,7 +1272,7 @@ function phItems(){
     if(!list.length)return;any++;
     const id='ph'+i,open=!!q||!!medOpen[id];
     h+='<div class="fold'+(open?' open':'')+'" role="button" aria-expanded="'+open+'" onclick="medTog(\''+id+'\')"><span class="chev">›</span><b'+(off?' style="color:var(--red)"':'')+'>'+sec+'</b><span class="fsum">'+list.length+'</span></div>';
-    if(open)h+='<div class="medsec">'+list.map(r=>'<div class="medcard"'+(off?' style="opacity:.8"':'')+'><div class="mh"><b>'+r[0]+'</b>'+(off?'':' <span class="otcb">OTC</span>')+'</div><div>'+r[1]+'</div>'+(r[2]?'<div class="dim" style="font-size:.88em">'+r[2]+'</div>':'')+'</div>').join('')+'</div>';
+    if(open)h+='<div class="medsec">'+list.map(r=>'<div class="medcard"'+(off?' style="opacity:.8"':'')+'><div class="mh"><b>'+r[0]+'</b>'+(off?'':' <span class="otcb">OTC</span>')+medInfoBtn(r[3])+'</div>'+medInfoHtml(r[3])+'<div>'+r[1]+'</div>'+(r[2]?'<div class="dim" style="font-size:.88em">'+r[2]+'</div>':'')+'</div>').join('')+'</div>';
   });
   if(!any)return '<div class="dim" style="padding:10px">'+L('No medication matches','Ningún medicamento coincide con')+' "'+q$(medQ)+'".</div>';
   return h+'<div class="note-hint" style="margin-top:10px;font-size:.9em;line-height:1.6">'+L('Sx &gt;1 week despite OTC → provider. Red flags (fever &gt;103, SOB, CP, neuro deficit, uncontrolled bleeding) → ER. More than 4 items/week or a med not on the list → provider. Document as <b>self-care recommendation</b>, not a prescription.','Síntomas &gt;1 semana a pesar de OTC → proveedor. Banderas rojas (fiebre &gt;103, falta de aire, dolor de pecho, déficit neurológico, sangrado que no para) → ER. Más de 4 artículos/semana o un med que no está en la lista → proveedor. Documentar como <b>recomendación de autocuidado</b>, no receta.')+'</div>';
@@ -2647,7 +2647,7 @@ function dcOut(k){
 }
 function adMedCard(m){
   const s=medSafety(m);
-  return '<div class="medcard'+(s.w.length?' bad':'')+'"><div class="mh"><b>'+q$(m.n)+'</b> <span class="dim">'+q$(m.t)+'</span>'+(m.rx?' <span class="rxb">Rx</span>':' <span class="otcb">OTC</span>')+'<span class="ppg dim">p.'+m.pg+'</span></div><div>'+q$(m.dose)+(m.max?' · <b>max '+q$(m.max)+'</b>':'')+'</div><div class="dim" style="font-size:.85em">Protocols: '+q$(m.alg)+'</div><details class="dd"><summary>Contraindications / pregnancy</summary><div style="padding:6px 10px 10px;font-size:.88em;line-height:1.6">'+m.ci.map(c=>'• '+q$(c)).join('<br>')+'<br><b>Pregnancy:</b> '+q$(m.preg)+' · <b>Lactation:</b> '+q$(m.lac)+(m.note?'<br><b>⚠️</b> '+q$(m.note):'')+'</div></details>'+dcHtml(m)+s.w.map(x=>'<div class="mw">⚠️ '+q$(x)+'</div>').join('')+'</div>';
+  return '<div class="medcard'+(s.w.length?' bad':'')+'"><div class="mh"><b>'+q$(m.n)+'</b> <span class="dim">'+q$(m.t)+'</span>'+(m.rx?' <span class="rxb">Rx</span>':' <span class="otcb">OTC</span>')+'<span class="ppg dim">p.'+m.pg+'</span>'+medInfoBtn(m.k)+'</div>'+medInfoHtml(m.k)+'<div>'+q$(m.dose)+(m.max?' · <b>max '+q$(m.max)+'</b>':'')+'</div><div class="dim" style="font-size:.85em">Protocols: '+q$(m.alg)+'</div><details class="dd"><summary>Contraindications / pregnancy</summary><div style="padding:6px 10px 10px;font-size:.88em;line-height:1.6">'+m.ci.map(c=>'• '+q$(c)).join('<br>')+'<br><b>Pregnancy:</b> '+q$(m.preg)+' · <b>Lactation:</b> '+q$(m.lac)+(m.note?'<br><b>⚠️</b> '+q$(m.note):'')+'</div></details>'+dcHtml(m)+s.w.map(x=>'<div class="mw">⚠️ '+q$(x)+'</div>').join('')+'</div>';
 }
 function adMedItems(){
   const q=medQ.trim().toLowerCase();
@@ -2709,7 +2709,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v22';
+const APP_VER='v23';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
