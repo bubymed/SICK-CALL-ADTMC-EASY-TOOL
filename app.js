@@ -1083,7 +1083,7 @@ function updPeek(){
 function renderMore(){
   const row=(ic,txt,on)=>'<div class="prow" onclick="'+on+'"><span class="ptit">'+ic+' '+txt+'</span><span class="dim">›</span></div>';
   let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
-  h+=row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
+  h+=row('🆕',L('What\'s new','Novedades'),'wnShow(true)')+row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
   h+='</div><div class="plist" style="margin-top:14px">';
   h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
   h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
@@ -2727,7 +2727,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v24';
+const APP_VER='v25';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -3091,3 +3091,27 @@ async function installApp(){
   o.innerHTML='<div class="inst-card" role="dialog"><button class="xbtn" onclick="document.getElementById(\'instOv\').remove()" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><img src="icons/icon-192.png" alt="" class="inst-ic"><span class="inst-t">'+L('Add Sick Call to your Home Screen','Agrega Sick Call a tu pantalla de inicio')+'</span><p>'+L('It opens full screen, works offline and keeps your access approval.','Se abre en pantalla completa, funciona sin internet y conserva tu aprobación de acceso.')+'</p><ol>'+steps.map(x=>'<li>'+x+'</li>').join('')+'</ol>'+(ios?'<p class="inst-n">'+L('Important on iPhone: the home-screen app and Safari keep separate data. Request or paste your access <b>inside the home-screen app</b>.','Importante en iPhone: la app de inicio y Safari guardan datos separados. Pide o pega tu acceso <b>dentro de la app de la pantalla de inicio</b>.')+'</p>':'')+'</div>';
   o.onclick=e=>{if(e.target===o)o.remove();};document.body.appendChild(o);}
 setTimeout(instUpd,0);
+
+/* ===== What's new popup (data/whatsnew.js) — once per version, after the access gate.
+   Ventana de novedades — una vez por versión, después de la pantalla de acceso. ===== */
+function wnVnum(v){return parseInt(String(v||'').replace(/\D/g,''),10)||0;}
+function wnPending(){if(typeof WHATSNEW==='undefined')return[];const seen=settings.wnSeen;
+  const cur=wnVnum(APP_VER),list=WHATSNEW.filter(e=>wnVnum(e.v)<=cur);
+  if(!seen)return list.slice(0,1);
+  return list.filter(e=>wnVnum(e.v)>wnVnum(seen)).slice(0,4);}
+function wnDone(){settings.wnSeen=APP_VER;saveSettings();const o=document.getElementById('wnOv');if(o)o.remove();}
+function wnGo(g){wnDone();if(g.startsWith('proto:')){try{tabGo('adtmc');adOpen(g.slice(6));}catch(e){}}else{try{tabGo(g);}catch(e){goRef(g);}}}
+function wnShow(force){
+  const L0=force?(typeof WHATSNEW!=='undefined'?WHATSNEW.slice(0,3):[]):wnPending();
+  if(!L0.length){if(!force&&settings.wnSeen!==APP_VER){settings.wnSeen=APP_VER;saveSettings();}return;}
+  if(document.getElementById('wnOv'))return;
+  const o=document.createElement('div');o.id='wnOv';
+  const items=L0.flatMap(e=>e.items.map(x=>Object.assign({v:e.v},x)));
+  o.innerHTML='<div class="wn-card" role="dialog" aria-label="What\'s new"><div class="wn-k">'+L('UPDATED','ACTUALIZADA')+' · '+APP_VER+'</div><div class="wn-t">'+L('What\'s new','Novedades')+'</div>'
+   +items.map(x=>'<div class="wn-i"><span class="wn-ic">'+x.i+'</span><div><div>'+L(x.en,x.es)+'</div>'+(x.go?'<button class="wn-go" onclick="wnGo(\''+x.go+'\')">'+L(x.btn[0],x.btn[1])+' →</button>':'')+'</div></div>').join('')
+   +'<button class="wn-ok" onclick="wnDone()">'+L('Got it','Entendido')+'</button></div>';
+  o.onclick=e=>{if(e.target===o)wnDone();};document.body.appendChild(o);}
+function wnInit(n){n=n||0;
+  if(document.getElementById('mgOv')||document.getElementById('instOv')||(document.getElementById('lock')||{}).style&&document.getElementById('lock').style.display==='flex'){if(n<600)setTimeout(()=>wnInit(n+1),1500);return;}
+  wnShow(false);}
+setTimeout(()=>wnInit(0),1200);
