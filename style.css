@@ -695,3 +695,8 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 .medsrc{margin:0 0 14px}
 .medsrc button{font-size:15.5px}
 .fold b{flex:0 1 auto;min-width:0}
+/* Med "what is it for" (v23) / Para qué sirve */
+.mi-btn{margin-left:6px;flex:none;width:30px;height:30px;border-radius:50%;border:0;background:var(--panel2);color:var(--accent);font-size:17px;font-weight:700;line-height:30px;padding:0;cursor:pointer;align-self:center}
+.mi-btn.on{background:var(--accent);color:#000}
+.minfo{background:var(--panel2);border-radius:10px;padding:9px 11px;margin:6px 0 8px;font-size:.93em;line-height:1.5}
+.minfo div+div{margin-top:5px}
