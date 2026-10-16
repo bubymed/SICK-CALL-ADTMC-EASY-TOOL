@@ -1121,8 +1121,12 @@ function fuQs(t,s,fid){
   }
   return out;
 }
+const GUEST_OK=['admeds','mace','more','preguntas','assess','access'];
+function isGuest(){return document.body.classList.contains('guest');}
+function guestLocked(){return '<div class="guest-lock"><div class="gl-ic">🔒</div><h2>'+L('For approved medics','Para médicos aprobados')+'</h2><p>'+L('Protocols, dispositions, profiles, notes and the patient list need medic access. As a guest you can use Meds, MACE, Assessments and Questions.','Los protocolos, disposiciones, perfiles, notas y la lista de pacientes necesitan acceso de médico. Como invitado puedes usar Meds, MACE, Assessments y Preguntas.')+'</p><button class="gl-btn" onclick="accGate(true)">🩺 '+L('Get medic access','Pedir acceso de médico')+'</button><button class="gl-sec" onclick="tabGo(\'admeds\')">💊 '+L('Go to Meds','Ir a Meds')+'</button></div>';}
 function renderMain(){
   const m=document.getElementById('main');
+  if(isGuest()&&!GUEST_OK.includes(view)){m.innerHTML=guestLocked();return;}
   if(view==='adtmc'){m.innerHTML=renderAD();return;}
   if(view==='admeds'){m.innerHTML=renderADMeds();return;}
   if(view==='ajustes'){m.innerHTML=renderSettings();return;}
@@ -1367,17 +1371,20 @@ function praText(){
 }
 function praCopy(b){copyTxt(praText(),b);}
 function praToNote(){const t=praText();const n=document.getElementById('note');const c0=n.textContent;const base=(c0.trim()&&!/^Pick a complaint/.test(c0))?c0.trimEnd()+'\n\n':'';setNoteMode('manual');n.textContent=base+t;renderNav();}
+const mcOpen={scr:true};
+function mcTog(id){mcOpen[id]=!mcOpen[id];renderMain();}
+function mcFold(id,t,sum,body){const op=!!mcOpen[id];return '<div class="fold'+(op?' open':'')+'" role="button" aria-expanded="'+op+'" onclick="mcTog(\''+id+'\')"><span class="chev">›</span><b>'+t+'</b><span class="fsum">'+sum+'</span></div>'+(op?'<div class="mcsec">'+body+'</div>':'');}
 function renderPra(){
   const E=praEval();
   const fld=(tag,name,ask,body)=>'<div class="field"><div class="lab"><span class="tag">'+tag+'</span><span class="name">'+name+'</span>'+(ask?'<span class="ask">'+ask+'</span>':'')+'</div>'+body+'</div>';
   const ch=(on,fn,t)=>'<span class="chip '+(on?'on':'')+'" onclick="'+fn+'">'+t+'</span>';
-  let h='<div class="secbar">PRA · Progressive return to activity (after the 24 h rest)</div>';
+  let h='';
   h+='<div class="note-hint">General guidance (App. H): minimum 24 h recovery; if first concussion in 12 months and asymptomatic, exertional testing can be done; if symptomatic at 24 h / after exertional testing, or it is the 2nd concussion in 12 months, enter the full PRA. Complete the NSI daily and after each stage. Stage 1 education: Acute Concussion / Return to Activity brochures (dvbic.dcoe.mil).</div>';
   h+=fld('12 mo','Second concussion in the past 12 months?','',"<div class='chips'>"+ch(pra.second===true,"praSet('second',true)",'YES (2nd)')+ch(pra.second===false,"praSet('second',false)",'NO (1st)')+'</div>');
   h+=fld('Stage','Current stage','one stage per day at most',"<div class='chips'>"+PRA_ST.map((x,i)=>ch(pra.stage===i+1,"praSet('stage',"+(i+1)+")",(i+1)+' · '+x[0])).join('')+'</div><div class="fuq">'+PRA_ST[pra.stage-1][1]+'</div>');
   h+=fld('Exert','Exertional testing','65–85% of target HR (220−age), ~2 min; stop and consult the provider if symptoms or red flags',"<div class='chips'>"+ch(pra.exert==='N',"praSet('exert','N')",'Not done')+ch(pra.exert==='A',"praSet('exert','A')",'Asymptomatic')+ch(pra.exert==='S',"praSet('exert','S')",'Symptomatic')+'</div>');
   h+='<div class="secbar">NSI · Neurobehavioral Symptom Inventory (0–4)</div><div class="fuq">0 none · 1 mild (occasional, doesn’t disrupt) · 2 moderate (often, occasionally disrupts) · 3 severe · 4 very severe. Progress only if all are 0–1.</div>';
-  NSI_Q.forEach((q,i)=>{h+='<div class="field" style="padding:6px 8px"><div class="lab"><span class="name" style="font-weight:500">'+q+'</span></div><div class="chips">'+[0,1,2,3,4].map(v=>ch(pra.nsi[i]===v,'praNsi('+i+','+v+')',String(v))).join('')+'</div></div>';});
+  NSI_Q.forEach((q,i)=>{h+='<div class="nsirow"><span>'+q+'</span><div class="nsiv">'+[0,1,2,3,4].map(v=>ch(pra.nsi[i]===v,'praNsi('+i+','+v+')',String(v))).join('')+'</div></div>';});
   h+='<div class="field"><b>'+(E.n&&E.max>=2?'⚠ HOLD / follow up':E.n?'✓ May progress':'—')+'</b><div style="margin-top:4px;font-size:.9em">'+E.rec+'</div></div>';
   h+='<div class="field"><pre style="white-space:pre-wrap;margin:0;font-size:.85em">'+praText().replace(/</g,'&lt;')+'</pre><div class="algo-actions"><button onclick="praCopy(this)">Copy</button><button class="ghost" onclick="praToNote()">Add to note</button><button class="ghost" onclick="praReset()">↺ Clear PRA</button></div></div>';
   return h;
@@ -1386,8 +1393,7 @@ function renderMace(){
   if(!mace)mcNew();const m=mace,S=mcScore();
   const YNU=[['Y','YES'],['N','NO'],['U','UNKNOWN']],YN=[['Y','YES'],['N','NO']];
   const fld=(tag,name,ask,body)=>`<div class="field"><div class="lab"><span class="tag">${tag}</span><span class="name">${name}</span>${ask?`<span class="ask">${ask}</span>`:''}</div>${body}</div>`;
-  let h='<h2 class="tpl">🧠 MACE 2 — Military Acute Concussion Evaluation</h2><p class="tpl-sub">ADTMC F-6 / Appendix H (DVBIC rev. 10/2018). Scoring helper: nothing is saved. Findings stay on this screen until you copy them to the note.</p>';
-  h+=`<div class="algo-actions" style="margin-bottom:10px"><button class="ghost" onclick="mcReset()">↺ New patient (clear)</button></div>`;
+  let h='';
   h+='<div class="secbar">1 · Description of incident</div>';
   h+=fld('1D','Blow or jolt to the head?','Head hit objects / struck by objects / blast wave / acceleration-deceleration',mcRow('','blow',YNU));
   h+='<div class="secbar">2 · Alteration of consciousness or memory</div>';
@@ -1400,6 +1406,7 @@ function renderMace(){
   h+='<div class="secbar">4 · History</div>';
   ['Diagnosed with a concussion in the past 12 months (not counting this event)?','History of diagnosed/treated headache disorder or migraine?','History of depression, anxiety, or other behavioral-health concerns?'].forEach((q,i)=>{h+=fld('4'+'ABC'[i],q,'',mcRow('','h',YN,i));});
   h+=`<div class="field" style="border-color:var(${S.screen?'--red':'--line'})"><b>Concussion screening result:</b> ${S.screen?'<span style="color:var(--red)">POSITIVE</span> — continue MACE 2, complete the evaluation before prescribing rest, communicate to line leadership, document and code in the EHR.':(m.blow===null?'<span style="color:var(--dim)">answer 1D and 2A–2D</span>':'<b>NEGATIVE</b> (needs a blow/jolt AND any alteration of consciousness or memory) — stop MACE 2; 24-hour rest period if deployed (avoid activities that worsen symptoms); follow up after rest per CMT; communicate to leadership; document and code in the EHR.')}</div>`;
+  const secScr=h;h='';let secCog='',secNeu='';
   if(S.screen){
     h+='<div class="secbar">Cognitive exam — choose one list (A–F) and use it for questions 6, 15 and 16</div><div class="chips">'+Object.keys(MC_WORDS).map(k=>`<span class="chip ${m.list===k?'on':''}" onclick="mace.list='${k}';renderMain()">List ${k}</span>`).join('')+'</div>';
     h+=fld('5','Orientation',`<b>${S.ori}/5</b> — within one hour of actual time`,'<div class="chips">'+MC_ORI.map((q,i)=>`<span class="chip ${m.ori[i]?'on':''}" onclick="mcFlip('ori',${i})">${m.ori[i]?'✓ ':''}${q}</span>`).join('')+'</div>');
@@ -1410,17 +1417,31 @@ function renderMace(){
     h+=fld('15B','Months in reverse order',`<b>${m.mo?1:0}/1</b> — all correct: Dec–Nov–Oct–Sep–Aug–Jul–Jun–May–Apr–Mar–Feb–Jan`,`<div class="chips"><span class="chip ${m.mo===true?'on':''}" onclick="mace.mo=mace.mo===true?null:true;renderMain()">All months correct</span><span class="chip ${m.mo===false?'on':''}" onclick="mace.mo=mace.mo===false?null:false;renderMain()">Incorrect</span></div><div class="fuq">Concentration total (15A + 15B): <b>${S.conc}/5</b></div>`);
     h+=fld('16','Delayed recall',`<b>${S.dr}/5</b> — "Do you remember that list of words I read a few minutes earlier? Tell me as many as you can, in any order." Do NOT repeat the list.`,'<div class="chips">'+MC_WORDS[m.list].map((w,i)=>`<span class="chip ${m.dr[i]?'on':''}" onclick="mcFlip('dr',${i})">${m.dr[i]?'✓ ':''}${w}</span>`).join('')+'</div>');
     h+=`<div class="field" style="border-color:var(${S.cogAb?'--red':'--line'})"><b>Cognitive total: ${S.cog}/30</b> (orientation ${S.ori} + immediate memory ${S.im} + concentration ${S.conc} + delayed recall ${S.dr}) — ${S.cogAb?'<span style="color:var(--red)">ABNORMAL (≤25)</span>':'normal (>25)'}</div>`;
+    secCog=h;h='';
     h+='<div class="secbar">Neurological exam (7–14)</div>';
     MC_NEURO.forEach((n,i)=>{h+=fld(String(7+i),n[0],n[1],`<div class="chips"><span class="chip ${m.neuro[i]==='N'?'on':''}" onclick="mcSet('neuro','N',${i})">Normal</span><span class="chip ${m.neuro[i]==='A'?'on':''}" style="${m.neuro[i]==='A'?'background:var(--red);border-color:var(--red);color:var(--on-red)':''}" onclick="mcSet('neuro','A',${i})">Abnormal</span></div>`);});
     h+='<div class="secbar">17 · Vestibular / ocular-motor screening (VOMS)</div>';
     h+=fld('17','VOMS result','Contraindication: unstable cervical spine. Defer if overtly symptomatic or no trained provider. Record headache / dizziness / nausea / fogginess (HDNF, 0–10) before and after each task: smooth pursuits, horizontal & vertical saccades, convergence (≥5 cm near point is abnormal), horizontal & vertical VOR, visual motion sensitivity. Any score above baseline is abnormal.',`<div class="chips"><span class="chip ${m.voms==='N'?'on':''}" onclick="mcSet('voms','N')">Normal</span><span class="chip ${m.voms==='A'?'on':''}" onclick="mcSet('voms','A')">Abnormal</span><span class="chip ${m.voms==='D'?'on':''}" onclick="mcSet('voms','D')">Deferred</span></div>`);
   }
-  h+='<div class="secbar">Summary</div><div class="field"><pre style="white-space:pre-wrap;margin:0;font-size:.85em">'+mcText().replace(/</g,'&lt;')+'</pre><div class="algo-actions"><button onclick="mcCopy(this)">Copy</button><button class="ghost" onclick="mcToNote()">Add to note</button></div></div>';
-  h+=renderPra();
-  h+='<div class="fuq" style="margin-top:8px">After completing MACE 2: document in the EHR with coding (initial TBI screening code Z13.850; primary TBI diagnostic code S06.-, etc. — see DVBIC ICD-10 coding guidance); initiate 24-hour rest; use the Concussion Management Tool (CMT); after the rest period evaluate for Progressive Return to Activity (PRA). The PRA guidance, NSI and stages above follow Appendix H (pp. 267–272); the CMT symptom-cluster treatment tables are not reproduced — use the pamphlet or the provider. This tool does not replace provider judgment.</div>';
-  return h;
+  if(S.screen){secNeu=h;}h='';
+  h+='<div class="field"><pre style="white-space:pre-wrap;margin:0;font-size:.85em">'+mcText().replace(/</g,'&lt;')+'</pre><div class="algo-actions"><button onclick="mcCopy(this)">Copy</button><button class="ghost" onclick="mcToNote()">Add to note</button></div></div>';
+  const secSum=h;h='';const secPra=renderPra();
+  const secInfo='<div class="fuq" style="margin-top:0">After completing MACE 2: document in the EHR with coding (initial TBI screening code Z13.850; primary TBI diagnostic code S06.-, etc. — see DVBIC ICD-10 coding guidance); initiate 24-hour rest; use the Concussion Management Tool (CMT); after the rest period evaluate for Progressive Return to Activity (PRA). The PRA guidance, NSI and stages above follow Appendix H (pp. 267–272); the CMT symptom-cluster treatment tables are not reproduced — use the pamphlet or the provider. This tool does not replace provider judgment.</div>';
+  const answered=['blow','aoc','loc','pta','wit'].filter(k=>m[k]!==null).length+((m.sym.length||m.symNeg)?1:0)+m.h.filter(x=>x!==null).length;
+  const res=S.screen?'pos':(m.blow===null?'none':'neg');
+  const nN=m.neuro.filter(x=>x!==null).length,nsiV=Object.values(pra.nsi||{}),nsiT=nsiV.reduce((x,y)=>x+y,0);
+  if(S.screen&&mcOpen.cog===undefined)mcOpen.cog=true;
+  let o='<div class="mace-head"><div><h2 class="tpl" style="margin:0">🧠 MACE 2</h2><div class="mh-sub">'+L('Concussion evaluation · ADTMC F-6 / App. H','Evaluación de concusión · ADTMC F-6 / Apénd. H')+'</div></div><button class="mh-new" onclick="mcReset()">↺ '+L('New','Nuevo')+'</button></div>';
+  o+='<div class="mace-status ms-'+res+'"><div class="ms-k">'+L('Screening','Tamizaje')+'</div><div class="ms-v">'+(res==='pos'?L('POSITIVE','POSITIVO'):res==='neg'?L('Negative','Negativo'):L('Not started','Sin empezar'))+'</div>'
+    +(S.screen?'<div class="ms-row"><span>'+L('Cognitive','Cognitivo')+' <b>'+S.cog+'/30</b></span><span>'+L('Neuro','Neuro')+' <b>'+(nN?(S.nAb?S.nAb+' '+L('abn','anormal'):L('normal','normal')):'—')+'</b></span><span>VOMS <b>'+(m.voms==='A'?L('abn','anormal'):m.voms==='N'?'OK':m.voms==='D'?L('deferred','diferido'):'—')+'</b></span></div>':'<div class="ms-hint">'+(res==='neg'?L('Negative screen — stop MACE 2, 24 h rest, follow CMT.','Tamizaje negativo — termina MACE 2, 24 h de descanso, sigue el CMT.'):L('Answer 1D and 2A–2D. Positive = blow/jolt + AOC, LOC or PTA.','Contesta 1D y 2A–2D. Positivo = golpe + AOC, LOC o PTA.'))+'</div>')+'</div>';
+  o+=mcFold('scr','1–4 · '+L('Screening','Tamizaje'),answered+'/9',secScr);
+  if(S.screen){const cT=S.cog>0||m.mo!==null;o+=mcFold('cog','5–6, 15–16 · '+L('Cognitive exam','Examen cognitivo'),cT?S.cog+'/30'+(S.cogAb?' ⚠':''):'—',secCog);
+    o+=mcFold('neu','7–14, 17 · '+L('Neuro exam + VOMS','Examen neuro + VOMS'),nN+'/8'+(S.nAb?' ⚠':''),secNeu);}
+  o+=mcFold('sum','📝 '+L('Summary → note','Resumen → nota'),'',secSum);
+  o+=mcFold('pra','🏃 PRA · '+L('Return to activity','Regreso a actividad'),L('Stage ','Etapa ')+pra.stage+(nsiV.length?' · NSI '+nsiT:''),secPra);
+  o+=mcFold('info','ⓘ '+L('After MACE: coding & next steps','Después del MACE: códigos y pasos'),'',secInfo);
+  return '<div class="mace">'+o+'</div>';
 }
-
 function renderQ(){
   let h=`<h2 class="tpl">❓ Question bank</h2><p class="tpl-sub">What to ask, in order.</p><div class="ref">`;
   QBANK.forEach(([sec,rows])=>{
@@ -2727,7 +2748,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v25';
+const APP_VER='v26';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
