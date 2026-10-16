@@ -1121,9 +1121,9 @@ function fuQs(t,s,fid){
   }
   return out;
 }
-const GUEST_OK=['admeds','mace','more','preguntas','assess','perfiles','access'];
+const GUEST_OK=['admeds','mace','more','preguntas','assess','access'];
 function isGuest(){return document.body.classList.contains('guest');}
-function guestLocked(){return '<div class="guest-lock"><div class="gl-ic">🔒</div><h2>'+L('For approved medics','Para médicos aprobados')+'</h2><p>'+L('Protocols, dispositions, notes and the patient list need medic access. As a guest you can use Meds, MACE, Assessments, Questions and Profiles.','Los protocolos, disposiciones, notas y la lista de pacientes necesitan acceso de médico. Como invitado puedes usar Meds, MACE, Assessments, Preguntas y Perfiles.')+'</p><button class="gl-btn" onclick="accGate(true)">🩺 '+L('Get medic access','Pedir acceso de médico')+'</button><button class="gl-sec" onclick="tabGo(\'admeds\')">💊 '+L('Go to Meds','Ir a Meds')+'</button></div>';}
+function guestLocked(){return '<div class="guest-lock"><div class="gl-ic">🔒</div><h2>'+L('For approved medics','Para médicos aprobados')+'</h2><p>'+L('Protocols, dispositions, profiles, notes and the patient list need medic access. As a guest you can use Meds, MACE, Assessments and Questions.','Los protocolos, disposiciones, perfiles, notas y la lista de pacientes necesitan acceso de médico. Como invitado puedes usar Meds, MACE, Assessments y Preguntas.')+'</p><button class="gl-btn" onclick="accGate(true)">🩺 '+L('Get medic access','Pedir acceso de médico')+'</button><button class="gl-sec" onclick="tabGo(\'admeds\')">💊 '+L('Go to Meds','Ir a Meds')+'</button></div>';}
 function renderMain(){
   const m=document.getElementById('main');
   if(isGuest()&&!GUEST_OK.includes(view)){m.innerHTML=guestLocked();return;}

@@ -63,7 +63,7 @@ async function accGate(force){
    +'<div class="mg-em">🚨 '+L('Emergency? Tell a medic now or call 911.','¿Emergencia? Avísale a un médico ya o llama al 911.')+'</div>');
 }
 function acLang(l){try{setLang(l);}catch(e){}accGate(true);}
-/* Guest mode: reference tools only (Meds, MACE, Assessments, Questions, Profiles). No protocols, dispositions, notes or patient queue.
+/* Guest mode: reference tools only (Meds, MACE, Assessments, Questions). No protocols, dispositions, profiles, notes or patient queue.
    Modo invitado: solo referencias. Sin protocolos, disposiciones, notas ni lista de pacientes. */
 function acIsGuest(){try{return localStorage.getItem('sc_guest')==='1';}catch(e){return false;}}
 function acGuest(){try{localStorage.setItem('sc_guest','1');}catch(e){}acClose();acGuestApply();}

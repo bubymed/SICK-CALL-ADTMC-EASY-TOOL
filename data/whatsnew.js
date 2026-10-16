@@ -4,7 +4,7 @@
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
  {v:'v26',items:[
-   {i:'👤',en:'<b>Cleaner start screen + guest mode</b> — anyone can "Continue as a guest" with reference tools only (Meds, MACE, Assessments, Profiles). Protocols and notes stay for approved medics.',es:'<b>Pantalla de inicio más limpia + modo invitado</b> — cualquiera puede "Continuar como invitado" solo con referencias (Meds, MACE, Assessments, Perfiles). Los protocolos y notas siguen siendo para médicos aprobados.'}]},
+   {i:'👤',en:'<b>Cleaner start screen + guest mode</b> — anyone can "Continue as a guest" with reference tools only (Meds, MACE, Assessments). Protocols, profiles and notes stay for approved medics.',es:'<b>Pantalla de inicio más limpia + modo invitado</b> — cualquiera puede "Continuar como invitado" solo con referencias (Meds, MACE, Assessments). Los protocolos, perfiles y notas siguen siendo para médicos aprobados.'}]},
  {v:'v25',items:[
    {i:'🆕',en:'<b>What\'s new window</b> — after each update you\'ll see this card with the new features.',es:'<b>Ventana de novedades</b> — después de cada actualización verás esta tarjeta con lo nuevo.'}]},
  {v:'v24',items:[
