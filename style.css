@@ -718,3 +718,27 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 #wnOv .wn-go{margin-top:8px;border:0;background:none;color:var(--accent);font:inherit;font-weight:700;padding:0;cursor:pointer}
 #wnOv .wn-ok{width:100%;border:0;border-radius:14px;background:var(--accent);color:#000;font:inherit;font-size:17px;font-weight:700;padding:14px;margin-top:6px;cursor:pointer}
 #wnOv .wn-ok{position:sticky;bottom:0;box-shadow:0 -10px 16px var(--panel)}
+/* Start screen redesign + guest mode (v26) / Pantalla de inicio + invitado */
+#mgOv .mg-top{display:flex;align-items:center;justify-content:space-between}
+#mgOv .mg-lang{display:flex;background:var(--panel);border-radius:9px;padding:2px}
+#mgOv .mg-lang button{border:0;background:none;color:var(--dim);font:inherit;font-size:14px;font-weight:700;padding:6px 12px;border-radius:7px}
+#mgOv .mg-lang button.on{background:var(--orange);color:#000}
+#mgOv h2{font-size:40px;letter-spacing:-.02em;margin:22px 0 8px}
+#mgOv .mg-sub{font-size:17px;color:var(--dim);margin:0 0 22px;line-height:1.45}
+#mgOv .mg-sub b{color:var(--txt);font-weight:700}
+#mgOv .mg-btn{margin-top:10px}
+#mgOv .mg-btn.ghost{background:none;border:1.5px dashed var(--line);color:var(--txt);margin-top:18px}
+#mgOv .mg-btn small{display:block;font-size:13px;font-weight:500;color:var(--dim);margin-top:3px}
+#mgOv .mg-links{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:22px;color:var(--dim);font-size:15px}
+#mgOv .mg-links button{border:0;background:none;color:var(--orange);font:inherit;font-weight:600;padding:4px 2px}
+#mgOv .mg-em{text-align:center;color:var(--dim);font-size:14px;margin-top:14px}
+.guest-btn{display:none;background:var(--panel2)!important;color:var(--txt)!important;font-weight:700}
+body.guest .guest-btn{display:inline-block}
+body.guest #aside,body.guest #mobileNoteBtn,body.guest #tabbar button[data-v="adtmc"],body.guest #tabbar button[data-v="guardados"],body.guest header button[onclick="resetTpl()"],body.guest header .danger{display:none!important}
+.guest-lock{max-width:440px;margin:40px auto;text-align:center;padding:0 8px}
+.guest-lock .gl-ic{font-size:44px}
+.guest-lock h2{font-size:26px;margin:10px 0 8px}
+.guest-lock p{color:var(--dim);font-size:16px;line-height:1.5;margin:0 0 18px}
+.guest-lock button{display:block;width:100%;border:0;border-radius:14px;padding:15px;font:inherit;font-size:17px;font-weight:700;margin-top:10px;cursor:pointer}
+.guest-lock .gl-btn{background:var(--accent);color:#000}
+.guest-lock .gl-sec{background:var(--panel);color:var(--txt)}

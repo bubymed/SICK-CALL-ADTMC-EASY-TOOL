@@ -47,21 +47,28 @@ function acShareBox(link,title){return '<div class="ac-qr">'+acQR(link)+'</div><
 async function accGate(force){
   if(!/^https?:/.test(location.protocol)||!AC.ok())return; // local file / no WebCrypto: dev mode
   acRole=await AC.role();
-  if(acRole){acClose();return;}
+  if(acRole){acGuestOff();acClose();return;}
+  if(acIsGuest()&&!force){acGuestApply();return;}
   let skip=false;try{skip=sessionStorage.getItem('sc_acskip')==='1';}catch(e){}
   if(skip&&!acEnforced()&&!force)return;
-  const left=acDays();
-  acOv('<div class="mg-k">68W · ADTMC</div><h2>'+L('Sick Call — for medics','Sick Call — para médicos')+'</h2>'
-   +'<p>'+L('This tool is for trained 68W medics and medical personnel using the ADTMC under provider supervision.','Esta herramienta es para médicos 68W entrenados y personal médico que usa el ADTMC bajo supervisión de un proveedor.')+'</p>'
-   +'<p><b>'+L('It does not diagnose. It is not for self-diagnosis or self-treatment.','No diagnostica. No es para autodiagnóstico ni para automedicarse.')+'</b></p>'
+  const lg=(typeof LANG!=='undefined'&&LANG==='es')?'es':'en';
+  acOv('<div class="mg-top"><span class="mg-k">68W · ADTMC</span><span class="mg-lang"><button class="'+(lg==='en'?'on':'')+'" onclick="acLang(\'en\')">EN</button><button class="'+(lg==='es'?'on':'')+'" onclick="acLang(\'es\')">ES</button></span></div>'
+   +'<h2>Sick Call</h2>'
+   +'<p class="mg-sub">'+L('For 68W medics, under provider supervision.','Para médicos 68W, bajo supervisión de un proveedor.')+' <b>'+L('Not for self-diagnosis.','No es para autodiagnóstico.')+'</b></p>'
    +'<button class="mg-btn" onclick="acReqView(\'medic\')">🩺 '+L('I\'m a medic — request access','Soy médico — pedir acceso')+'</button>'
-   +'<button class="mg-btn sec" onclick="acHaveView()">🔑 '+L('I have an approval (scan or paste)','Tengo una aprobación (escanear o pegar)')+'</button>'
-   +'<button class="ac-skip" style="padding-top:8px" onclick="acReqView(\'appr\')">'+L('Medic NCO? Become an approver','¿NCO de médicos? Ser aprobador')+'</button>'
+   +'<button class="mg-btn sec" onclick="acHaveView()">🔑 '+L('I have an approval','Tengo una aprobación')+'</button>'
    +'<button class="mg-btn sec" onclick="location.href=\'intake.html\'">🤒 '+L('I\'m a Soldier and I feel sick','Soy soldado y me siento mal')+'</button>'
-   +(acEnforced()?'':'<button class="ac-skip" onclick="acSkip()">'+L('Continue for now','Continuar por ahora')+' — '+L('approval required in ','aprobación obligatoria en ')+left+(left===1?L(' day',' día'):L(' days',' días'))+'</button>')
-   +((typeof canInstall==='function'&&canInstall())?'<button class="ac-skip" onclick="installApp()">📲 '+L('First time? Add the app to your Home Screen','¿Primera vez? Agrega la app a tu pantalla de inicio')+'</button>':'')
-   +'<p class="mg-f">'+L('Medics get access once: your NCO approves your phone. No name or ID is stored. Soldiers: answer the sick call questions and show your code to the medic. Emergency? Tell a medic now or call 911.','Los médicos piden acceso una sola vez: tu NCO aprueba tu teléfono. No se guarda nombre ni ID. Soldados: contesten las preguntas de sick call y enséñenle su código al médico. ¿Emergencia? Avísale a un médico ya o llama al 911.')+'</p>');
+   +'<button class="mg-btn ghost" onclick="acGuest()">👤 '+L('Continue as a guest','Continuar como invitado')+'<small>'+L('Reference tools only','Solo herramientas de referencia')+'</small></button>'
+   +'<div class="mg-links"><button onclick="acReqView(\'appr\')">'+L('NCO? Become an approver','¿NCO? Ser aprobador')+'</button>'+((typeof canInstall==='function'&&canInstall())?'<span>·</span><button onclick="installApp()">📲 '+L('Install app','Instalar app')+'</button>':'')+'</div>'
+   +'<div class="mg-em">🚨 '+L('Emergency? Tell a medic now or call 911.','¿Emergencia? Avísale a un médico ya o llama al 911.')+'</div>');
 }
+function acLang(l){try{setLang(l);}catch(e){}accGate(true);}
+/* Guest mode: reference tools only (Meds, MACE, Assessments, Questions, Profiles). No protocols, dispositions, notes or patient queue.
+   Modo invitado: solo referencias. Sin protocolos, disposiciones, notas ni lista de pacientes. */
+function acIsGuest(){try{return localStorage.getItem('sc_guest')==='1';}catch(e){return false;}}
+function acGuest(){try{localStorage.setItem('sc_guest','1');}catch(e){}acClose();acGuestApply();}
+function acGuestOff(){try{localStorage.removeItem('sc_guest');}catch(e){}document.body.classList.remove('guest');}
+function acGuestApply(){document.body.classList.add('guest');const gb=document.getElementById('guestBtn');if(gb)gb.textContent='👤 '+L('Guest','Invitado');try{if(typeof GUEST_OK!=='undefined'&&!GUEST_OK.includes(view)){tabGo('admeds');}else{renderNav();renderMain();}}catch(e){}}
 function acSkip(){try{sessionStorage.setItem('sc_acskip','1');}catch(e){}acClose();}
 function acReqView(role){
   const s=AC.get('sc_req')||{};
