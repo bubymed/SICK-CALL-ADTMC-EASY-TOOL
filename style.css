@@ -708,3 +708,13 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 .pfb .pfbph{margin:12px 0 6px;line-height:1.5}
 .pfb .pfbplan{padding:6px 10px 10px;font-size:.92em;line-height:1.55}
 .pfb .pfbplan div+div{margin-top:4px}
+/* What's new popup (v25) / Ventana de novedades */
+#wnOv{position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px calc(16px) calc(16px + env(safe-area-inset-bottom))}
+#wnOv .wn-card{background:var(--panel);color:var(--txt);border-radius:22px;padding:22px 20px 16px;max-width:440px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#wnOv .wn-k{display:inline-block;background:var(--accent);color:#000;font-weight:800;font-size:12px;letter-spacing:.05em;padding:4px 9px;border-radius:7px}
+#wnOv .wn-t{font-size:26px;font-weight:800;margin:10px 0 12px}
+#wnOv .wn-i{display:flex;gap:12px;align-items:flex-start;background:var(--panel2);border-radius:14px;padding:12px;margin-bottom:10px;font-size:15.5px;line-height:1.45}
+#wnOv .wn-ic{font-size:24px;line-height:1;flex:none;width:30px;text-align:center}
+#wnOv .wn-go{margin-top:8px;border:0;background:none;color:var(--accent);font:inherit;font-weight:700;padding:0;cursor:pointer}
+#wnOv .wn-ok{width:100%;border:0;border-radius:14px;background:var(--accent);color:#000;font:inherit;font-size:17px;font-weight:700;padding:14px;margin-top:6px;cursor:pointer}
+#wnOv .wn-ok{position:sticky;bottom:0;box-shadow:0 -10px 16px var(--panel)}

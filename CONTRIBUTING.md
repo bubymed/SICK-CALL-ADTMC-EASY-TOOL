@@ -20,6 +20,9 @@ Rules / Reglas:
 Bump `APP_VER` in `app.js`, the cache name in `sw.js` **and** `version.json` to the same value (e.g. `v19`). Installed apps compare `version.json` with their `APP_VER` and update themselves.
 Sube `APP_VER` en `app.js`, el nombre del caché en `sw.js` **y** `version.json` al mismo valor. Las apps instaladas comparan `version.json` con su `APP_VER` y se actualizan solas.
 
+For every release with a new feature, add an entry at the **top** of `data/whatsnew.js` (same `v` as `APP_VER`, 1–3 short items, EN + ES). Medics see it once in a "What's new" popup after the update.
+En cada versión con algo nuevo, agrega una entrada **arriba** en `data/whatsnew.js` (mismo `v` que `APP_VER`, 1–3 puntos cortos, EN + ES). Los médicos la ven una vez en la ventana "Novedades" después de actualizar.
+
 ## Medic access / Acceso de médicos
 `data/access.js` holds the root public key(s), the revocation list and the enforcement date. The root **private** key is never committed — it lives only on the owner's phone (More → Access). To revoke an approver or a single approval, add its ID to `REVOKED` and release a new version.
 `data/access.js` guarda la(s) llave(s) públicas raíz, la lista de revocados y la fecha de obligatoriedad. La llave **privada** raíz nunca se sube — solo vive en el teléfono del dueño. Para revocar, agrega el ID a `REVOKED` y publica una versión nueva.
