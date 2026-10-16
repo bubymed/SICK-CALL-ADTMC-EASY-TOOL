@@ -686,3 +686,9 @@ header button.danger.armed,button.danger.armed,button.armed{background:#8E0000!i
 #instOv .ib{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:0 6px;font-weight:700}
 #instOv .inst-n{font-size:13px;background:var(--panel2);border-radius:10px;padding:8px 10px;color:var(--txt)}
 #instOv .xbtn{position:absolute;top:12px;right:12px}
+/* Meds groups + OTC/Rx filter (v21) / Grupos de meds + filtro OTC/Rx */
+.medf{display:flex;background:var(--panel);border-radius:12px;padding:3px;margin:4px 0 10px;gap:3px}
+.medf button{flex:1;border:0;background:none;color:var(--dim);font:inherit;font-size:15px;font-weight:600;padding:9px 6px;border-radius:9px;cursor:pointer}
+.medf button.on{background:var(--accent);color:#000}
+.otcb{background:var(--panel2);color:var(--dim);border-radius:6px;padding:1px 6px;font-size:.78em;font-weight:700}
+.medsec{margin:0 0 12px 6px}

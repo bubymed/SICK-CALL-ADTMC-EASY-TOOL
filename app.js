@@ -2588,10 +2588,30 @@ function rfqHtml(){
    +'<pre id="rfqPrev" style="white-space:pre-wrap;margin:8px 0 0;font-size:.85em">'+q$(rfqText())+'</pre>'
    +'<div class="algo-actions"><button onclick="rfqCopy(this)">'+L('Copy','Copiar')+'</button><button class="ghost" onclick="rfqClear()">'+L('↺ Clear','↺ Limpiar')+'</button></div></div></details>';
 }
+/* Meds grouped by use; each group folds open on tap. Filter: all / OTC / Rx.
+   Medicamentos agrupados por uso; cada grupo se abre al tocarlo. Filtro: todos / OTC / Rx. */
+const MED_SECS=[
+ ['pain','🤕','Pain & fever','Dolor y fiebre',['acetaminophen','ibuprofen','naproxen','menthol','ketorolac','phenazopyridine']],
+ ['cold','🤧','Cold, allergy, ENT & eyes','Gripe, alergia, oído/nariz/garganta y ojos',['diphenhydramine','loratadine','pseudoephedrine','oxymetazoline','guaifenesin','benzocaine','lidocaine','acetasol','tears']],
+ ['gi','🍽️','Stomach & GI','Estómago y digestivo',['ranitidine','bismuth','loperamide','peg','docusate','bisacodyl','analpram']],
+ ['abx','🦠','Antibiotics & antivirals','Antibióticos y antivirales',['azithromycin','ceftriaxone','doxycycline','metronidazole','nitrofurantoin','tmpsmx','valacyclovir']],
+ ['fung','🍄','Fungus, lice & scabies','Hongos, piojos y sarna',['terbinafine','fluconazole','permethrin1','permethrin5']],
+ ['skin','🧴','Skin, wounds & acne','Piel, heridas y acné',['bacitracin','povidone','hc1','calamine','burow','benzoyl','adapalene']],
+ ['em','🚨','Emergency','Emergencia',['albuterol','aspirin','epinephrine','glucagon']]
+];
+let medF='all';const medOpen={};
+function medSecOf(m){for(const s of MED_SECS)if(s[4].includes(m.k))return s[0];return 'other';}
+function medSecs(){const out=MED_SECS.map(s=>({id:s[0],ic:s[1],t:L(s[2],s[3]),list:[]}));const oth={id:'other',ic:'💊',t:L('Other','Otros'),list:[]};
+  ADMEDS.forEach(m=>{const o=out.find(x=>x.id===medSecOf(m))||oth;o.list.push(m);});if(oth.list.length)out.push(oth);return out;}
+function medSetF(f){medF=f;const l=document.getElementById('medlist');if(l)l.innerHTML=adMedItems();document.querySelectorAll('#medF button').forEach(b=>b.classList.toggle('on',b.dataset.f===f));}
+function medTog(id){medOpen[id]=!medOpen[id];const l=document.getElementById('medlist');if(l)l.innerHTML=adMedItems();}
 function renderADMeds(){
-  let h='<h2 class="tpl">💊 ADTMC Meds — Appendix C</h2><p class="tpl-sub">Type a medication, brand or protocol: dose, contraindications, pregnancy, lactation and a daily-max check. <span class="rxb">Rx</span> = requires a privileged-provider prescription.</p>';
+  let h='<h2 class="tpl">💊 '+L('ADTMC Meds — Appendix C','Medicamentos ADTMC — Apéndice C')+'</h2><p class="tpl-sub">'+L('Tap a group to see its meds, or search. Each med: dose, contraindications, pregnancy, lactation and a daily-max check.','Toca un grupo para ver sus medicamentos, o busca. Cada uno: dosis, contraindicaciones, embarazo, lactancia y verificación del máximo diario.')+' <span class="rxb">Rx</span> = '+L('requires a privileged-provider prescription','requiere receta de un proveedor privilegiado')+'.</p>';
   h+=rfqHtml();
-  h+='<div class="field"><input type="text" id="medSearch" style="margin-top:0;font-size:1.05em" placeholder="Search medication, brand or protocol (e.g. ibuprofen, Motrin, K-6)…" value="'+q$(medQ)+'" oninput="medQ=this.value;document.getElementById(\'medlist\').innerHTML=adMedItems()" autocomplete="off"></div><div id="medlist">'+adMedItems()+'</div>';
+  h+='<div class="field"><input type="text" id="medSearch" style="margin-top:0;font-size:1.05em" placeholder="'+L('Search medication, brand or protocol (e.g. ibuprofen, Motrin, K-6)…','Buscar medicamento, marca o protocolo (ej. ibuprofeno, Motrin, K-6)…')+'" value="'+q$(medQ)+'" oninput="medQ=this.value;document.getElementById(\'medlist\').innerHTML=adMedItems()" autocomplete="off"></div>';
+  const n0=ADMEDS.filter(m=>!m.rx).length,n1=ADMEDS.length-n0;
+  h+='<div class="seg medf" id="medF">'+[['all',L('All','Todos')+' '+ADMEDS.length],['otc','OTC '+n0],['rx','Rx '+n1]].map(([f,t])=>'<button data-f="'+f+'" class="'+(medF===f?'on':'')+'" onclick="medSetF(\''+f+'\')">'+t+'</button>').join('')+'</div>';
+  h+='<div id="medlist">'+adMedItems()+'</div>';
   return h;
 }
 function dcHtml(m){
@@ -2611,14 +2631,24 @@ function dcOut(k){
   else msg=L('room for '+more+' more ('+c.q+' '+c.u+' each'+(c.hrs?', q'+c.hrs+'h interval':'')+')','margen para '+more+' más ('+c.q+' '+u+' c/u'+(c.hrs?', intervalo q'+c.hrs+'h':'')+')');
   return '<div class="'+(left<0||more<1?'rfbanner':'note-hint')+'" style="margin:6px 0 0">'+L('Total today: ','Total hoy: ')+'<b>'+tot+' '+u+'</b> · '+L('ADTMC max ','Máx. ADTMC ')+c.max+' '+u+'/24 h · '+msg+'</div>'+(c.n?'<div class="dim" style="font-size:.8em;margin-top:4px">'+q$(c.n)+'</div>':'');
 }
+function adMedCard(m){
+  const s=medSafety(m);
+  return '<div class="medcard'+(s.w.length?' bad':'')+'"><div class="mh"><b>'+q$(m.n)+'</b> <span class="dim">'+q$(m.t)+'</span>'+(m.rx?' <span class="rxb">Rx</span>':' <span class="otcb">OTC</span>')+'<span class="ppg dim">p.'+m.pg+'</span></div><div>'+q$(m.dose)+(m.max?' · <b>max '+q$(m.max)+'</b>':'')+'</div><div class="dim" style="font-size:.85em">Protocols: '+q$(m.alg)+'</div><details class="dd"><summary>Contraindications / pregnancy</summary><div style="padding:6px 10px 10px;font-size:.88em;line-height:1.6">'+m.ci.map(c=>'• '+q$(c)).join('<br>')+'<br><b>Pregnancy:</b> '+q$(m.preg)+' · <b>Lactation:</b> '+q$(m.lac)+(m.note?'<br><b>⚠️</b> '+q$(m.note):'')+'</div></details>'+dcHtml(m)+s.w.map(x=>'<div class="mw">⚠️ '+q$(x)+'</div>').join('')+'</div>';
+}
 function adMedItems(){
   const q=medQ.trim().toLowerCase();
-  const list=ADMEDS.filter(m=>!q||(m.n+' '+m.t+' '+m.alg+' '+m.k).toLowerCase().includes(q));
-  if(!list.length)return '<div class="dim" style="padding:10px">'+L('No medication matches','Ningún medicamento coincide con')+' "'+q$(medQ)+'".</div>';
-  return list.map(m=>{
-    const s=medSafety(m);
-    return '<div class="medcard'+(s.w.length?' bad':'')+'"><div class="mh"><b>'+q$(m.n)+'</b> <span class="dim">'+q$(m.t)+'</span>'+(m.rx?' <span class="rxb">Rx</span>':'')+'<span class="ppg dim">p.'+m.pg+'</span></div><div>'+q$(m.dose)+(m.max?' · <b>max '+q$(m.max)+'</b>':'')+'</div><div class="dim" style="font-size:.85em">Protocols: '+q$(m.alg)+'</div><details class="dd"><summary>Contraindications / pregnancy</summary><div style="padding:6px 10px 10px;font-size:.88em;line-height:1.6">'+m.ci.map(c=>'• '+q$(c)).join('<br>')+'<br><b>Pregnancy:</b> '+q$(m.preg)+' · <b>Lactation:</b> '+q$(m.lac)+(m.note?'<br><b>⚠️</b> '+q$(m.note):'')+'</div></details>'+dcHtml(m)+s.w.map(x=>'<div class="mw">⚠️ '+q$(x)+'</div>').join('')+'</div>';
-  }).join('');
+  const fOk=m=>medF==='all'||(medF==='rx'?!!m.rx:!m.rx);
+  let h='',any=0;
+  medSecs().forEach(sec=>{
+    const list=sec.list.filter(m=>fOk(m)&&(!q||(m.n+' '+m.t+' '+m.alg+' '+m.k+' '+sec.t).toLowerCase().includes(q)));
+    if(!list.length)return;any++;
+    const open=!!q||!!medOpen[sec.id],nr=list.filter(m=>m.rx).length,no=list.length-nr;
+    const sum=nr&&!no?list.length+' Rx':list.length+(nr?' · '+nr+' Rx':'');
+    h+='<div class="fold'+(open?' open':'')+'" role="button" aria-expanded="'+open+'" onclick="medTog(\''+sec.id+'\')"><span class="chev">›</span><b>'+sec.ic+' '+q$(sec.t)+'</b><span class="fsum">'+sum+'</span></div>';
+    if(open)h+='<div class="medsec">'+list.map(adMedCard).join('')+'</div>';
+  });
+  if(!any)return '<div class="dim" style="padding:10px">'+L('No medication matches','Ningún medicamento coincide con')+' "'+q$(medQ)+'".</div>';
+  return h;
 }
 
 /* =========================================================
