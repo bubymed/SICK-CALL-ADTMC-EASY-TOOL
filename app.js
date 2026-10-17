@@ -2758,7 +2758,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v28';
+const APP_VER='v29';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -3092,7 +3092,7 @@ document.body.style.fontSize=fsBase+'px';showLockIfNeeded();
 if(ad.pid&&getP(ad.pid)){const _m=protoTpl(ad.pid);cur=_m.tid;view='tpl';}else{ad.pid=null;view='adtmc';}
 iqHash();
 renderNav();renderMain();renderNote();
-window.addEventListener('hashchange',()=>{if(/iq=/.test(location.hash)){iqHash();renderNav();renderMain();}else if(/(acc|areq|acert|aroot)=/.test(location.hash))acHashCheck();});
+window.addEventListener('hashchange',()=>{if(/iq=/.test(location.hash)){iqHash();renderNav();renderMain();}else if(/(acc|areq|acert|aroot|ainv)=/.test(location.hash))acHashCheck();});
 const _pi=document.getElementById('ptIn'); if(_pi)_pi.value=patient;
 setLang(LANG);
 

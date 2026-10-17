@@ -776,3 +776,7 @@ body.guest #aside,body.guest #mobileNoteBtn,body.guest #tabbar button[data-v="ad
 /* Guest MACE (v28) */
 .guest-mace{font-size:14px;color:var(--dim);margin:2px 4px 6px}
 .gm-neg{background:var(--panel);border-radius:14px;padding:12px 14px;font-size:14.5px;line-height:1.5;margin:10px 0}
+/* Unit QR sign-up (v29) / Registro con QR de unidad */
+#mgOv select.ac-in{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 12px) 55%;background-size:6px 6px;background-repeat:no-repeat;padding-right:30px}
+#mgOv .ac-row>div .ac-in{margin-top:0}
+#mgOv .ac-tally{width:100%;height:220px;border:0;border-radius:14px;background:var(--panel);margin-top:8px}
