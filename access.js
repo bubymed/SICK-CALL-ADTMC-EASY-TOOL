@@ -184,13 +184,13 @@ function acJoinView(tok,iv){
    +'<label class="ac-l">MOS</label><select id="jM" class="ac-in" onchange="document.getElementById(\'jNo\').style.display=this.value===\'NONE\'?\'block\':\'none\'"><option value="">—</option>'+AC_MOS.map(m=>'<option value="'+m[0]+'"'+(s.mos===m[0]?' selected':'')+'>'+m[1]+'</option>').join('')+'</select>'
    +'<div id="jNo" class="ac-msg bad" style="display:none">'+L('This app is for medical personnel. You can use guest mode.','Esta app es para personal médico. Puedes usar el modo invitado.')+' <button class="ac-skip" style="display:inline;width:auto;padding:0" onclick="acGuest()">'+L('Continue as a guest','Continuar como invitado')+'</button></div>'
    +'<label class="ac-l">'+L('Unit','Unidad')+'</label><input id="jU" class="ac-in" maxlength="40" value="'+acEsc(s.unit||iv.u||'')+'">'
-   +'<label class="ac-l">'+L('Point of contact (NCOIC name, phone or email)','Punto de contacto (NCOIC, teléfono o correo)')+'</label><input id="jP" class="ac-in" maxlength="60" value="'+acEsc(s.poc||'')+'">'
+   +'<label class="ac-l">'+L('Point of contact (optional)','Punto de contacto (opcional)')+'</label><input id="jP" class="ac-in" maxlength="60" placeholder="'+L('NCOIC name, phone or email','NCOIC, teléfono o correo')+'" value="'+acEsc(s.poc||'')+'">'
    +'<button class="mg-btn" onclick="acJoinNext(\''+tok+'\')">'+L('Continue','Continuar')+'</button><div id="acMsg" class="ac-msg"></div>');
 }
 function acJoinNext(tok){
   const g=id=>(document.getElementById(id).value||'').trim();
   const reg={rank:g('jR'),last:g('jL'),first:g('jF'),mos:g('jM'),unit:g('jU'),poc:g('jP')};
-  if(!reg.rank||!reg.last||!reg.first||!reg.mos||!reg.unit||!reg.poc){acMsg(L('Please fill in every field.','Llena todos los campos.'),true);return;}
+  if(!reg.rank||!reg.last||!reg.first||!reg.mos||!reg.unit){acMsg(L('Please fill in every field.','Llena todos los campos.'),true);return;}
   if(reg.mos==='NONE'){acMsg(L('This app is for medical personnel.','Esta app es para personal médico.'),true);return;}
   AC.set('sc_reg',reg);
   const name=reg.rank+' '+reg.last.toUpperCase()+', '+reg.first;
@@ -218,7 +218,7 @@ window.addEventListener('message',e=>{
 function acInvView(){
   const me=acRole;if(!me||(me.r!=='root'&&me.r!=='appr'))return;
   acOv('<button class="ac-back" onclick="acClose();goRef(\'access\')">‹ '+L('Back','Atrás')+'</button><h2>'+L('Create unit QR','Crear QR de unidad')+'</h2>'
-   +'<p>'+L('Medics who open it register once (rank, name, MOS, unit, POC) and get access.','Los médicos que lo abran se registran una vez (rango, nombre, MOS, unidad, contacto) y entran.')+'</p>'
+   +'<p>'+L('Medics who open it register once (rank, name, MOS, unit) and get access.','Los médicos que lo abran se registran una vez (rango, nombre, MOS, unidad) y entran.')+'</p>'
    +'<label class="ac-l">'+L('Unit','Unidad')+'</label><input id="iU" class="ac-in" maxlength="40" value="'+acEsc(me.r==='appr'?me.u:'')+'"'+(me.r==='appr'?' readonly':'')+'>'
    +'<label class="ac-l">'+L('Valid for','Válido por')+'</label><select id="iD" class="ac-in"><option value="7">7 '+L('days','días')+'</option><option value="14">14 '+L('days','días')+'</option><option value="30" selected>30 '+L('days','días')+'</option></select>'
    +'<label class="ac-l">'+L('About how many medics?','¿Más o menos cuántos médicos?')+'</label><select id="iN" class="ac-in"><option>5</option><option>10</option><option selected>20</option><option>50</option></select>'

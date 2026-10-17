@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **Point of contact is optional** in the unit QR sign-up. Medics who already signed up keep their access.
+  **El punto de contacto es opcional** en el registro con QR de unidad. Los médicos que ya se registraron conservan su acceso.
 - **Unit QR instructions:** the unit QR screen now shows a short how-to for medics (scan → fill info once → start; iPhone tip; "medics only, do not forward — non-medical sign-ups will be revoked") and Share sends it as an image (what you see on screen) plus the text and link.
   **Instrucciones del QR de unidad:** la pantalla del QR de unidad muestra un instructivo corto para los médicos (escanea → llena tus datos una vez → empieza; consejo para iPhone; "solo para médicos, no lo reenvíes — quien no sea personal médico será revocado") y Compartir lo manda como imagen (lo que ves en pantalla) junto con el texto y el link.
 - **Sign-up wording:** the medic sign-up says the registration is only used to verify medic access.
