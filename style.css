@@ -793,3 +793,6 @@ body.guest #aside,body.guest #mobileNoteBtn,body.guest #tabbar button[data-v="ad
 /* Personal access link (v34) / Link personal */
 #mgOv .pass-box{background:var(--panel);border-radius:16px;padding:14px 16px;margin:14px 0 4px}
 #mgOv .pass-box b{font-size:18px}#mgOv .pass-box p{font-size:14.5px;color:var(--dim);margin:6px 0 4px;line-height:1.45}
+/* H2F referral (v35) */
+.h2f .chips .chip{display:inline-flex;flex-direction:column;align-items:flex-start;text-align:left;border-radius:14px;padding:8px 14px;line-height:1.25}
+.h2f .chips .chip small{font-size:.78em;margin-top:2px}
