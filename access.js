@@ -234,13 +234,46 @@ async function acInvMake(){
   const log=AC.get('sc_aplog')||[];log.unshift({id,n:L('Unit QR','QR de unidad')+' · '+days+'d · ~'+n,u,r:'inv',at:Date.now()});AC.set('sc_aplog',log.slice(0,300));
   const until=new Date(exp*1000).toLocaleDateString();
   const shareTxt=L('🩺 Sick Call — medic access ('+u+')\nNew to the app? Tap the link or scan the QR, fill your info once (1 min) and start using it.\niPhone: add the app to your Home Screen first, then open it there → “I have an approval or link” → scan or paste.\n⚠️ For medics only — do not forward. Non-medical sign-ups will be revoked.\nAlready have access? You don\'t need this.\nValid until '+until+'.','🩺 Sick Call — acceso de médicos ('+u+')\n¿Nuevo en la app? Toca el link o escanea el QR, llena tus datos una vez (1 min) y empieza a usarla.\niPhone: primero agrega la app a tu pantalla de inicio, ábrela desde ahí → “Tengo una aprobación o link” → escanea o pega.\n⚠️ Solo para médicos — no lo reenvíes. Quien no sea personal médico y se registre será revocado.\n¿Ya tienes acceso? No necesitas esto.\nVálido hasta '+until+'.');
+  window._inv={link,u,until,txt:shareTxt};
   acOv('<div class="inv-card"><div class="inv-k">🩺 SICK CALL · '+L('MEDIC ACCESS','ACCESO DE MÉDICOS')+'</div><div class="inv-u">'+acEsc(u)+'</div>'
    +'<ol class="inv-steps"><li>'+L('<b>Scan</b> with your camera or tap the link','<b>Escanea</b> con tu cámara o toca el link')+'</li><li>'+L('<b>Fill your info once</b> — rank, name, MOS (1 min)','<b>Llena tus datos una vez</b> — rango, nombre, MOS (1 min)')+'</li><li>'+L('<b>Start using it</b> — you\'re in','<b>Empieza a usarla</b> — ya entraste')+'</li></ol>'
    +'<div class="inv-warn">⚠️ '+L('<b>For medics only. Do not forward.</b> Anyone who is not medical personnel and signs up will be revoked.','<b>Solo para médicos. No lo reenvíes.</b> Cualquier persona que no sea personal médico y se registre será revocada.')+'</div>'
    +'<div class="inv-ios">'+L('iPhone: add the app to your Home Screen first, open it there → “I have an approval or link” → scan.','iPhone: primero agrega la app a tu pantalla de inicio, ábrela desde ahí → “Tengo una aprobación o link” → escanea.')+'</div>'
-   +acShareBox(link,L('Sick Call — medic access for ','Sick Call — acceso de médicos para ')+u,shareTxt)
+   +'<div class="ac-qr">'+acQR(link)+'</div><div class="ac-row"><button class="mg-btn" onclick="acInvShare(this)">📤 '+L('Share','Compartir')+'</button><button class="mg-btn sec" onclick="acCopy(window._inv.txt+\'\\n\'+window._inv.link,this)">'+L('Copy text','Copiar texto')+'</button></div>'
    +'<div class="inv-f">'+L('Valid until ','Válido hasta ')+until+' · '+L('Already approved? You don\'t need this.','¿Ya tienes acceso? No necesitas esto.')+'</div></div>'
    +'<p class="mg-f">ID: '+id+' — '+L('to revoke this QR, give this ID to the app owner.','para revocar este QR, dale este ID al dueño de la app.')+'</p><button class="mg-btn sec" onclick="acClose();goRef(\'access\')">'+L('Done','Listo')+'</button>');
+}
+/* Unit QR as an image (what you see on screen) + text + link, via the share sheet.
+   QR de unidad como imagen (lo que ves en pantalla) + texto + link, con el menú de compartir. */
+function acInvCanvas(){const v=window._inv;const W=1080,P=72;const cv=document.createElement('canvas');const c=cv.getContext('2d');
+  const F='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+  const wrap=(t,font,maxW)=>{c.font=font;const out=[];t.split('\n').forEach(par=>{let line='';par.split(' ').forEach(w=>{const tst=line?line+' '+w:w;if(c.measureText(tst).width>maxW&&line){out.push(line);line=w;}else line=tst;});out.push(line);});return out;};
+  const steps=[L('1. Scan with your camera or tap the link','1. Escanea con tu cámara o toca el link'),L('2. Fill your info once — rank, name, MOS (1 min)','2. Llena tus datos una vez — rango, nombre, MOS (1 min)'),L('3. Start using it','3. Empieza a usarla')];
+  const warn=L('⚠ FOR MEDICS ONLY. DO NOT FORWARD. Anyone who is not medical personnel and signs up will be revoked.','⚠ SOLO PARA MÉDICOS. NO LO REENVÍES. Cualquier persona que no sea personal médico y se registre será revocada.');
+  const ios=L('iPhone: add the app to your Home Screen first, open it there → “I have an approval or link” → scan.','iPhone: primero agrega la app a tu pantalla de inicio, ábrela desde ahí → “Tengo una aprobación o link” → escanea.');
+  const stepL=steps.map(t=>wrap(t,'600 40px '+F,W-2*P)),warnL=wrap(warn,'600 34px '+F,W-2*P-48),iosL=wrap(ios,'400 30px '+F,W-2*P-48);
+  const qrS=620;let H=P+40+20+90+30+stepL.flat().length*54+30+warnL.length*46+48+24+iosL.length*42+40+30+qrS+40+60+P;
+  cv.width=W;cv.height=H;c.fillStyle='#000';c.fillRect(0,0,W,H);
+  c.fillStyle='#1C1C1E';c.beginPath();c.roundRect?c.roundRect(24,24,W-48,H-48,48):c.rect(24,24,W-48,H-48);c.fill();
+  let y=P+40;c.fillStyle='#FF9F0A';c.font='800 32px '+F;c.fillText('SICK CALL · '+L('MEDIC ACCESS','ACCESO DE MÉDICOS'),P,y);
+  y+=20+80;c.fillStyle='#fff';c.font='800 76px '+F;c.fillText(v.u,P,y);y+=30;
+  c.font='600 40px '+F;stepL.flat().forEach(l=>{y+=54;c.fillText(l,P,y);});y+=30;
+  const wh=warnL.length*46+48;c.fillStyle='rgba(255,69,58,.18)';c.strokeStyle='rgba(255,69,58,.6)';c.lineWidth=3;c.beginPath();c.roundRect?c.roundRect(P,y,W-2*P,wh,20):c.rect(P,y,W-2*P,wh);c.fill();c.stroke();
+  c.fillStyle='#fff';c.font='600 34px '+F;warnL.forEach((l,i)=>c.fillText(l,P+24,y+24+34+i*46));y+=wh+24;
+  const ih=iosL.length*42+40;c.fillStyle='#2C2C2E';c.beginPath();c.roundRect?c.roundRect(P,y,W-2*P,ih,20):c.rect(P,y,W-2*P,ih);c.fill();
+  c.fillStyle='#AEAEB2';c.font='400 30px '+F;iosL.forEach((l,i)=>c.fillText(l,P+24,y+20+30+i*42));y+=ih+30;
+  const qx=(W-qrS)/2;c.fillStyle='#fff';c.beginPath();c.roundRect?c.roundRect(qx,y,qrS,qrS,36):c.rect(qx,y,qrS,qrS);c.fill();
+  try{const q=qrcode(0,'M');q.addData(v.link);q.make();const n=q.getModuleCount(),m=36,cell=(qrS-2*m)/n;c.fillStyle='#000';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))c.fillRect(Math.floor(qx+m+k*cell),Math.floor(y+m+r*cell),Math.ceil(cell),Math.ceil(cell));}catch(e){}
+  y+=qrS+60;c.fillStyle='#AEAEB2';c.font='400 30px '+F;c.textAlign='center';c.fillText(L('Valid until ','Válido hasta ')+v.until+' · '+L('Already approved? You don’t need this.','¿Ya tienes acceso? No lo necesitas.'),W/2,y);
+  return cv;}
+async function acInvShare(btn){const v=window._inv;if(!v)return;
+  try{const cv=acInvCanvas();const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+    const file=new File([blob],'Sick_Call_medic_access_'+v.u.replace(/[^A-Za-z0-9]+/g,'_')+'.png',{type:'image/png'});
+    const text=v.txt+'\n'+v.link;
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text,title:'Sick Call'});return;}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+    acCopy(text,btn);if(typeof iqToast==='function')iqToast(L('Image saved and text copied — paste it in your chat.','Imagen guardada y texto copiado — pégalo en tu chat.'));
+  }catch(e){if(e&&e.name==='AbortError')return;acShare(v.link,'Sick Call',v.txt);}
 }
 /* Remote revocation list (revoked.json) — checked on open; cached for offline. / Lista de revocados remota. */
 function acRevSync(){if(!/^https?:/.test(location.protocol))return;
