@@ -33,8 +33,9 @@ const AC={
     const ap=AC.get('sc_appr');if(ap&&ap.cert&&ap.prv){const c=await AC.verifyCert(ap.cert);if(c&&c.pub===ap.pub)return{r:'appr',u:c.u,cert:ap.cert,prv:ap.prv,id:c.id};}
     if(AC.revoked(AC.dev())){AC.set('sc_auth',null);return null;}
     const a=AC.get('sc_auth');
+    if(a&&a.pid&&AC.revoked(a.pid)){AC.set('sc_auth',null);return null;}
     if(a&&a.inv){const v=await AC.verifyInvite(a.inv);if(v&&a.d===AC.dev())return{r:'medic',u:(a.reg&&a.reg.unit)||v.u,by:v._by,iat:Math.round((a.at||0)/1000),reg:a.reg||null,via:'inv'};AC.set('sc_auth',null);return null;}
-    if(a&&a.tok){const v=await AC.verifyApproval(a.tok);if(v&&v.d===AC.dev())return{r:'medic',u:v.u,by:v._by,iat:v.iat};AC.set('sc_auth',null);}
+    if(a&&a.tok){const v=await AC.verifyApproval(a.tok);if(v&&(v.d===AC.dev()||(a.pass&&a.d===AC.dev())))return{r:'medic',u:v.u,by:v._by,iat:v.iat};AC.set('sc_auth',null);}
     return null;}
 };
 let acRole=null;
@@ -105,13 +106,14 @@ function acHaveView(){
    +'<textarea id="acP" class="ac-in" rows="3" placeholder="'+L('Paste link here','Pega el link aquí')+'"></textarea>'
    +'<button class="mg-btn sec" onclick="acHandle(document.getElementById(\'acP\').value)">'+L('Activate','Activar')+'</button><div id="acMsg" class="ac-msg"></div>');
 }
-function acScan(){iqScan(t=>{if(/#(acc|areq|acert|ainv)=/.test(t)){acHandle(t);return true;}return false;});}
+function acScan(){iqScan(t=>{if(/#(acc|areq|acert|ainv|apass)=/.test(t)){acHandle(t);return true;}return false;});}
 function acMsg(t,bad){const m=document.getElementById('acMsg');if(m){m.textContent=t;m.className='ac-msg'+(bad?' bad':'');}else iqToast(t);}
 /* ---------- handle any access link/text ---------- */
 async function acHandle(text){
-  text=String(text||'').trim();const m=text.match(/#?(acc|areq|acert|aroot|ainv)=([A-Za-z0-9_.-]+)/);
+  text=String(text||'').trim();const m=text.match(/#?(acc|areq|acert|aroot|ainv|apass)=([A-Za-z0-9_.-]+)/);
   if(!m){acMsg(L('That is not a Sick Call access code.','Eso no es un código de acceso de Sick Call.'),true);return;}
   const k=m[1],v=m[2];
+  if(k==='apass'){const ok=await acPassUse(v);if(!ok)acOv('<h2>'+L('Link not valid','Link no válido')+'</h2><p>'+L('This personal link is invalid or was revoked. Scan your unit QR again.','Este link personal no es válido o fue revocado. Escanea otra vez el QR de tu unidad.')+'</p><button class="mg-btn" onclick="accGate(true)">'+L('Back','Atrás')+'</button>');return;}
   if(k==='ainv'){const iv=await AC.verifyInvite(v);
     if(!iv){acMsg(L('Invalid or revoked unit QR.','QR de unidad inválido o revocado.'),true);acOv('<h2>'+L('QR not valid','QR no válido')+'</h2><p>'+L('This unit QR is invalid or was revoked. Ask your NCO for a new one.','Este QR de unidad no es válido o fue revocado. Pídele uno nuevo a tu NCO.')+'</p><button class="mg-btn" onclick="accGate(true)">'+L('Back','Atrás')+'</button>');return;}
     if(iv.exp&&Date.now()/1000>iv.exp){acOv('<h2>'+L('QR expired','QR vencido')+'</h2><p>'+L('This unit QR expired. Ask your NCO for a new one.','Este QR de unidad ya venció. Pídele uno nuevo a tu NCO.')+'</p><button class="mg-btn" onclick="accGate(true)">'+L('Back','Atrás')+'</button>');return;}
@@ -161,12 +163,13 @@ function renderAccess(){
     if(log.length)h+='<div class="field"><div class="lab"><span class="tag">📋</span><span class="name">'+L('My approvals','Mis aprobaciones')+'</span></div>'+log.slice(0,50).map(e=>'<div class="ac-log"><b>'+acEsc(e.n||'—')+'</b> · '+acEsc(e.u)+' · '+(e.r==='appr'?L('approver','aprobador'):e.r==='inv'?L('unit QR','QR de unidad'):L('medic','médico'))+'<span>'+new Date(e.at).toLocaleDateString()+' · ID '+e.id+'</span></div>').join('')+'</div>';
   }
   if(!r)h+='<div class="algo-actions"><button onclick="accGate(true)">'+L('Request access','Pedir acceso')+'</button><button class="ghost" onclick="acReqView(\'appr\')">'+L('Become an approver','Ser aprobador')+'</button></div>';
+  if(r&&r.r==='medic')h+='<div class="algo-actions"><button onclick="acPassView()">🔗 '+L('My personal access link','Mi link personal de acceso')+'</button></div>';
   if(r&&r.r==='medic')h+='<div class="algo-actions"><button class="ghost" onclick="acReqView(\'appr\')">'+L('I\'m a medic NCO — become an approver','Soy NCO de médicos — ser aprobador')+'</button></div>';
   h+='<div class="algo-actions"><button class="ghost" onclick="acHaveView()">🔑 '+L('Paste approval / certificate / admin key','Pegar aprobación / certificado / llave admin')+'</button></div>';
-  h+='<p class="note-hint foot">'+L('Approvals are signed and only work on the phone that asked for them. To revoke someone, give the app owner the approval ID.','Las aprobaciones están firmadas y solo funcionan en el teléfono que las pidió. Para revocar a alguien, dale al dueño de la app el ID de la aprobación.')+'</p>';
+  h+='<p class="note-hint foot">'+L('Approvals are signed. To use the app in another browser or phone, use your personal access link. To revoke someone, give the app owner the approval ID.','Las aprobaciones están firmadas. Para usar la app en otro navegador o teléfono, usa tu link personal de acceso. Para revocar a alguien, dale al dueño de la app el ID de la aprobación.')+'</p>';
   return h;
 }
-function acHashCheck(){const h=location.hash||'';if(!/(acc|areq|acert|aroot|ainv)=/.test(h))return false;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}acHandle(h);return true;}
+function acHashCheck(){const h=location.hash||'';if(!/(acc|areq|acert|aroot|ainv|apass)=/.test(h))return false;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}acHandle(h);return true;}
 
 /* ---------- Unit QR (invite) — one link per unit, medic registers once ----------
    Invite (#ainv=) signed by root or approver: {t:'inv', id, u:unit, exp, n:maxPhones, iat, c:certToken|null}
@@ -194,10 +197,11 @@ function acJoinNext(tok){
   if(!reg.rank||!reg.last||!reg.first||!reg.mos||!reg.unit){acMsg(L('Please fill in every field.','Llena todos los campos.'),true);return;}
   if(reg.mos==='NONE'){acMsg(L('This app is for medical personnel.','Esta app es para personal médico.'),true);return;}
   AC.set('sc_reg',reg);
+  const pid=AC.rid();
   const name=reg.rank+' '+reg.last.toUpperCase()+', '+reg.first;
   const iv=AC.dec(String(tok).split('.')[0])||{};
-  const q=new URLSearchParams({alignLeft:'1',hideTitle:'1',transparentBackground:'1',dynamicHeight:'1',rank:reg.rank,name:name,mos:reg.mos,unit:reg.unit,poc:reg.poc,device:AC.dev(),invite:iv.id||'',by:iv.c?'approver':'admin'});
-  window._acJoin={tok,reg,name};
+  const q=new URLSearchParams({alignLeft:'1',hideTitle:'1',transparentBackground:'1',dynamicHeight:'1',rank:reg.rank,name:name,mos:reg.mos,unit:reg.unit,poc:reg.poc,device:AC.dev(),invite:iv.id||'',by:iv.c?'approver':'admin',pass:pid});
+  window._acJoin={tok,reg,name,pid};
   acOv('<button class="ac-back" onclick="acJoinView(\''+tok+'\',AC.dec(\''+String(tok).split('.')[0]+'\'))">‹ '+L('Back','Atrás')+'</button><h2>'+L('Confirm','Confirmar')+'</h2>'
    +'<div class="ac-card"><div><span>'+L('Name','Nombre')+'</span><b>'+acEsc(name)+'</b></div><div><span>MOS</span><b>'+acEsc(reg.mos)+'</b></div><div><span>'+L('Unit','Unidad')+'</span><b>'+acEsc(reg.unit)+'</b></div><div><span>POC</span><b>'+acEsc(reg.poc)+'</b></div></div>'
    +'<p class="mg-f" style="margin-top:6px">'+L('Tap “Confirm & enter” below. Needs internet.','Toca “Confirmar y entrar” abajo. Necesita internet.')+'</p>'
@@ -205,10 +209,10 @@ function acJoinNext(tok){
 }
 async function acJoinDone(){
   const j=window._acJoin;if(!j)return;window._acJoin=null;
-  AC.set('sc_auth',{inv:j.tok,d:AC.dev(),reg:Object.assign({name:j.name},j.reg),at:Date.now()});acRole=await AC.role();
+  AC.set('sc_auth',{inv:j.tok,d:AC.dev(),reg:Object.assign({name:j.name},j.reg),at:Date.now(),pid:j.pid});acRole=await AC.role();
   if(!acRole){acOv('<h2>'+L('Something went wrong','Algo salió mal')+'</h2><p>'+L('Try the QR again.','Intenta otra vez con el QR.')+'</p><button class="mg-btn" onclick="accGate(true)">OK</button>');return;}
   acGuestOff();
-  acOv('<h2>✅ '+L('You\'re in','Ya entraste')+'</h2><p>'+L('Welcome, ','Bienvenido, ')+'<b>'+acEsc(j.name)+'</b>. '+L('This phone now has medic access.','Este teléfono ya tiene acceso de médico.')+'</p><button class="mg-btn" onclick="acClose();renderNav();renderMain()">'+L('Open the app','Abrir la app')+'</button>');
+  acOv('<h2>✅ '+L('You\'re in','Ya entraste')+'</h2><p>'+L('Welcome, ','Bienvenido, ')+'<b>'+acEsc(j.name)+'</b>'+(/\.$/.test(j.name)?' ':'. ')+L('This phone now has medic access.','Este teléfono ya tiene acceso de médico.')+'</p>'+acPassBox()+'<button class="mg-btn sec" onclick="acClose();renderNav();renderMain()">'+L('Open the app','Abrir la app')+'</button>');
 }
 window.addEventListener('message',e=>{
   if(!window._acJoin)return;if(!/^https:\/\/(www\.)?tally\.so$/.test(e.origin||''))return;
@@ -244,6 +248,25 @@ async function acInvMake(){
    +'<div class="inv-f">'+L('Valid until ','Válido hasta ')+until+' · '+L('Already approved? You don\'t need this.','¿Ya tienes acceso? No necesitas esto.')+'</div></div>'
    +'<p class="mg-f">ID: '+id+' — '+L('to revoke this QR, give this ID to the app owner.','para revocar este QR, dale este ID al dueño de la app.')+'</p><button class="mg-btn sec" onclick="acClose();goRef(\'access\')">'+L('Done','Listo')+'</button>');
 }
+/* ---------- Personal access link (#apass=) — open it in any browser/phone to restore access without signing up again.
+   Link personal de acceso — ábrelo en cualquier navegador/teléfono para recuperar el acceso sin registrarte otra vez.
+   {t:'pass', id, k:'inv'|'acc', a:<signed invite or approval>, reg?} — revocable by id; the inner token is still verified. */
+function acPassLink(){const a=AC.get('sc_auth');if(!a||!(a.inv||a.tok))return null;
+  if(!a.pid){a.pid=AC.rid();AC.set('sc_auth',a);}
+  const o=a.inv?{t:'pass',id:a.pid,k:'inv',a:a.inv,reg:a.reg?{name:a.reg.name,mos:a.reg.mos,unit:a.reg.unit}:null}:{t:'pass',id:a.pid,k:'acc',a:a.tok};
+  return acLink('apass',AC.enc(o));}
+function acPassTxt(){return L('🔐 My Sick Call personal access link — open it in any browser or phone to get back in (do not share it):','🔐 Mi link personal de Sick Call — ábrelo en cualquier navegador o teléfono para volver a entrar (no lo compartas):');}
+function acPassBox(){const link=acPassLink();if(!link)return '';window._pass={link,txt:acPassTxt()};
+  return '<div class="pass-box"><b>🔗 '+L('Save your personal link','Guarda tu link personal')+'</b><p>'+L('If you open the app in another browser (like Safari) or a new phone, open this link and you are back in — no sign-up. Send it to yourself (email, notes, WhatsApp). Do not share it.','Si abres la app en otro navegador (como Safari) o en otro teléfono, abre este link y vuelves a entrar — sin registrarte. Mándatelo a ti mismo (correo, notas, WhatsApp). No lo compartas.')+'</p><div class="ac-row"><button class="mg-btn" onclick="acShare(window._pass.link,\'Sick Call\',window._pass.txt)">📤 '+L('Send to myself','Mandármelo')+'</button><button class="mg-btn sec" onclick="acCopy(window._pass.link,this)">'+L('Copy link','Copiar link')+'</button></div></div>';}
+function acPassView(){acOv('<button class="ac-back" onclick="acClose();goRef(\'access\')">‹ '+L('Back','Atrás')+'</button><h2>'+L('My personal link','Mi link personal')+'</h2>'+acPassBox()+'<button class="mg-btn sec" onclick="acClose();goRef(\'access\')">'+L('Done','Listo')+'</button>');}
+async function acPassUse(v){const p=AC.dec(v);if(!p||p.t!=='pass'||!p.id||!p.a||AC.revoked(p.id))return false;
+  const me=acRole||await AC.role();if(me){acOv('<h2>✅ '+L('Already active','Ya estás activo')+'</h2><p>'+L('This phone already has access.','Este teléfono ya tiene acceso.')+'</p><button class="mg-btn" onclick="acClose();renderMain()">'+L('Open the app','Abrir la app')+'</button>');return true;}
+  if(p.k==='inv'){const iv=await AC.verifyInvite(p.a);if(!iv)return false;AC.set('sc_auth',{inv:p.a,d:AC.dev(),reg:p.reg||null,at:Date.now(),pid:p.id,restored:1});}
+  else if(p.k==='acc'){const ap=await AC.verifyApproval(p.a);if(!ap)return false;AC.set('sc_auth',{tok:p.a,pass:1,d:AC.dev(),at:Date.now(),pid:p.id});}
+  else return false;
+  acRole=await AC.role();if(!acRole){AC.set('sc_auth',null);return false;}
+  acGuestOff();
+  acOv('<h2>✅ '+L('Welcome back','Bienvenido de nuevo')+'</h2><p>'+L('Your access is restored on this phone/browser.','Tu acceso quedó activo en este teléfono/navegador.')+'</p><button class="mg-btn" onclick="acClose();renderNav();renderMain()">'+L('Open the app','Abrir la app')+'</button>');return true;}
 /* Unit QR as an image (what you see on screen) + text + link, via the share sheet.
    QR de unidad como imagen (lo que ves en pantalla) + texto + link, con el menú de compartir. */
 function acInvCanvas(){const v=window._inv;const W=1080,P=72;const cv=document.createElement('canvas');const c=cv.getContext('2d');

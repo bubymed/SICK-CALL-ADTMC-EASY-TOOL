@@ -3,6 +3,10 @@
    Add a new entry at the TOP for every feature release (same value as APP_VER). Keep it short: 1–3 items.
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
+ {v:'v35',items:[
+   {i:'🏃',en:'<b>H2F class referral</b> — on MSK protocols (B-) and in Profiles: pick the H2F class(es), times per week and weeks; the note line writes itself and you can print the H2F slip prefilled. Unit-level profiles now go up to 14 days; PT and longer profiles → clinic (Mendoza).',es:'<b>Referido a clases de H2F</b> — en los protocolos MSK (B-) y en Perfiles: escoge la(s) clase(s) de H2F, veces por semana y semanas; la línea de la nota se escribe sola y puedes imprimir el slip de H2F prellenado. Los profiles a nivel unidad ahora llegan hasta 14 días; PT y profiles largos → clínica (Mendoza).',go:'perfiles',btn:['Open Profiles','Abrir Perfiles']}]},
+ {v:'v34',items:[
+   {i:'🔗',en:'<b>Your personal access link</b> — More → Access → "My personal access link". Save it (email, notes, WhatsApp to yourself). If you open the app in another browser or a new phone, open the link and you\'re back in — no sign-up.',es:'<b>Tu link personal de acceso</b> — Más → Acceso → "Mi link personal de acceso". Guárdalo (correo, notas o WhatsApp a ti mismo). Si abres la app en otro navegador o teléfono, abre el link y vuelves a entrar — sin registrarte.',go:'access',btn:['Get my link','Sacar mi link']}]},
  {v:'v29',items:[
    {i:'📲',en:'<b>Unit QR — easier medic access</b> — NCOs create one QR for the unit (More → Access → Create unit QR). New medics scan it, fill rank, name, MOS, unit and POC once, and they\'re in. Already-approved phones don\'t need to do anything.',es:'<b>QR de unidad — acceso más fácil</b> — los NCOs crean un QR para la unidad (Más → Acceso → Crear QR de unidad). Los médicos nuevos lo escanean, llenan rango, nombre, MOS, unidad y contacto una vez, y entran. Los teléfonos ya aprobados no tienen que hacer nada.',go:'access',btn:['Open Access','Abrir Acceso']}]},
  {v:'v28',items:[

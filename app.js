@@ -1463,9 +1463,9 @@ function renderQ(){
 }
 /* ---- Profile builder ---- */
 const PB_TYPES=['RTD (full duty)','RTD w/ light duty','Quarters'];
-const PB_DUR=['24h','48h','72h','1 week','until re-evaluated'];
+const PB_DUR=['24h','48h','72h','7 days','14 days'];
 const PB_RESTR=['no PT','no ruck','no running','no jumping','no lifting >20 lbs','no prolonged standing >30 min','no overhead activity','no push-ups/sit-ups','no field duty','low-impact PT only','avoid strenuous activity','avoid heat/friction exposure','no driving/operating equipment (sedating med)'];
-const PB_FU=['Re-eval if not improved','Re-eval at sick call in 48–72h','Return sooner if symptoms worsen','Provider referral if no improvement'];
+const PB_FU=['Re-eval at the end of the profile','Re-eval at sick call in 48–72h','Return sooner if symptoms worsen','Not improved at re-eval → clinic (Mendoza) / provider','Needs PT or a longer/permanent profile → clinic (Mendoza) provider'];
 const PB_PRESETS=[
  {n:'Acute MSK 48h',t:1,d:1,r:[1,2,3,4],f:[0]},
  {n:'MSK + H2F',t:1,d:1,r:[1,2,3,4],f:[0],h:true},
@@ -1477,14 +1477,14 @@ const PB_PRESETS=[
 let pb={t:null,d:null,r:new Set(),f:new Set(),h:false,c:''};
 function pbText(){
   if(pb.t===null)return '';
-  const dur=pb.d===null?'':(pb.d===4?' until re-evaluated':' x'+PB_DUR[pb.d]);
+  const dur=pb.d===null?'':' x'+PB_DUR[pb.d];
   const rs=[...pb.r].sort((a,b)=>a-b).map(i=>PB_RESTR[i]); if(pb.c.trim())rs.push(pb.c.trim());
   const out=[];
   if(pb.t===0){out.push('RTD — cleared for full duty.'); if(rs.length)out.push('Advise: '+rs.join(', ')+'.');}
   else if(pb.t===1){out.push('RTD w/ restrictions'+dur+' (per CoC guidance)'+(rs.length?': '+rs.join(', '):'')+'.');}
   else{out.push('Recommend quarters'+dur+' for rest/recovery (pending CoC/provider approval).'+(rs.length?' On return: '+rs.join(', ')+'.':''));}
   [...pb.f].sort((a,b)=>a-b).forEach(i=>out.push(PB_FU[i]+'.'));
-  if(pb.h)out.push('Recommend referral to H2F for running/gait instruction, strengthening of weak muscle groups, and injury-prevention classes.');
+  if(pb.h)out.push(h2fText()||'Recommend referral to H2F for running/gait instruction, strengthening of weak muscle groups, and injury-prevention classes.');
   return out.join(' ');
 }
 function pbSet(k,v){pb[k]=pb[k]===v?null:v;renderMain();}
@@ -1504,7 +1504,9 @@ function renderProfiles(){
   const sedating=TPLS.some(t=>[...state[t.id].plan].some(p=>/Benadryl|Actifed/.test(p)));
   const chip=(on,fn,label)=>`<span class="chip ${on?'on':''}" onclick="${fn}">${label}</span>`;
   let h=`<h2 class="tpl">🪖 Profiles — builder</h2><p class="tpl-sub">Build the recommendation: type, duration, restrictions and follow-up. The text generates itself — copy it or send it to the note's Disposition. Always as a recommendation, not a medical order.</p><div class="ref">`;
+  h+='<div class="note-hint" style="margin-bottom:10px">🪖 '+L('<b>Unit level:</b> temporary profiles up to <b>14 days</b>, H2F referral and basic treatment. Re-evaluate at the end of the profile; not improved → clinic (Mendoza). PT referrals and longer or permanent profiles are done by the provider at the clinic.','<b>A nivel unidad:</b> profiles temporales de hasta <b>14 días</b>, referido a H2F y tratamiento básico. Re-evaluar al terminar el profile; si no mejora → clínica (Mendoza). Los referidos a PT y los profiles largos o permanentes los hace el proveedor en la clínica.')+'</div>';
   h+=pfbCard();
+  h+=h2fCard();
   if(anyPos)h+=`<div class="rfbanner">🚩 There is a POSITIVE red flag in a section — do NOT recommend RTD / light duty / quarters. Escalate to provider/ER per protocol.</div>`;
   h+=`<div class="field"><div class="lab"><span class="tag">⚡</span><span class="name">Shortcuts</span><span class="ask">load a combination and adjust it</span></div><div class="chips">`;
   PB_PRESETS.forEach((q,i)=>h+=chip(false,`pbPreset(${i})`,q.n));
@@ -1957,7 +1959,7 @@ function adTagLines(p){
   return out;
 }
 function noteEntries(){const ex=new Set(ad.excl||[]);const e=ad.log.filter(x=>!ex.has('ad:'+x.id));
-  if(ad.pid&&!ex.has('ad:'+ad.pid)){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length||(ad.pfb&&ad.pid==='J-3'))e.push(adEntry(p,R));}return e;}
+  if(ad.pid&&!ex.has('ad:'+ad.pid)){const p=getP(ad.pid),R=adEval(p);if(R.final||Object.keys(ad.dpDone).length||Object.keys(ad.rf).length||(ad.pfb&&ad.pid==='J-3')||(typeof h2f!=='undefined'&&h2f.cls.size&&/^B-/.test(ad.pid)))e.push(adEntry(p,R));}return e;}
 function noteActive(){const ex=new Set(ad.excl||[]);return TPLS.filter(t=>tplHasContent(t,state[t.id])&&!ex.has('tpl:'+t.id));}
 function noteTog(k){const a=ad.excl||(ad.excl=[]);const i=a.indexOf(k);const off=i<0;off?a.push(k):a.splice(i,1);
   if(k.startsWith('ad:')){try{const id=k.slice(3),tid=protoTpl(id).tid,tk='tpl:'+tid;
@@ -2471,7 +2473,41 @@ function adDecisionHtml(p,R){
   h+='<div class="algo-actions"><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
   return h;
 }
-function adResultCard(p,R){return adResultCard0(p,R)+(p.id==='J-3'?pfbCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+function adResultCard(p,R){return adResultCard0(p,R)+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+/* H2F class referral (data/h2f.js) — on ADTMC B- (MSK) protocols and in Profiles. / Referido a H2F */
+const h2f={cls:new Set(),f:2,w:4};
+function h2fTog(k){h2f.cls.has(k)?h2f.cls.delete(k):h2f.cls.add(k);renderMain();renderNote();}
+function h2fSet(k,v){h2f[k]=v;renderMain();renderNote();}
+function h2fMedic(){try{return (acRole&&acRole.reg&&acRole.reg.name)||settings.medicName||'';}catch(e){return settings.medicName||'';}}
+function h2fText(){if(typeof H2F_CLASSES==='undefined'||!h2f.cls.size)return '';
+  const c=H2F_CLASSES.filter(x=>h2f.cls.has(x[0])).map(x=>x[1]+' ('+x[2]+')').join('; ');
+  const m=h2fMedic();
+  return 'Referred to H2F ('+H2F_LOC+'): '+c+' — '+h2f.f+'x/week x'+h2f.w+' weeks. H2F class slip given; Soldier brings slip to the COF / schedules via Visibook QR.'+(m?' Referring source: '+m+(/\.$/.test(m)?'':'.'):'');}
+function h2fCard(){if(typeof H2F_CLASSES==='undefined')return '';
+  const sug=ad.pid?H2F_CLASSES.filter(x=>x[3].includes(ad.pid)).map(x=>x[0]):[];
+  let h='<div class="field h2f"><div class="lab"><span class="tag">🏃</span><span class="name">'+L('H2F class referral','Referido a clases de H2F')+'</span><span class="ask">'+L('unit level — instead of PT','a nivel unidad — en vez de PT')+'</span></div>';
+  h+='<div class="chips">'+H2F_CLASSES.map(x=>'<span class="chip '+(h2f.cls.has(x[0])?'on':'')+'" onclick="h2fTog(\''+x[0]+'\')">'+(sug.includes(x[0])?'★ ':'')+x[1]+' <small style="opacity:.7">'+x[2]+'</small></span>').join('')+'</div>';
+  h+='<div class="subrow" style="margin-top:8px"><div class="half"><div class="mini">'+L('Times per week','Veces por semana')+'</div><div class="chips">'+[1,2,3].map(n=>'<span class="chip '+(h2f.f===n?'on':'')+'" onclick="h2fSet(\'f\','+n+')">'+n+'x</span>').join('')+'</div></div><div class="half"><div class="mini">'+L('Weeks','Semanas')+'</div><div class="chips">'+[2,4,6,8].map(n=>'<span class="chip '+(h2f.w===n?'on':'')+'" onclick="h2fSet(\'w\','+n+')">'+n+'</span>').join('')+'</div></div></div>';
+  h+='<div class="mini" style="margin-top:8px">'+L('Referring source (rank / name)','Quien refiere (rango / nombre)')+'</div><input type="text" value="'+q$(h2fMedic())+'" placeholder="SPC LAST, First" oninput="settings.medicName=this.value;saveSettings();renderNote()">';
+  const t=h2fText();
+  if(t)h+='<div class="sugbox" style="margin-top:10px"><div class="sughead">📄 '+L('For the note','Para la nota')+'</div><div id="h2fOut" style="font-family:var(--mono);font-size:.9em;line-height:1.55">'+q$(t)+'</div><div class="algo-actions"><button onclick="h2fSlipOpen()">🖨 '+L('H2F slip','Slip de H2F')+'</button><button class="ghost" onclick="copyTxt(document.getElementById(\'h2fOut\').textContent,this)">'+L('Copy','Copiar')+'</button></div></div><div class="note-hint" style="margin-top:8px">'+L('Print the H2F slip (or fill the paper one) — the Soldier takes it to ','Imprime el slip de H2F (o llena el de papel) — el soldado lo lleva a ')+H2F_LOC+L(' to schedule the class.',' para agendar la clase.')+' '+L('Needs real PT → clinic (Mendoza) provider.','Si necesita PT de verdad → proveedor en la clínica (Mendoza).')+'</div>';
+  else h+='<div class="dim" style="font-size:.88em;margin-top:6px">'+(sug.length?L('★ = suggested for this complaint. ','★ = sugerida para esta queja. '):'')+L('Pick class(es) to build the referral.','Escoge clase(s) para armar el referido.')+'</div>';
+  return h+'</div>';}
+/* H2F Class Appointment Slip — printable, prefilled from the H2F card (same print flow as DD 689). Nothing is saved.
+   Slip de citas de clases de H2F — imprimible y prellenado. No se guarda nada. */
+function h2fSlipTog(k){h2fTog(k);const el=document.querySelector('#slipOv [data-h2f="'+k+'"]');if(el)el.classList.toggle('sel',h2f.cls.has(k));}
+function h2fSlipOpen(){
+  if(typeof sheetTog==='function')sheetTog(false);
+  let o=document.getElementById('slipOv');if(o)o.remove();o=document.createElement('div');o.id='slipOv';
+  let qr='';try{const q=qrcode(0,'M');q.addData(H2F_VISIBOOK);q.make();qr=q.createSvgTag({cellSize:3,margin:1,scalable:true});}catch(e){}
+  o.innerHTML='<div class="sl-bar"><b>'+L('H2F Class Appointment Slip','Slip de citas de H2F')+'</b><span class="spacer"></span><button onclick="slipPrint()">🖨 '+L('Print','Imprimir')+'</button><button onclick="slipClose()">✕ '+L('Close','Cerrar')+'</button></div>'
+   +'<div class="sl-hint">'+L('Prefilled from your H2F referral. Tap a class to circle / uncircle it. Fill-in only for printing — nothing is saved.','Prellenado con tu referido a H2F. Toca una clase para circularla o quitarla. Solo para imprimir — no se guarda nada.')+'</div>'
+   +'<div class="sl-form h2f-slip"><div class="hs-top"><div class="hs-main"><div class="hs-t">'+H2F_TITLE+'</div><div class="hs-loc"><b>Location:</b> '+H2F_LOC+'</div><div class="hs-bring">Bring slip into COF for scheduling &amp; class participation</div></div></div>'
+   +'<div class="hs-mid"><div class="hs-pc">Please Circle:</div><div class="hs-list">'+H2F_CLASSES.map(x=>'<div class="hs-c'+(h2f.cls.has(x[0])?' sel':'')+'" data-h2f="'+x[0]+'" onclick="h2fSlipTog(\''+x[0]+'\')">'+x[1]+', <b>'+x[2].replace(/ (\d{4})$/,' @$1')+'</b></div>').join('')+'</div>'
+   +'<div class="hs-qr">'+qr+'<div><b>Visibook QR Code</b><br><b>(Scan to Schedule)</b></div></div></div>'
+   +'<div class="hs-f"><b>Frequency:</b> <input class="hs-in" style="width:44px" value="'+h2f.f+'"> time(s) per week, for <input class="hs-in" style="width:44px" value="'+h2f.w+'"> week(s)</div>'
+   +'<div class="hs-f"><b>Referring Source (NAME/RANK):</b> <input class="hs-in" style="width:56%" value="'+q$(h2fMedic())+'"></div></div>';
+  document.body.appendChild(o);}
 /* Shaving profile (PFB) builder — used on ADTMC J-3 and in Profiles. / Perfil de afeitar (PFB) */
 function pfbSet(k){ad.pfb=ad.pfb===k?'':k;renderMain();renderNote();}
 function pfbCard(){
@@ -2573,6 +2609,7 @@ function adNoteParts(){
     (e.plan||[]).forEach(x=>out.plan.push(x));
   });
   if(ad.pfb&&typeof PFB!=='undefined'&&entries.some(e=>e.id==='J-3'))out.plan.push(pfbNote(ad.pfb));
+  if(typeof h2fText==='function'){const ht=h2fText();if(ht&&entries.length)out.plan.push(ht);}
   const hi=adHighest();
   const D={PN:'Sent to clinic — needs a provider now.',AEM:settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' — evaluation today.':'Sent to clinic — no AEM available; supervising provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
   if(hi&&hi!=='MCP')out.dispo=D[hi]||LV[hi].s;
@@ -2758,7 +2795,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v33';
+const APP_VER='v35';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -2933,7 +2970,12 @@ async function slipPdf(btn){
       if(!cols){sz=6;const lines=pdfWrap(f,ht,sz,colW);const per=Math.floor((bottom-top)/(sz*1.25));cols=[lines.slice(0,per),lines.slice(per,per*2)];}
       cols.forEach((col,ci)=>col.forEach((l,i)=>txt(l,42+ci*(colW+16),top+sz+i*sz*1.25,sz)));
     }}
-    const bytes=await doc.save();const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+    // Lock: no fillable fields or annotations left (signature and date are part of the page). / Bloqueo: sin campos ni anotaciones editables.
+    try{const fm=doc.getForm();if(fm.getFields().length)fm.flatten();}catch(e){}
+    doc.getPages().forEach(p=>{try{p.node.delete(P.PDFName.of('Annots'));}catch(e){}});
+    const stamp=new Date();txt('Generated '+stamp.toISOString().slice(0,16).replace('T',' ')+'Z by Sick Call (flattened copy). Any alteration voids this document.',42,H-14,6.5);
+    try{doc.setTitle('DD Form 689 - Individual Sick Slip');doc.setProducer('Sick Call 68W tool');doc.setCreationDate(stamp);doc.setModificationDate(stamp);}catch(e){}
+    const bytes=await doc.save({updateFieldAppearances:false});const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
     const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download='DD689_'+(v('slDate')||'slip')+'.pdf';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(url);},60000);
     if(btn)btn.textContent=o;
   }catch(e){if(btn){btn.textContent=L('PDF failed — use Print','PDF falló — usa Imprimir');setTimeout(()=>btn.textContent=o,3000);}console.error(e);}
@@ -3092,7 +3134,7 @@ document.body.style.fontSize=fsBase+'px';showLockIfNeeded();
 if(ad.pid&&getP(ad.pid)){const _m=protoTpl(ad.pid);cur=_m.tid;view='tpl';}else{ad.pid=null;view='adtmc';}
 iqHash();
 renderNav();renderMain();renderNote();
-window.addEventListener('hashchange',()=>{if(/iq=/.test(location.hash)){iqHash();renderNav();renderMain();}else if(/(acc|areq|acert|aroot|ainv)=/.test(location.hash))acHashCheck();});
+window.addEventListener('hashchange',()=>{if(/iq=/.test(location.hash)){iqHash();renderNav();renderMain();}else if(/(acc|areq|acert|aroot|ainv|apass)=/.test(location.hash))acHashCheck();});
 const _pi=document.getElementById('ptIn'); if(_pi)_pi.value=patient;
 setLang(LANG);
 
