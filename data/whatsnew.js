@@ -3,6 +3,8 @@
    Add a new entry at the TOP for every feature release (same value as APP_VER). Keep it short: 1–3 items.
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
+ {v:'v29',items:[
+   {i:'📲',en:'<b>Unit QR — easier medic access</b> — NCOs create one QR for the unit (More → Access → Create unit QR). New medics scan it, fill rank, name, MOS, unit and POC once, and they\'re in. Already-approved phones don\'t need to do anything.',es:'<b>QR de unidad — acceso más fácil</b> — los NCOs crean un QR para la unidad (Más → Acceso → Crear QR de unidad). Los médicos nuevos lo escanean, llenan rango, nombre, MOS, unidad y contacto una vez, y entran. Los teléfonos ya aprobados no tienen que hacer nada.',go:'access',btn:['Open Access','Abrir Acceso']}]},
  {v:'v28',items:[
    {i:'🧠',en:'<b>Guest MACE = quick screen only</b> — guests answer 1D and 2A–2D and get Positive / Negative with "go to a medic". The full exam, scoring, PRA and notes stay for approved medics.',es:'<b>MACE de invitado = solo tamizaje</b> — el invitado contesta 1D y 2A–2D y recibe Positivo / Negativo con "ve con un médico". El examen completo, puntajes, PRA y notas siguen siendo para médicos aprobados.'}]},
  {v:'v27',items:[

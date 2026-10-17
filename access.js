@@ -19,16 +19,22 @@ const AC={
   async prvKey(b64){return crypto.subtle.importKey('pkcs8',AC.b64d(b64),{name:'ECDSA',namedCurve:'P-256'},false,['sign']);},
   async sign(obj,prvB64){const p=AC.enc(obj);const sig=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},await AC.prvKey(prvB64),new TextEncoder().encode(p));return p+'.'+AC.b64e(sig);},
   async verify(tok,pubB64){try{const[i,s]=String(tok).split('.');if(!i||!s)return null;const ok=await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},await AC.pubKey(pubB64),AC.b64d(s),new TextEncoder().encode(i));return ok?AC.dec(i):null;}catch(e){return null;}},
-  revoked:id=>(ACCESS.REVOKED||[]).includes(id),
+  revoked:id=>!!id&&((ACCESS.REVOKED||[]).includes(id)||(AC.get('sc_rev')||[]).includes(id)),
   async verifyCert(tok){for(const r of ACCESS.ROOT_PUBS){const c=await AC.verify(tok,r);if(c&&c.t==='cert'&&!AC.revoked(c.id))return c;}return null;},
   async verifyApproval(tok){const p=AC.dec(String(tok).split('.')[0]);if(!p||p.t!=='ok'||AC.revoked(p.id))return null;
     if(p.c){const c=await AC.verifyCert(p.c);if(!c)return null;const a=await AC.verify(tok,c.pub);return a&&a.t==='ok'?Object.assign(a,{_by:c.u||''}):null;}
     for(const r of ACCESS.ROOT_PUBS){const a=await AC.verify(tok,r);if(a&&a.t==='ok')return Object.assign(a,{_by:'admin'});}return null;},
+  async verifyInvite(tok){const p=AC.dec(String(tok).split('.')[0]);if(!p||p.t!=='inv'||AC.revoked(p.id))return null;
+    if(p.c){const c=await AC.verifyCert(p.c);if(!c)return null;const a=await AC.verify(tok,c.pub);return a&&a.t==='inv'?Object.assign(a,{_by:c.u||''}):null;}
+    for(const r of ACCESS.ROOT_PUBS){const a=await AC.verify(tok,r);if(a&&a.t==='inv')return Object.assign(a,{_by:'admin'});}return null;},
   /* role on this device: 'root' | 'appr' | 'medic' | null */
   async role(){
     const rk=AC.get('sc_root');if(rk&&rk.prv&&ACCESS.ROOT_PUBS.includes(rk.pub))return{r:'root',u:'admin'};
     const ap=AC.get('sc_appr');if(ap&&ap.cert&&ap.prv){const c=await AC.verifyCert(ap.cert);if(c&&c.pub===ap.pub)return{r:'appr',u:c.u,cert:ap.cert,prv:ap.prv,id:c.id};}
-    const a=AC.get('sc_auth');if(a&&a.tok){const v=await AC.verifyApproval(a.tok);if(v&&v.d===AC.dev())return{r:'medic',u:v.u,by:v._by,iat:v.iat};AC.set('sc_auth',null);}
+    if(AC.revoked(AC.dev())){AC.set('sc_auth',null);return null;}
+    const a=AC.get('sc_auth');
+    if(a&&a.inv){const v=await AC.verifyInvite(a.inv);if(v&&a.d===AC.dev())return{r:'medic',u:(a.reg&&a.reg.unit)||v.u,by:v._by,iat:Math.round((a.at||0)/1000),reg:a.reg||null,via:'inv'};AC.set('sc_auth',null);return null;}
+    if(a&&a.tok){const v=await AC.verifyApproval(a.tok);if(v&&v.d===AC.dev())return{r:'medic',u:v.u,by:v._by,iat:v.iat};AC.set('sc_auth',null);}
     return null;}
 };
 let acRole=null;
@@ -55,11 +61,11 @@ async function accGate(force){
   acOv('<div class="mg-top"><span class="mg-k">68W · ADTMC</span><span class="mg-lang"><button class="'+(lg==='en'?'on':'')+'" onclick="acLang(\'en\')">EN</button><button class="'+(lg==='es'?'on':'')+'" onclick="acLang(\'es\')">ES</button></span></div>'
    +'<h2>Sick Call</h2>'
    +'<p class="mg-sub">'+L('For 68W medics, under provider supervision.','Para médicos 68W, bajo supervisión de un proveedor.')+' <b>'+L('Not for self-diagnosis.','No es para autodiagnóstico.')+'</b></p>'
-   +'<button class="mg-btn" onclick="acReqView(\'medic\')">🩺 '+L('I\'m a medic — request access','Soy médico — pedir acceso')+'</button>'
-   +'<button class="mg-btn sec" onclick="acHaveView()">🔑 '+L('I have an approval','Tengo una aprobación')+'</button>'
+   +'<button class="mg-btn" onclick="acHaveView()">🩺 '+L('I\'m a medic — scan unit QR','Soy médico — escanear QR de unidad')+'</button>'
+   +'<button class="mg-btn sec" onclick="acHaveView()">🔑 '+L('I have an approval or link','Tengo una aprobación o link')+'</button>'
    +'<button class="mg-btn sec" onclick="location.href=\'intake.html\'">🤒 '+L('I\'m a Soldier and I feel sick','Soy soldado y me siento mal')+'</button>'
    +'<button class="mg-btn ghost" onclick="acGuest()">👤 '+L('Continue as a guest','Continuar como invitado')+'<small>'+L('Reference tools only','Solo herramientas de referencia')+'</small></button>'
-   +'<div class="mg-links"><button onclick="acReqView(\'appr\')">'+L('NCO? Become an approver','¿NCO? Ser aprobador')+'</button>'+((typeof canInstall==='function'&&canInstall())?'<span>·</span><button onclick="installApp()">📲 '+L('Install app','Instalar app')+'</button>':'')+'</div>'
+   +'<div class="mg-links"><button onclick="acReqView(\'medic\')">'+L('No QR? Request access','¿Sin QR? Pedir acceso')+'</button><span>·</span><button onclick="acReqView(\'appr\')">'+L('NCO? Approver','¿NCO? Aprobador')+'</button>'+((typeof canInstall==='function'&&canInstall())?'<span>·</span><button onclick="installApp()">📲 '+L('Install app','Instalar app')+'</button>':'')+'</div>'
    +'<div class="mg-em">🚨 '+L('Emergency? Tell a medic now or call 911.','¿Emergencia? Avísale a un médico ya o llama al 911.')+'</div>');
 }
 function acLang(l){try{setLang(l);}catch(e){}accGate(true);}
@@ -93,18 +99,23 @@ async function acMakeReq(role){
 }
 function acHaveView(){
   acOv('<button class="ac-back" onclick="'+(acRole?'acClose()':'accGate(true)')+'">‹ '+L('Back','Atrás')+'</button><h2>'+L('Activate','Activar')+'</h2>'
-   +'<p>'+L('Scan the approval QR, or paste the link you received.','Escanea el QR de aprobación o pega el link que recibiste.')+'</p>'
+   +'<p>'+L('Scan your unit QR (or an approval), or paste the link you received.','Escanea el QR de tu unidad (o una aprobación), o pega el link que recibiste.')+'</p>'
    +'<button class="mg-btn" onclick="acScan()">📷 '+L('Scan QR','Escanear QR')+'</button>'
    +'<textarea id="acP" class="ac-in" rows="3" placeholder="'+L('Paste link here','Pega el link aquí')+'"></textarea>'
    +'<button class="mg-btn sec" onclick="acHandle(document.getElementById(\'acP\').value)">'+L('Activate','Activar')+'</button><div id="acMsg" class="ac-msg"></div>');
 }
-function acScan(){iqScan(t=>{if(/#(acc|areq|acert)=/.test(t)){acHandle(t);return true;}return false;});}
+function acScan(){iqScan(t=>{if(/#(acc|areq|acert|ainv)=/.test(t)){acHandle(t);return true;}return false;});}
 function acMsg(t,bad){const m=document.getElementById('acMsg');if(m){m.textContent=t;m.className='ac-msg'+(bad?' bad':'');}else iqToast(t);}
 /* ---------- handle any access link/text ---------- */
 async function acHandle(text){
-  text=String(text||'').trim();const m=text.match(/#?(acc|areq|acert|aroot)=([A-Za-z0-9_.-]+)/);
+  text=String(text||'').trim();const m=text.match(/#?(acc|areq|acert|aroot|ainv)=([A-Za-z0-9_.-]+)/);
   if(!m){acMsg(L('That is not a Sick Call access code.','Eso no es un código de acceso de Sick Call.'),true);return;}
   const k=m[1],v=m[2];
+  if(k==='ainv'){const iv=await AC.verifyInvite(v);
+    if(!iv){acMsg(L('Invalid or revoked unit QR.','QR de unidad inválido o revocado.'),true);acOv('<h2>'+L('QR not valid','QR no válido')+'</h2><p>'+L('This unit QR is invalid or was revoked. Ask your NCO for a new one.','Este QR de unidad no es válido o fue revocado. Pídele uno nuevo a tu NCO.')+'</p><button class="mg-btn" onclick="accGate(true)">'+L('Back','Atrás')+'</button>');return;}
+    if(iv.exp&&Date.now()/1000>iv.exp){acOv('<h2>'+L('QR expired','QR vencido')+'</h2><p>'+L('This unit QR expired. Ask your NCO for a new one.','Este QR de unidad ya venció. Pídele uno nuevo a tu NCO.')+'</p><button class="mg-btn" onclick="accGate(true)">'+L('Back','Atrás')+'</button>');return;}
+    const me=acRole||await AC.role();if(me){acOv('<h2>✅ '+L('Already active','Ya estás activo')+'</h2><p>'+L('This phone already has access.','Este teléfono ya tiene acceso.')+'</p><button class="mg-btn" onclick="acClose();renderMain()">'+L('Open the app','Abrir la app')+'</button>');return;}
+    acJoinView(v,iv);return;}
   if(k==='acc'){const a=await AC.verifyApproval(v);
     if(!a){acMsg(L('Invalid or revoked approval.','Aprobación inválida o revocada.'),true);return;}
     if(a.d!==AC.dev()){acOv('<h2>'+L('Open it in your app','Ábrelo en tu app')+'</h2><p>'+L('This approval belongs to the phone/app where the request was made. Open the Sick Call app on your home screen → “I have an approval” → paste this link.','Esta aprobación pertenece al teléfono/app donde se hizo la solicitud. Abre la app Sick Call de tu pantalla de inicio → “Tengo una aprobación” → pega este link.')+'</p><button class="mg-btn" onclick="acCopy(\''+acLink('acc',v)+'\',this)">'+L('Copy link','Copiar link')+'</button>');return;}
@@ -141,11 +152,12 @@ async function acApprove(v){
 function renderAccess(){
   const r=acRole;let h='<h2 class="tpl">🔐 '+L('Access','Acceso')+'</h2>';
   h+='<div class="field"><div class="lab"><span class="tag">🔐</span><span class="name">'+L('This phone','Este teléfono')+'</span></div><div style="font-size:15px">'
-   +(!r?L('Not approved yet.','Todavía no aprobado.'):r.r==='root'?L('🛡 Root approver (app owner)','🛡 Aprobador principal (dueño)'):r.r==='appr'?L('✅ Approver — ','✅ Aprobador — ')+acEsc(r.u):L('✅ Approved medic — ','✅ Médico aprobado — ')+acEsc(r.u))+'</div></div>';
+   +(!r?L('Not approved yet.','Todavía no aprobado.'):r.r==='root'?L('🛡 Root approver (app owner)','🛡 Aprobador principal (dueño)'):r.r==='appr'?L('✅ Approver — ','✅ Aprobador — ')+acEsc(r.u):L('✅ Approved medic — ','✅ Médico aprobado — ')+acEsc(r.u)+(r.reg?'<br><span style="color:var(--dim)">'+acEsc(r.reg.name||'')+' · '+acEsc(r.reg.mos||'')+'</span>':''))+'</div></div>';
   if(r&&(r.r==='root'||r.r==='appr')){
+    h+='<div class="algo-actions"><button onclick="acInvView()">📲 '+L('Create unit QR','Crear QR de unidad')+'</button></div>';
     h+='<div class="algo-actions"><button onclick="acScan()">📷 '+L('Scan a request','Escanear solicitud')+'</button><button class="ghost" onclick="acHaveView()">'+L('Paste a request','Pegar solicitud')+'</button></div>';
     const log=AC.get('sc_aplog')||[];
-    if(log.length)h+='<div class="field"><div class="lab"><span class="tag">📋</span><span class="name">'+L('My approvals','Mis aprobaciones')+'</span></div>'+log.slice(0,50).map(e=>'<div class="ac-log"><b>'+acEsc(e.n||'—')+'</b> · '+acEsc(e.u)+' · '+(e.r==='appr'?L('approver','aprobador'):L('medic','médico'))+'<span>'+new Date(e.at).toLocaleDateString()+' · ID '+e.id+'</span></div>').join('')+'</div>';
+    if(log.length)h+='<div class="field"><div class="lab"><span class="tag">📋</span><span class="name">'+L('My approvals','Mis aprobaciones')+'</span></div>'+log.slice(0,50).map(e=>'<div class="ac-log"><b>'+acEsc(e.n||'—')+'</b> · '+acEsc(e.u)+' · '+(e.r==='appr'?L('approver','aprobador'):e.r==='inv'?L('unit QR','QR de unidad'):L('medic','médico'))+'<span>'+new Date(e.at).toLocaleDateString()+' · ID '+e.id+'</span></div>').join('')+'</div>';
   }
   if(!r)h+='<div class="algo-actions"><button onclick="accGate(true)">'+L('Request access','Pedir acceso')+'</button><button class="ghost" onclick="acReqView(\'appr\')">'+L('Become an approver','Ser aprobador')+'</button></div>';
   if(r&&r.r==='medic')h+='<div class="algo-actions"><button class="ghost" onclick="acReqView(\'appr\')">'+L('I\'m a medic NCO — become an approver','Soy NCO de médicos — ser aprobador')+'</button></div>';
@@ -153,7 +165,82 @@ function renderAccess(){
   h+='<p class="note-hint foot">'+L('Approvals are signed and only work on the phone that asked for them. No names or IDs are stored on any server. To revoke someone, give the app owner the approval ID.','Las aprobaciones están firmadas y solo funcionan en el teléfono que las pidió. No se guardan nombres ni IDs en ningún servidor. Para revocar a alguien, dale al dueño de la app el ID de la aprobación.')+'</p>';
   return h;
 }
-function acHashCheck(){const h=location.hash||'';if(!/(acc|areq|acert|aroot)=/.test(h))return false;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}acHandle(h);return true;}
+function acHashCheck(){const h=location.hash||'';if(!/(acc|areq|acert|aroot|ainv)=/.test(h))return false;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}acHandle(h);return true;}
+
+/* ---------- Unit QR (invite) — one link per unit, medic registers once ----------
+   Invite (#ainv=) signed by root or approver: {t:'inv', id, u:unit, exp, n:maxPhones, iat, c:certToken|null}
+   The medic fills rank / name / MOS / unit / POC; the record goes to the owner's Tally form (SIGNUP_FORM) and only then is access granted.
+   QR de unidad: un link por unidad; el médico se registra una vez y el registro le llega al dueño por Tally. */
+const SIGNUP_FORM='5XKe2E';
+const AC_RANKS=['PVT','PV2','PFC','SPC','CPL','SGT','SSG','SFC','MSG','1SG','SGM','CSM','WO1','CW2','CW3','CW4','CW5','2LT','1LT','CPT','MAJ','LTC','COL','HN','HM3','HM2','HM1','HMC','A1C','SrA','SSgt','TSgt','CIV','CTR'];
+const AC_MOS=[['68W','68W Combat Medic'],['18D','18D SF Medical Sergeant'],['68C','68C Practical Nursing'],['68D','68D Operating Room'],['68E','68E Dental'],['68K','68K Medical Laboratory'],['68P','68P Radiology'],['68V','68V Respiratory'],['68B','68B Orthopedic'],['68F','68F Physical Therapy'],['68N','68N Cardiovascular'],['68U','68U ENT'],['68Y','68Y Eye'],['68X','68X Behavioral Health'],['68S','68S Preventive Medicine'],['65D','65D Physician Assistant'],['66','66 Nurse Corps'],['60/61/62','60/61/62 Physician'],['HM','Navy Hospital Corpsman (HM)'],['4N0','Air Force Aerospace Medical (4N0)'],['CIVMED','Civilian clinician (RN/PA/MD/NP/EMT)'],['NONE','My MOS is not listed']];
+function acJoinView(tok,iv){
+  const s=AC.get('sc_reg')||{};
+  acOv('<button class="ac-back" onclick="accGate(true)">‹ '+L('Back','Atrás')+'</button><h2>'+L('Medic sign-up','Registro de médico')+'</h2>'
+   +'<p class="mg-sub" style="margin-bottom:10px">'+L('Unit QR: ','QR de unidad: ')+'<b>'+acEsc(iv.u)+'</b>. '+L('Fill this once — it goes only to the app owner.','Llénalo una vez — solo le llega al dueño de la app.')+'</p>'
+   +'<div class="ac-row"><div style="flex:0 0 38%"><label class="ac-l">'+L('Rank','Rango')+'</label><select id="jR" class="ac-in"><option value="">—</option>'+AC_RANKS.map(r=>'<option'+(s.rank===r?' selected':'')+'>'+r+'</option>').join('')+'</select></div>'
+   +'<div style="flex:1"><label class="ac-l">'+L('Last name','Apellido')+'</label><input id="jL" class="ac-in" maxlength="30" autocomplete="family-name" value="'+acEsc(s.last||'')+'"></div></div>'
+   +'<label class="ac-l">'+L('First name + middle initial','Nombre + inicial')+'</label><input id="jF" class="ac-in" maxlength="30" autocomplete="given-name" placeholder="'+L('e.g. Michael A.','ej. Michael A.')+'" value="'+acEsc(s.first||'')+'">'
+   +'<label class="ac-l">MOS</label><select id="jM" class="ac-in" onchange="document.getElementById(\'jNo\').style.display=this.value===\'NONE\'?\'block\':\'none\'"><option value="">—</option>'+AC_MOS.map(m=>'<option value="'+m[0]+'"'+(s.mos===m[0]?' selected':'')+'>'+m[1]+'</option>').join('')+'</select>'
+   +'<div id="jNo" class="ac-msg bad" style="display:none">'+L('This app is for medical personnel. You can use guest mode.','Esta app es para personal médico. Puedes usar el modo invitado.')+' <button class="ac-skip" style="display:inline;width:auto;padding:0" onclick="acGuest()">'+L('Continue as a guest','Continuar como invitado')+'</button></div>'
+   +'<label class="ac-l">'+L('Unit','Unidad')+'</label><input id="jU" class="ac-in" maxlength="40" value="'+acEsc(s.unit||iv.u||'')+'">'
+   +'<label class="ac-l">'+L('Point of contact (NCOIC name, phone or email)','Punto de contacto (NCOIC, teléfono o correo)')+'</label><input id="jP" class="ac-in" maxlength="60" value="'+acEsc(s.poc||'')+'">'
+   +'<button class="mg-btn" onclick="acJoinNext(\''+tok+'\')">'+L('Continue','Continuar')+'</button><div id="acMsg" class="ac-msg"></div>');
+}
+function acJoinNext(tok){
+  const g=id=>(document.getElementById(id).value||'').trim();
+  const reg={rank:g('jR'),last:g('jL'),first:g('jF'),mos:g('jM'),unit:g('jU'),poc:g('jP')};
+  if(!reg.rank||!reg.last||!reg.first||!reg.mos||!reg.unit||!reg.poc){acMsg(L('Please fill in every field.','Llena todos los campos.'),true);return;}
+  if(reg.mos==='NONE'){acMsg(L('This app is for medical personnel.','Esta app es para personal médico.'),true);return;}
+  AC.set('sc_reg',reg);
+  const name=reg.rank+' '+reg.last.toUpperCase()+', '+reg.first;
+  const iv=AC.dec(String(tok).split('.')[0])||{};
+  const q=new URLSearchParams({alignLeft:'1',hideTitle:'1',transparentBackground:'1',dynamicHeight:'1',rank:reg.rank,name:name,mos:reg.mos,unit:reg.unit,poc:reg.poc,device:AC.dev(),invite:iv.id||'',by:iv.c?'approver':'admin'});
+  window._acJoin={tok,reg,name};
+  acOv('<button class="ac-back" onclick="acJoinView(\''+tok+'\',AC.dec(\''+String(tok).split('.')[0]+'\'))">‹ '+L('Back','Atrás')+'</button><h2>'+L('Confirm','Confirmar')+'</h2>'
+   +'<div class="ac-card"><div><span>'+L('Name','Nombre')+'</span><b>'+acEsc(name)+'</b></div><div><span>MOS</span><b>'+acEsc(reg.mos)+'</b></div><div><span>'+L('Unit','Unidad')+'</span><b>'+acEsc(reg.unit)+'</b></div><div><span>POC</span><b>'+acEsc(reg.poc)+'</b></div></div>'
+   +'<p class="mg-f" style="margin-top:6px">'+L('Tap “Confirm & enter” below. Needs internet.','Toca “Confirmar y entrar” abajo. Necesita internet.')+'</p>'
+   +'<iframe id="jFrame" class="ac-tally" src="https://tally.so/embed/'+SIGNUP_FORM+'?'+q.toString()+'" title="Sign-up" loading="eager"></iframe><div id="acMsg" class="ac-msg"></div>');
+}
+async function acJoinDone(){
+  const j=window._acJoin;if(!j)return;window._acJoin=null;
+  AC.set('sc_auth',{inv:j.tok,d:AC.dev(),reg:Object.assign({name:j.name},j.reg),at:Date.now()});acRole=await AC.role();
+  if(!acRole){acOv('<h2>'+L('Something went wrong','Algo salió mal')+'</h2><p>'+L('Try the QR again.','Intenta otra vez con el QR.')+'</p><button class="mg-btn" onclick="accGate(true)">OK</button>');return;}
+  acGuestOff();
+  acOv('<h2>✅ '+L('You\'re in','Ya entraste')+'</h2><p>'+L('Welcome, ','Bienvenido, ')+'<b>'+acEsc(j.name)+'</b>. '+L('This phone now has medic access.','Este teléfono ya tiene acceso de médico.')+'</p><button class="mg-btn" onclick="acClose();renderNav();renderMain()">'+L('Open the app','Abrir la app')+'</button>');
+}
+window.addEventListener('message',e=>{
+  if(!window._acJoin)return;if(!/^https:\/\/(www\.)?tally\.so$/.test(e.origin||''))return;
+  let d=e.data;if(typeof d==='string'){try{d=JSON.parse(d);}catch(x){return;}}
+  if(d&&d.event==='Tally.FormSubmitted')acJoinDone();
+  if(d&&d.event==='Tally.Resize'&&d.payload&&d.payload.height){const f=document.getElementById('jFrame');if(f)f.style.height=Math.min(600,Math.max(160,d.payload.height))+'px';}
+});
+function acInvView(){
+  const me=acRole;if(!me||(me.r!=='root'&&me.r!=='appr'))return;
+  acOv('<button class="ac-back" onclick="acClose();goRef(\'access\')">‹ '+L('Back','Atrás')+'</button><h2>'+L('Create unit QR','Crear QR de unidad')+'</h2>'
+   +'<p>'+L('Medics who open it register once (rank, name, MOS, unit, POC) and get access. Each sign-up reaches the app owner.','Los médicos que lo abran se registran una vez (rango, nombre, MOS, unidad, contacto) y entran. Cada registro le llega al dueño de la app.')+'</p>'
+   +'<label class="ac-l">'+L('Unit','Unidad')+'</label><input id="iU" class="ac-in" maxlength="40" value="'+acEsc(me.r==='appr'?me.u:'')+'"'+(me.r==='appr'?' readonly':'')+'>'
+   +'<label class="ac-l">'+L('Valid for','Válido por')+'</label><select id="iD" class="ac-in"><option value="7">7 '+L('days','días')+'</option><option value="14">14 '+L('days','días')+'</option><option value="30" selected>30 '+L('days','días')+'</option></select>'
+   +'<label class="ac-l">'+L('About how many medics?','¿Más o menos cuántos médicos?')+'</label><select id="iN" class="ac-in"><option>5</option><option>10</option><option selected>20</option><option>50</option></select>'
+   +'<p class="mg-f">'+L('Share it only in medic chats or post it where only medics see it.','Compártelo solo en chats de médicos o ponlo donde solo lo vean médicos.')+'</p>'
+   +'<button class="mg-btn" onclick="acInvMake()">'+L('Create QR','Crear QR')+'</button><div id="acMsg" class="ac-msg"></div>');
+}
+async function acInvMake(){
+  const me=acRole;const u=(document.getElementById('iU').value||'').trim().slice(0,40);if(!u){acMsg(L('Enter the unit.','Escribe la unidad.'),true);return;}
+  const days=parseInt(document.getElementById('iD').value,10)||30,n=parseInt(document.getElementById('iN').value,10)||20;
+  const id=AC.rid(),iat=Math.round(Date.now()/1000),exp=iat+days*86400;
+  const prv=me.r==='appr'?me.prv:AC.get('sc_root').prv;
+  const link=acLink('ainv',await AC.sign({t:'inv',id,u,exp,n,iat,c:me.r==='appr'?me.cert:null},prv));
+  const log=AC.get('sc_aplog')||[];log.unshift({id,n:L('Unit QR','QR de unidad')+' · '+days+'d · ~'+n,u,r:'inv',at:Date.now()});AC.set('sc_aplog',log.slice(0,300));
+  acOv('<h2>📲 '+L('Unit QR for ','QR de unidad para ')+acEsc(u)+'</h2><p>'+L('Valid until ','Válido hasta ')+'<b>'+new Date(exp*1000).toLocaleDateString()+'</b>. '+L('Medics scan it with the camera or tap the link.','Los médicos lo escanean con la cámara o tocan el link.')+'</p>'
+   +acShareBox(link,L('Sick Call — medic access for ','Sick Call — acceso de médicos para ')+u)
+   +'<p class="mg-f">ID: '+id+' — '+L('to revoke this QR, give this ID to the app owner.','para revocar este QR, dale este ID al dueño de la app.')+'</p><button class="mg-btn sec" onclick="acClose();goRef(\'access\')">'+L('Done','Listo')+'</button>');
+}
+/* Remote revocation list (revoked.json) — checked on open; cached for offline. / Lista de revocados remota. */
+function acRevSync(){if(!/^https?:/.test(location.protocol))return;
+  fetch('revoked.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).then(async j=>{if(!j||!Array.isArray(j.ids))return;AC.set('sc_rev',j.ids.slice(0,5000));
+    if(acRole&&acRole.r==='medic'){const r=await AC.role();if(!r){acRole=null;accGate(true);}}}).catch(()=>{});}
 
 /* init (runs after app.js) / inicio */
-setTimeout(()=>{try{if(!acHashCheck())accGate();}catch(e){}},0);
+setTimeout(()=>{try{if(!acHashCheck())accGate();}catch(e){}acRevSync();},0);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')acRevSync();});
