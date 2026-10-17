@@ -2,6 +2,8 @@
    Unit-level option instead of a PT referral; PT itself is ordered by the provider at the clinic.
    Referido a clases de H2F — opción a nivel unidad en vez de PT; PT lo ordena el proveedor en la clínica. */
 const H2F_LOC='H2F COF, 20565 Old Ironsides Drive';
+const H2F_VISIBOOK='https://visibook.com/2bct1adh2f'; // from the slip's Visibook QR (scan to schedule)
+const H2F_TITLE='2/1 AD H2F Class Appointment Slip';
 const H2F_CLASSES=[
  ['knee','Runners Knee Class','Mon/Wed 0900',['B-8']],
  ['khip','Knee and Hip Stability Class','Wed/Fri 1000',['B-8','B-7']],

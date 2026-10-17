@@ -796,3 +796,18 @@ body.guest #aside,body.guest #mobileNoteBtn,body.guest #tabbar button[data-v="ad
 /* H2F referral (v35) */
 .h2f .chips .chip{display:inline-flex;flex-direction:column;align-items:flex-start;text-align:left;border-radius:14px;padding:8px 14px;line-height:1.25}
 .h2f .chips .chip small{font-size:.78em;margin-top:2px}
+/* H2F slip (printable) */
+#slipOv .h2f-slip{padding:18px 22px;font-family:Calibri,Arial,Helvetica,sans-serif;border:1px solid #000}
+#slipOv .hs-top{text-align:center}#slipOv .hs-t{font-size:22px;font-weight:700;margin-bottom:10px}
+#slipOv .hs-loc{font-size:15px}#slipOv .hs-bring{font-size:14px;font-weight:700;margin:2px 0 8px}
+#slipOv .hs-mid{display:grid;grid-template-columns:110px 1fr 150px;gap:8px;align-items:start}
+#slipOv .hs-pc{font-weight:700;font-size:14px;padding-top:4px}
+#slipOv .hs-list{text-align:center;font-size:14px;line-height:1.25}
+#slipOv .hs-c{display:inline-block;padding:2px 10px;margin:1px 0;border:2px solid transparent;border-radius:999px;cursor:pointer}
+#slipOv .hs-c.sel{border-color:#000}
+#slipOv .hs-qr{text-align:center;font-size:12px}#slipOv .hs-qr svg{width:110px;height:110px;display:block;margin:0 auto 6px}
+#slipOv .hs-f{font-size:14px;margin-top:10px}
+#slipOv input.hs-in{display:inline-block;border:none;border-bottom:1px solid #000;font:14px Calibri,Arial,sans-serif;text-align:center;padding:0 2px}
+@media (max-width:560px){#slipOv .hs-mid{grid-template-columns:1fr}#slipOv .hs-pc{text-align:center}}
+#slipOv .hs-list .hs-c{display:table;margin:1px auto}
+@media print{body.slip-print #slipOv input.hs-in{border-bottom:1px solid #000!important}}
