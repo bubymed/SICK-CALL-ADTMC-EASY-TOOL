@@ -162,7 +162,7 @@ function renderAccess(){
   if(!r)h+='<div class="algo-actions"><button onclick="accGate(true)">'+L('Request access','Pedir acceso')+'</button><button class="ghost" onclick="acReqView(\'appr\')">'+L('Become an approver','Ser aprobador')+'</button></div>';
   if(r&&r.r==='medic')h+='<div class="algo-actions"><button class="ghost" onclick="acReqView(\'appr\')">'+L('I\'m a medic NCO — become an approver','Soy NCO de médicos — ser aprobador')+'</button></div>';
   h+='<div class="algo-actions"><button class="ghost" onclick="acHaveView()">🔑 '+L('Paste approval / certificate / admin key','Pegar aprobación / certificado / llave admin')+'</button></div>';
-  h+='<p class="note-hint foot">'+L('Approvals are signed and only work on the phone that asked for them. No names or IDs are stored on any server. To revoke someone, give the app owner the approval ID.','Las aprobaciones están firmadas y solo funcionan en el teléfono que las pidió. No se guardan nombres ni IDs en ningún servidor. Para revocar a alguien, dale al dueño de la app el ID de la aprobación.')+'</p>';
+  h+='<p class="note-hint foot">'+L('Approvals are signed and only work on the phone that asked for them. To revoke someone, give the app owner the approval ID.','Las aprobaciones están firmadas y solo funcionan en el teléfono que las pidió. Para revocar a alguien, dale al dueño de la app el ID de la aprobación.')+'</p>';
   return h;
 }
 function acHashCheck(){const h=location.hash||'';if(!/(acc|areq|acert|aroot|ainv)=/.test(h))return false;try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}acHandle(h);return true;}
