@@ -43,12 +43,12 @@ function acDays(){return Math.max(0,Math.ceil((new Date(ACCESS.ENFORCE_FROM+'T00
 function acLink(k,v){return iqBase()+'#'+k+'='+v;}
 function acQR(text){try{const q=qrcode(0,'L');q.addData(text);q.make();return q.createSvgTag({cellSize:3,margin:2,scalable:true});}catch(e){return '';}}
 function acCopy(t,b){try{navigator.clipboard.writeText(t);if(b){const o=b.textContent;b.textContent=L('Copied ✓','Copiado ✓');setTimeout(()=>b.textContent=o,1500);}}catch(e){prompt('Copy',t);}}
-function acShare(t,title){if(navigator.share){navigator.share({title,text:title,url:t}).catch(()=>{});}else acCopy(t);}
+function acShare(t,title,txt){if(navigator.share){navigator.share({title,text:txt||title,url:t}).catch(()=>{});}else acCopy(txt?txt+'\n'+t:t);}
 function acEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 /* ---------- overlay ---------- */
 function acOv(html){let o=document.getElementById('mgOv');if(!o){o=document.createElement('div');o.id='mgOv';document.body.appendChild(o);}o.innerHTML='<div class="mg-card" role="dialog" aria-modal="true">'+html+'</div>';o.scrollTop=0;}
 function acClose(){const o=document.getElementById('mgOv');if(o)o.remove();}
-function acShareBox(link,title){return '<div class="ac-qr">'+acQR(link)+'</div><div class="ac-row"><button class="mg-btn" onclick="acShare(\''+link+'\',\''+acEsc(title)+'\')">📤 '+L('Share link','Compartir link')+'</button><button class="mg-btn sec" onclick="acCopy(\''+link+'\',this)">'+L('Copy','Copiar')+'</button></div>';}
+function acShareBox(link,title,txt){const tx=txt?acEsc(txt.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n')):'';return '<div class="ac-qr">'+acQR(link)+'</div><div class="ac-row"><button class="mg-btn" onclick="acShare(\''+link+'\',\''+acEsc(title)+'\',\''+tx+'\')">📤 '+L('Share link','Compartir link')+'</button><button class="mg-btn sec" onclick="acCopy(\''+link+'\',this)">'+L('Copy','Copiar')+'</button></div>';}
 /* ---------- gate ---------- */
 async function accGate(force){
   if(!/^https?:/.test(location.protocol)||!AC.ok())return; // local file / no WebCrypto: dev mode
@@ -232,8 +232,13 @@ async function acInvMake(){
   const prv=me.r==='appr'?me.prv:AC.get('sc_root').prv;
   const link=acLink('ainv',await AC.sign({t:'inv',id,u,exp,n,iat,c:me.r==='appr'?me.cert:null},prv));
   const log=AC.get('sc_aplog')||[];log.unshift({id,n:L('Unit QR','QR de unidad')+' · '+days+'d · ~'+n,u,r:'inv',at:Date.now()});AC.set('sc_aplog',log.slice(0,300));
-  acOv('<h2>📲 '+L('Unit QR for ','QR de unidad para ')+acEsc(u)+'</h2><p>'+L('Valid until ','Válido hasta ')+'<b>'+new Date(exp*1000).toLocaleDateString()+'</b>. '+L('Medics scan it with the camera or tap the link.','Los médicos lo escanean con la cámara o tocan el link.')+'</p>'
-   +acShareBox(link,L('Sick Call — medic access for ','Sick Call — acceso de médicos para ')+u)
+  const until=new Date(exp*1000).toLocaleDateString();
+  const shareTxt=L('🩺 Sick Call — medic access ('+u+')\nNew to the app? Tap the link or scan the QR, fill your info once (1 min) and start using it.\niPhone: add the app to your Home Screen first, then open it there → “I have an approval or link” → scan or paste.\nAlready have access? You don\'t need this.\nValid until '+until+'.','🩺 Sick Call — acceso de médicos ('+u+')\n¿Nuevo en la app? Toca el link o escanea el QR, llena tus datos una vez (1 min) y empieza a usarla.\niPhone: primero agrega la app a tu pantalla de inicio, ábrela desde ahí → “Tengo una aprobación o link” → escanea o pega.\n¿Ya tienes acceso? No necesitas esto.\nVálido hasta '+until+'.');
+  acOv('<div class="inv-card"><div class="inv-k">🩺 SICK CALL · '+L('MEDIC ACCESS','ACCESO DE MÉDICOS')+'</div><div class="inv-u">'+acEsc(u)+'</div>'
+   +'<ol class="inv-steps"><li>'+L('<b>Scan</b> with your camera or tap the link','<b>Escanea</b> con tu cámara o toca el link')+'</li><li>'+L('<b>Fill your info once</b> — rank, name, MOS (1 min)','<b>Llena tus datos una vez</b> — rango, nombre, MOS (1 min)')+'</li><li>'+L('<b>Start using it</b> — you\'re in','<b>Empieza a usarla</b> — ya entraste')+'</li></ol>'
+   +'<div class="inv-ios">'+L('iPhone: add the app to your Home Screen first, open it there → “I have an approval or link” → scan.','iPhone: primero agrega la app a tu pantalla de inicio, ábrela desde ahí → “Tengo una aprobación o link” → escanea.')+'</div>'
+   +acShareBox(link,L('Sick Call — medic access for ','Sick Call — acceso de médicos para ')+u,shareTxt)
+   +'<div class="inv-f">'+L('Valid until ','Válido hasta ')+until+' · '+L('Already approved? You don\'t need this.','¿Ya tienes acceso? No necesitas esto.')+'</div></div>'
    +'<p class="mg-f">ID: '+id+' — '+L('to revoke this QR, give this ID to the app owner.','para revocar este QR, dale este ID al dueño de la app.')+'</p><button class="mg-btn sec" onclick="acClose();goRef(\'access\')">'+L('Done','Listo')+'</button>');
 }
 /* Remote revocation list (revoked.json) — checked on open; cached for offline. / Lista de revocados remota. */

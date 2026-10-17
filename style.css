@@ -780,3 +780,10 @@ body.guest #aside,body.guest #mobileNoteBtn,body.guest #tabbar button[data-v="ad
 #mgOv select.ac-in{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);background-position:calc(100% - 18px) 55%,calc(100% - 12px) 55%;background-size:6px 6px;background-repeat:no-repeat;padding-right:30px}
 #mgOv .ac-row>div .ac-in{margin-top:0}
 #mgOv .ac-tally{width:100%;height:220px;border:0;border-radius:14px;background:var(--panel);margin-top:8px}
+/* Unit QR card (v31) / Tarjeta del QR de unidad */
+#mgOv .inv-card{background:var(--panel);border-radius:20px;padding:18px 16px}
+#mgOv .inv-k{font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--orange)}
+#mgOv .inv-u{font-size:26px;font-weight:800;margin:4px 0 10px}
+#mgOv .inv-steps{margin:0 0 10px;padding-left:22px;font-size:16px;line-height:1.45}#mgOv .inv-steps li{margin-bottom:6px}
+#mgOv .inv-ios{font-size:13.5px;color:var(--dim);background:var(--panel2);border-radius:10px;padding:8px 10px;line-height:1.45}
+#mgOv .inv-f{font-size:13px;color:var(--dim);text-align:center;margin-top:12px}
