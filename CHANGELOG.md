@@ -4,8 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
-- **Unit QR instructions:** the unit QR screen now shows a short how-to for medics (scan → fill info once → start; iPhone tip) and the shared message carries the same instructions.
-  **Instrucciones del QR de unidad:** la pantalla del QR de unidad muestra un instructivo corto para los médicos (escanea → llena tus datos una vez → empieza; consejo para iPhone) y el mensaje que se comparte lleva las mismas instrucciones.
+- **Unit QR instructions:** the unit QR screen now shows a short how-to for medics (scan → fill info once → start; iPhone tip; "medics only, do not forward — non-medical sign-ups will be revoked") and the shared message carries the same instructions.
+  **Instrucciones del QR de unidad:** la pantalla del QR de unidad muestra un instructivo corto para los médicos (escanea → llena tus datos una vez → empieza; consejo para iPhone; "solo para médicos, no lo reenvíes — quien no sea personal médico será revocado") y el mensaje que se comparte lleva las mismas instrucciones.
 - **Sign-up wording:** the medic sign-up says the registration is only used to verify medic access.
   **Texto del registro:** el registro del médico dice que solo se usa para verificar el acceso de médicos.
 - **Unit QR for medic access:** the owner or an NCO approver creates a signed unit QR/link (More → Access → Create unit QR; valid 7/14/30 days). A medic scans it, fills rank, last/first name, MOS (medical MOS list only), unit and point of contact, taps "Confirm & enter" and has access. Each sign-up (with device ID and QR ID) goes to the owner's Tally form "Sick Call — Medic sign-up". Revocation without a new release: add a device ID, approval ID or QR ID to `revoked.json`; phones check it every time the app opens. Phones approved the old way keep working; the request/approval path stays as a fallback.
