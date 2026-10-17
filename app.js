@@ -2970,7 +2970,12 @@ async function slipPdf(btn){
       if(!cols){sz=6;const lines=pdfWrap(f,ht,sz,colW);const per=Math.floor((bottom-top)/(sz*1.25));cols=[lines.slice(0,per),lines.slice(per,per*2)];}
       cols.forEach((col,ci)=>col.forEach((l,i)=>txt(l,42+ci*(colW+16),top+sz+i*sz*1.25,sz)));
     }}
-    const bytes=await doc.save();const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
+    // Lock: no fillable fields or annotations left (signature and date are part of the page). / Bloqueo: sin campos ni anotaciones editables.
+    try{const fm=doc.getForm();if(fm.getFields().length)fm.flatten();}catch(e){}
+    doc.getPages().forEach(p=>{try{p.node.delete(P.PDFName.of('Annots'));}catch(e){}});
+    const stamp=new Date();txt('Generated '+stamp.toISOString().slice(0,16).replace('T',' ')+'Z by Sick Call (flattened copy). Any alteration voids this document.',42,H-14,6.5);
+    try{doc.setTitle('DD Form 689 - Individual Sick Slip');doc.setProducer('Sick Call 68W tool');doc.setCreationDate(stamp);doc.setModificationDate(stamp);}catch(e){}
+    const bytes=await doc.save({updateFieldAppearances:false});const url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));
     const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download='DD689_'+(v('slDate')||'slip')+'.pdf';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(url);},60000);
     if(btn)btn.textContent=o;
   }catch(e){if(btn){btn.textContent=L('PDF failed — use Print','PDF falló — usa Imprimir');setTimeout(()=>btn.textContent=o,3000);}console.error(e);}
@@ -3141,22 +3146,10 @@ let instEvt=null;
 function isStandalone(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}
 function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
 function canInstall(){return !isStandalone()&&(instEvt||isIOS()||/android/i.test(navigator.userAgent));}
-function instUpd(){const b=document.getElementById('instBtn');if(!b)return;if(isStandalone()){b.style.display='';b.textContent='📲 '+L('Share app','Compartir app');b.title=L('Send the app to another medic','Manda la app a otro médico');return;}b.style.display=canInstall()?'':'none';b.textContent='📲 '+L('Install','Instalar');}
+function instUpd(){const b=document.getElementById('instBtn');if(b){b.style.display=canInstall()?'':'none';b.textContent='📲 '+L('Install','Instalar');}}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEvt=e;instUpd();});
 window.addEventListener('appinstalled',()=>{instEvt=null;instUpd();try{iqToast(L('Installed ✓ — open it from your home screen','Instalada ✓ — ábrela desde tu pantalla de inicio'));}catch(e){}});
-/* Installed app: the same button shares the app link + the install guides (images). / App instalada: el botón comparte el link + las guías. */
-async function shareApp(){
-  const url=(typeof iqBase==='function'?iqBase():location.href.split('#')[0].replace(/index\.html.*$/,''));
-  const txt=L('🩺 Sick Call — ADTMC sick call tool for medics.\nOpen the link and add it to your Home Screen (iPhone: Safari → Share ⬆︎ → Add to Home Screen · Android: Chrome → 📲 Install). Guides attached.\nMedic access: use your unit QR inside the app.',
-   '🩺 Sick Call — herramienta de sick call ADTMC para médicos.\nAbre el link y agrégala a tu pantalla de inicio (iPhone: Safari → Compartir ⬆︎ → Agregar a pantalla de inicio · Android: Chrome → 📲 Instalar). Van las guías.\nAcceso de médico: usa el QR de tu unidad dentro de la app.');
-  try{const files=[];for(const f of ['Install_iPhone_Safari.jpg','Install_Android_Chrome.jpg']){const r=await fetch('docs/install/'+f);if(r.ok)files.push(new File([await r.blob()],f,{type:'image/jpeg'}));}
-    if(files.length&&navigator.canShare&&navigator.canShare({files})){await navigator.share({files,text:txt+'\n'+url,title:'Sick Call'});return;}
-    if(navigator.share){await navigator.share({title:'Sick Call',text:txt,url});return;}
-  }catch(e){if(e&&e.name==='AbortError')return;}
-  try{await navigator.clipboard.writeText(txt+'\n'+url);iqToast(L('Link and instructions copied','Link e instrucciones copiados'));}catch(e){prompt('Copy',url);}
-}
 async function installApp(){
-  if(isStandalone()){shareApp();return;}
   if(instEvt){instEvt.prompt();try{await instEvt.userChoice;}catch(e){}instEvt=null;instUpd();return;}
   const ios=isIOS();let o=document.getElementById('instOv');if(o)o.remove();o=document.createElement('div');o.id='instOv';
   const steps=ios?[
