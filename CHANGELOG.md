@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **iPhone Safari hint:** on the access screen in Safari (iPhone/iPad), a note says that if the app is already on the Home Screen, open it from there — access is saved in that app, not in Safari.
+  **Aviso en Safari de iPhone:** en la pantalla de acceso en Safari (iPhone/iPad) sale una nota: si ya tienes la app en la pantalla de inicio, ábrela desde ahí — el acceso está guardado en esa app, no en Safari.
 - **Point of contact is optional** in the unit QR sign-up. Medics who already signed up keep their access.
   **El punto de contacto es opcional** en el registro con QR de unidad. Los médicos que ya se registraron conservan su acceso.
 - **Unit QR instructions:** the unit QR screen now shows a short how-to for medics (scan → fill info once → start; iPhone tip; "medics only, do not forward — non-medical sign-ups will be revoked") and Share sends it as an image (what you see on screen) plus the text and link.

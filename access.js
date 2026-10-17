@@ -61,6 +61,7 @@ async function accGate(force){
   acOv('<div class="mg-top"><span class="mg-k">68W · ADTMC</span><span class="mg-lang"><button class="'+(lg==='en'?'on':'')+'" onclick="acLang(\'en\')">EN</button><button class="'+(lg==='es'?'on':'')+'" onclick="acLang(\'es\')">ES</button></span></div>'
    +'<h2>Sick Call</h2>'
    +'<p class="mg-sub">'+L('For 68W medics, under provider supervision.','Para médicos 68W, bajo supervisión de un proveedor.')+' <b>'+L('Not for self-diagnosis.','No es para autodiagnóstico.')+'</b></p>'
+   +((typeof isIOS==='function'&&isIOS()&&typeof isStandalone==='function'&&!isStandalone())?'<div class="mg-ios">📱 '+L('<b>Already have the app on your Home Screen?</b> Open it from there — your access is saved in that app, not in Safari.','<b>¿Ya tienes la app en tu pantalla de inicio?</b> Ábrela desde ahí — tu acceso está guardado en esa app, no en Safari.')+'</div>':'')
    +'<button class="mg-btn" onclick="acHaveView()">🩺 '+L('I\'m a medic — scan unit QR','Soy médico — escanear QR de unidad')+'</button>'
    +'<button class="mg-btn sec" onclick="acHaveView()">🔑 '+L('I have an approval or link','Tengo una aprobación o link')+'</button>'
    +'<button class="mg-btn sec" onclick="location.href=\'intake.html\'">🤒 '+L('I\'m a Soldier and I feel sick','Soy soldado y me siento mal')+'</button>'
