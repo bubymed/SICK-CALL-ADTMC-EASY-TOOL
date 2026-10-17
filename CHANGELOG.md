@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **Guest MACE is a quick screen only:** in guest mode MACE shows just 1D and 2A–2D and a Positive / Negative result telling the person to go to a medic (no driving, PT or weapons if positive; warning signs if negative). Cognitive and neuro exam, VOMS, summary, notes, PRA and coding are hidden.
+  **MACE de invitado solo tamizaje:** en modo invitado el MACE muestra solo 1D y 2A–2D y un resultado Positivo / Negativo que manda a la persona con un médico (sin manejar, PT ni armas si es positivo; señales de alarma si es negativo). Se ocultan el examen cognitivo y neuro, VOMS, resumen, notas, PRA y códigos.
 - **MACE result card pinned:** the screening card (result, answered count, cognitive/neuro/VOMS) stays at the top while scrolling.
   **Tarjeta del MACE fija:** la tarjeta del tamizaje (resultado, preguntas contestadas, cognitivo/neuro/VOMS) se queda arriba al bajar.
 - **Cleaner MACE 2:** live screening result card at the top (Negative / POSITIVE, cognitive score, neuro, VOMS) and folded sections — Screening, Cognitive, Neuro + VOMS, Summary, PRA and coding info — with progress on each. Script lines sit under each question; NSI symptoms take one line each with 0–4 buttons.

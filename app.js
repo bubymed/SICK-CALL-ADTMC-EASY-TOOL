@@ -1406,6 +1406,7 @@ function renderMace(){
   h+='<div class="secbar">4 · History</div>';
   ['Diagnosed with a concussion in the past 12 months (not counting this event)?','History of diagnosed/treated headache disorder or migraine?','History of depression, anxiety, or other behavioral-health concerns?'].forEach((q,i)=>{h+=fld('4'+'ABC'[i],q,'',mcRow('','h',YN,i));});
   h+=`<div class="field" style="border-color:var(${S.screen?'--red':'--line'})"><b>Concussion screening result:</b> ${S.screen?'<span style="color:var(--red)">POSITIVE</span> — continue MACE 2, complete the evaluation before prescribing rest, communicate to line leadership, document and code in the EHR.':(m.blow===null?'<span style="color:var(--dim)">answer 1D and 2A–2D</span>':'<b>NEGATIVE</b> (needs a blow/jolt AND any alteration of consciousness or memory) — stop MACE 2; 24-hour rest period if deployed (avoid activities that worsen symptoms); follow up after rest per CMT; communicate to leadership; document and code in the EHR.')}</div>`;
+  const secScrG=h.split('<div class="secbar">3 · Symptoms</div>')[0];
   const secScr=h;h='';let secCog='',secNeu='';
   if(S.screen){
     h+='<div class="secbar">Cognitive exam — choose one list (A–F) and use it for questions 6, 15 and 16</div><div class="chips">'+Object.keys(MC_WORDS).map(k=>`<span class="chip ${m.list===k?'on':''}" onclick="mace.list='${k}';renderMain()">List ${k}</span>`).join('')+'</div>';
@@ -1434,6 +1435,15 @@ function renderMace(){
   let o='<div class="mace-head"><div><h2 class="tpl" style="margin:0">🧠 MACE 2</h2><div class="mh-sub">'+L('Concussion evaluation · ADTMC F-6 / App. H','Evaluación de concusión · ADTMC F-6 / Apénd. H')+'</div></div><button class="mh-new" onclick="mcReset()">↺ '+L('New','Nuevo')+'</button></div>';
   o+='<div class="mace-status ms-'+res+'"><div class="ms-k">'+L('Screening','Tamizaje')+'<span class="ms-n">'+answered+'/9</span></div><div class="ms-v">'+(res==='pos'?L('POSITIVE','POSITIVO'):res==='neg'?L('Negative','Negativo'):L('Not started','Sin empezar'))+'</div>'
     +(S.screen?'<div class="ms-row"><span>'+L('Cognitive','Cognitivo')+' <b>'+S.cog+'/30</b></span><span>'+L('Neuro','Neuro')+' <b>'+(nN?(S.nAb?S.nAb+' '+L('abn','anormal'):L('normal','normal')):'—')+'</b></span><span>VOMS <b>'+(m.voms==='A'?L('abn','anormal'):m.voms==='N'?'OK':m.voms==='D'?L('deferred','diferido'):'—')+'</b></span></div>':'<div class="ms-hint">'+(res==='neg'?L('Negative screen — stop MACE 2, 24 h rest, follow CMT.','Tamizaje negativo — termina MACE 2, 24 h de descanso, sigue el CMT.'):L('Answer 1D and 2A–2D. Positive = blow/jolt + AOC, LOC or PTA.','Contesta 1D y 2A–2D. Positivo = golpe + AOC, LOC o PTA.'))+'</div>')+'</div>';
+  if(isGuest()){
+    const core=['blow','aoc','loc','pta','wit'].filter(k=>m[k]!==null).length;
+    o=o.slice(0,o.indexOf('<div class="mace-status'));
+    o+='<div class="mace-status ms-'+res+'"><div class="ms-k">'+L('Quick screen','Tamizaje rápido')+'<span class="ms-n">'+core+'/5</span></div><div class="ms-v">'+(res==='pos'?L('POSITIVE','POSITIVO'):res==='neg'?L('Negative','Negativo'):L('Not started','Sin empezar'))+'</div><div class="ms-hint">'+(res==='pos'?L('Possible concussion. Go to a medic or aid station NOW. No driving, no PT, no weapons until seen.','Posible concusión. Ve con un médico o al aid station YA. No manejar, no PT, no armas hasta que te vean.'):res==='neg'?L('No concussion signs on this screen. Watch for warning signs below.','Sin señales de concusión en este tamizaje. Vigila las señales de alarma de abajo.'):L('Answer the 5 questions. Positive = blow/jolt + dazed, passed out or memory gap.','Contesta las 5 preguntas. Positivo = golpe + aturdido, desmayo o laguna de memoria.'))+'</div></div>';
+    o+='<div class="guest-mace">'+L('Quick screen only. A medic does the full MACE 2 and decides.','Solo tamizaje rápido. Un médico hace el MACE 2 completo y decide.')+'</div>';
+    o+='<div class="mcsec">'+secScrG+'</div>';
+    if(res==='neg')o+='<div class="gm-neg">✓ '+L('Screen negative. If headache gets worse, vomiting, confusion, unequal pupils, seizure or trouble waking up → go to a medic or ER right away.','Tamizaje negativo. Si empeora el dolor de cabeza, vomita, se confunde, pupilas desiguales, convulsión o le cuesta despertar → con un médico o al ER de inmediato.')+'</div>';
+    return '<div class="mace">'+o+'</div>';
+  }
   o+=mcFold('scr','1–4 · '+L('Screening','Tamizaje'),answered+'/9',secScr);
   if(S.screen){const cT=S.cog>0||m.mo!==null;o+=mcFold('cog','5–6, 15–16 · '+L('Cognitive exam','Examen cognitivo'),cT?S.cog+'/30'+(S.cogAb?' ⚠':''):'—',secCog);
     o+=mcFold('neu','7–14, 17 · '+L('Neuro exam + VOMS','Examen neuro + VOMS'),nN+'/8'+(S.nAb?' ⚠':''),secNeu);}
@@ -2748,7 +2758,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v27';
+const APP_VER='v28';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
