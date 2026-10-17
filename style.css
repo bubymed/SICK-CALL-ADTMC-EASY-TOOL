@@ -790,3 +790,6 @@ body.guest #aside,body.guest #mobileNoteBtn,body.guest #tabbar button[data-v="ad
 #mgOv .inv-warn{font-size:14px;line-height:1.45;background:color-mix(in srgb,var(--red) 16%,transparent);border:1px solid color-mix(in srgb,var(--red) 45%,transparent);border-radius:10px;padding:8px 10px;margin-bottom:8px}
 #mgOv .mg-ios{font-size:14.5px;line-height:1.45;background:var(--panel);border-left:4px solid var(--orange);border-radius:10px;padding:10px 12px;margin:-8px 0 14px}
 #mgOv .mg-links{flex-wrap:wrap;row-gap:4px;font-size:14.5px}#mgOv .mg-links button{white-space:nowrap}
+/* Personal access link (v34) / Link personal */
+#mgOv .pass-box{background:var(--panel);border-radius:16px;padding:14px 16px;margin:14px 0 4px}
+#mgOv .pass-box b{font-size:18px}#mgOv .pass-box p{font-size:14.5px;color:var(--dim);margin:6px 0 4px;line-height:1.45}

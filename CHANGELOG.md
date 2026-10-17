@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **Personal access link:** approved medics get a personal link (More → Access → "My personal access link"; also shown right after unit QR sign-up). Opening it in any browser or phone restores access with no sign-up — fixes the iPhone Safari vs Home Screen split and phone changes. Each link has an ID (sent with new sign-ups to Tally) that can be revoked in `revoked.json`. Nobody loses current access.
+  **Link personal de acceso:** los médicos aprobados tienen un link personal (Más → Acceso → "Mi link personal de acceso"; también sale al terminar el registro con QR de unidad). Al abrirlo en cualquier navegador o teléfono se recupera el acceso sin registrarse — resuelve lo de Safari vs pantalla de inicio en iPhone y cambios de teléfono. Cada link tiene un ID (llega a Tally con los registros nuevos) que se puede revocar en `revoked.json`. Nadie pierde su acceso actual.
 - **iPhone Safari hint:** on the access screen in Safari (iPhone/iPad), a note says that if the app is already on the Home Screen, open it from there — access is saved in that app, not in Safari.
   **Aviso en Safari de iPhone:** en la pantalla de acceso en Safari (iPhone/iPad) sale una nota: si ya tienes la app en la pantalla de inicio, ábrela desde ahí — el acceso está guardado en esa app, no en Safari.
 - **Point of contact is optional** in the unit QR sign-up. Medics who already signed up keep their access.
