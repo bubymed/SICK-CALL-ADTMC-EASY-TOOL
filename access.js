@@ -177,7 +177,7 @@ const AC_MOS=[['68W','68W Combat Medic'],['18D','18D SF Medical Sergeant'],['68C
 function acJoinView(tok,iv){
   const s=AC.get('sc_reg')||{};
   acOv('<button class="ac-back" onclick="accGate(true)">‹ '+L('Back','Atrás')+'</button><h2>'+L('Medic sign-up','Registro de médico')+'</h2>'
-   +'<p class="mg-sub" style="margin-bottom:10px">'+L('Unit QR: ','QR de unidad: ')+'<b>'+acEsc(iv.u)+'</b>. '+L('Fill this once — it goes only to the app owner.','Llénalo una vez — solo le llega al dueño de la app.')+'</p>'
+   +'<p class="mg-sub" style="margin-bottom:10px">'+L('Unit QR: ','QR de unidad: ')+'<b>'+acEsc(iv.u)+'</b>. '+L('Fill this once. It is only used to verify medic access.','Llénalo una vez. Solo se usa para verificar el acceso de médicos.')+'</p>'
    +'<div class="ac-row"><div style="flex:0 0 38%"><label class="ac-l">'+L('Rank','Rango')+'</label><select id="jR" class="ac-in"><option value="">—</option>'+AC_RANKS.map(r=>'<option'+(s.rank===r?' selected':'')+'>'+r+'</option>').join('')+'</select></div>'
    +'<div style="flex:1"><label class="ac-l">'+L('Last name','Apellido')+'</label><input id="jL" class="ac-in" maxlength="30" autocomplete="family-name" value="'+acEsc(s.last||'')+'"></div></div>'
    +'<label class="ac-l">'+L('First name + middle initial','Nombre + inicial')+'</label><input id="jF" class="ac-in" maxlength="30" autocomplete="given-name" placeholder="'+L('e.g. Michael A.','ej. Michael A.')+'" value="'+acEsc(s.first||'')+'">'
@@ -218,7 +218,7 @@ window.addEventListener('message',e=>{
 function acInvView(){
   const me=acRole;if(!me||(me.r!=='root'&&me.r!=='appr'))return;
   acOv('<button class="ac-back" onclick="acClose();goRef(\'access\')">‹ '+L('Back','Atrás')+'</button><h2>'+L('Create unit QR','Crear QR de unidad')+'</h2>'
-   +'<p>'+L('Medics who open it register once (rank, name, MOS, unit, POC) and get access. Each sign-up reaches the app owner.','Los médicos que lo abran se registran una vez (rango, nombre, MOS, unidad, contacto) y entran. Cada registro le llega al dueño de la app.')+'</p>'
+   +'<p>'+L('Medics who open it register once (rank, name, MOS, unit, POC) and get access.','Los médicos que lo abran se registran una vez (rango, nombre, MOS, unidad, contacto) y entran.')+'</p>'
    +'<label class="ac-l">'+L('Unit','Unidad')+'</label><input id="iU" class="ac-in" maxlength="40" value="'+acEsc(me.r==='appr'?me.u:'')+'"'+(me.r==='appr'?' readonly':'')+'>'
    +'<label class="ac-l">'+L('Valid for','Válido por')+'</label><select id="iD" class="ac-in"><option value="7">7 '+L('days','días')+'</option><option value="14">14 '+L('days','días')+'</option><option value="30" selected>30 '+L('days','días')+'</option></select>'
    +'<label class="ac-l">'+L('About how many medics?','¿Más o menos cuántos médicos?')+'</label><select id="iN" class="ac-in"><option>5</option><option>10</option><option selected>20</option><option>50</option></select>'
