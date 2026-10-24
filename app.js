@@ -1083,7 +1083,7 @@ function updPeek(){
 function renderMore(){
   const row=(ic,txt,on)=>'<div class="prow" onclick="'+on+'"><span class="ptit">'+ic+' '+txt+'</span><span class="dim">›</span></div>';
   let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
-  h+=row('🆕',L('What\'s new','Novedades'),'wnShow(true)')+row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
+  h+=row('🆕',L('What\'s new','Novedades'),'wnShow(true)')+row('🏥',L('Mendoza Clinic — sick call rules','Clínica Mendoza — reglas de sick call'),"goRef('clinic')")+row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
   h+='</div><div class="plist" style="margin-top:14px">';
   h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
   h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
@@ -1121,12 +1121,13 @@ function fuQs(t,s,fid){
   }
   return out;
 }
-const GUEST_OK=['admeds','mace','more','preguntas','assess','access'];
+const GUEST_OK=['admeds','mace','more','preguntas','assess','access','clinic'];
 function isGuest(){return document.body.classList.contains('guest');}
 function guestLocked(){return '<div class="guest-lock"><div class="gl-ic">🔒</div><h2>'+L('For approved medics','Para médicos aprobados')+'</h2><p>'+L('Protocols, dispositions, profiles, notes and the patient list need medic access. As a guest you can use Meds, MACE, Assessments and Questions.','Los protocolos, disposiciones, perfiles, notas y la lista de pacientes necesitan acceso de médico. Como invitado puedes usar Meds, MACE, Assessments y Preguntas.')+'</p><button class="gl-btn" onclick="accGate(true)">🩺 '+L('Get medic access','Pedir acceso de médico')+'</button><button class="gl-sec" onclick="tabGo(\'admeds\')">💊 '+L('Go to Meds','Ir a Meds')+'</button></div>';}
 function renderMain(){
   const m=document.getElementById('main');
   if(isGuest()&&!GUEST_OK.includes(view)){m.innerHTML=guestLocked();return;}
+  if(view==='clinic'){m.innerHTML=renderClinic();return;}
   if(view==='adtmc'){m.innerHTML=renderAD();return;}
   if(view==='admeds'){m.innerHTML=renderADMeds();return;}
   if(view==='ajustes'){m.innerHTML=renderSettings();return;}
@@ -2294,7 +2295,7 @@ function iqDurTxt(q){return iqLbl(IQ_DUR,q.d,LANG==='es'?2:1);}
 function iqAgo(at){const m=Math.max(0,Math.round((Date.now()-at)/60000));return m<1?L('just now','ahora'):m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min';}
 function iqIndexRow(){const n=iqList.filter(e=>!e.seen).length;
   return '<div class="iq-row"><button class="ghost" onclick="iqScan()">📷 '+L('Scan patient QR','Escanear QR del paciente')+'</button>'+(iqList.length?'<button class="ghost" onclick="goRef(\'queue\')">📋 '+L('Triage list','Lista de triaje')+(n?' <b class="iq-n">'+n+'</b>':'')+'</button>':'')+'</div>';}
-function iqFacts(q){const f=[iqDurTxt(q),q.s+'/10'];if(q.w)f.push(L('worse last 2–3 d','peor en 2–3 d'));if(q.r)f.push(L('seen before','ya lo vieron')+(q.rw?L(' — worse',' — peor'):''));if(q.j)f.push(L('stops duty/PT','impide trabajo/PT'));return f;}
+function iqFacts(q){const f=[iqDurTxt(q),q.s+'/10'];if(q.w)f.push(L('worse last 2–3 d','peor en 2–3 d'));if(q.old)f.push(L('had it before','ya lo tuvo antes'));if(q.doc)f.push(L('wants documentation','quiere documentación'));if(q.r)f.push(L('seen before','ya lo vieron')+(q.rw?L(' — worse',' — peor'):''));if(q.j)f.push(L('stops duty/PT','impide trabajo/PT'));return f;}
 function renderQueue(){
   const ord={red:0,orange:1,gray:2};
   const list=iqList.map(e=>Object.assign({tr:iqTriage(e.q)},e)).sort((a,b)=>(a.seen-b.seen)||(ord[a.tr.c]-ord[b.tr.c])||(a.at-b.at));
@@ -2322,7 +2323,7 @@ function iqStart(id){const e=iqList.find(x=>x.id===id);if(!e)return;const q=e.q,
   const s=state[cur];
   if(!s.cc.size&&!(s.ccCustom||'').trim())s.ccCustom=a[1].toLowerCase();
   const _fu=iqFUAns(q).map(x=>x.en+': '+x.ven).join('; ');
-  const _dt={'today':'today','1-3d':'1–3 days ago','4-7d':'4–7 days ago','1-4w':'1–4 weeks ago','1mo+':'more than 1 month ago'}[q.d]||q.d;
+  const _dt={'today':'today','1-2d':'1–2 days ago','3-7d':'3–7 days ago','1-3d':'1–3 days ago','4-7d':'4–7 days ago','1-4w':'1–4 weeks ago','1mo+':'more than 1 month ago'}[q.d]||q.d;
   if(s.fields&&s.fields.o&&!(s.custom.o||'').trim())s.custom.o=_dt+(_fu?'. Pt questionnaire — '+_fu:' (pt questionnaire)');
   if(s.sev===null||s.sev===undefined)s.sev=q.s;
   if(!s.duty)s.duty=q.j?'Yes':'No';
@@ -2473,7 +2474,17 @@ function adDecisionHtml(p,R){
   h+='<div class="algo-actions"><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
   return h;
 }
-function adResultCard(p,R){return adResultCard0(p,R)+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined')?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>':'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+/* Mendoza Clinic sick call & appointment guidelines (CLINIC in data/intake.js). / Guía de la clínica Mendoza. */
+function clinicLine(){if(typeof CLINIC==='undefined')return '';return L('Mendoza sick call '+CLINIC.sc+' Mon–Fri with a DD 689 · no DD 689: provider '+CLINIC.walk+' (wait 2–3 h) · appointments ','Sick call en Mendoza '+CLINIC.sc+' lun–vie con DD 689 · sin DD 689: proveedor '+CLINIC.walk+' (espera 2–3 h) · citas ')+CLINIC.phones.join(' / ');}
+function renderClinic(){const C=CLINIC,tel=p=>'<a href="tel:'+p.replace(/\D/g,'')+'">'+p+'</a>';
+  let h='<h2 class="tpl">🏥 '+L('Mendoza Clinic','Clínica Mendoza')+'</h2><p class="tpl-sub">'+C.name+' · '+L('Sick Call & Appointment Guidelines','Guía de sick call y citas')+'</p>';
+  h+='<div class="field"><div class="lab"><span class="tag">📍</span><span class="name">'+C.addr+'</span></div><div>'+L('Appointments: ','Citas: ')+C.phones.map(tel).join(' · ')+'</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">⏰</span><span class="name">'+L('Sick call','Sick call')+' '+C.sc+' · '+L('Monday–Friday','lunes a viernes')+'</span></div><div style="line-height:1.6">• '+L('Soldiers sign in on the clipboard at the front desk.','Los soldados firman en la hoja (clipboard) de la recepción.')+'<br>• '+L('<b>The medic is in charge</b>; the medic and provider determine what is medically appropriate.','<b>El médico está a cargo</b>; el médico y el proveedor deciden qué es médicamente apropiado.')+'<br>• '+L('A <b>DD 689</b> is required to be seen during sick call hours.','Se requiere un <b>DD 689</b> para ser visto en horario de sick call.')+'<br>• '+L('No DD 689 but meets criteria: may be seen by the provider on duty '+C.walk+' — wait may exceed 2–3 h.','Sin DD 689 pero cumple criterios: lo puede ver el proveedor de turno de '+C.walk+' — la espera puede pasar de 2–3 h.')+'</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">✅</span><span class="name">'+L('Sick call is ONLY for','Sick call es SOLO para')+'</span></div><div style="line-height:1.6">• '+L('Active fever, nausea, vomiting or diarrhea','Fiebre, náusea, vómito o diarrea activos')+'<br>• '+L('New-onset pain, rash or new concerning symptoms not previously experienced','Dolor, sarpullido o síntomas nuevos que no había tenido antes')+'<br>• '+L('Injury within the last 48 hours — <b>older than 48 h → H2F physical therapy evaluation</b>','Lesión en las últimas 48 horas — <b>más de 48 h → evaluación de terapia física en H2F</b>')+'</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">⚠️</span><span class="name">'+L('Important reminders','Recordatorios importantes')+'</span></div><div style="line-height:1.6">• '+L('Sick call is not for documenting chronic conditions for VA claims or VA percentage.','Sick call no es para documentar condiciones crónicas para reclamos o porcentaje del VA.')+'<br>• '+L('"I just want it documented" → appointments only.','"Solo quiero que lo documenten" → solo con cita.')+'<br>• '+L('Not following these rules may mean a 2–3 h wait or being sent back to work without an excuse.','No seguir estas reglas puede significar esperar 2–3 h o regresar al trabajo sin excusa.')+'</div></div>';
+  h+='<p class="note-hint">'+L('The patient QR questionnaire applies these rules: injuries older than 48 h and documentation-only visits are sorted as routine (gray) with the reason shown in the triage list.','El cuestionario QR del paciente aplica estas reglas: lesiones de más de 48 h y visitas solo para documentar quedan como rutina (gris) con la razón en la lista de triaje.')+'</p>';
+  return h;}
 /* H2F class referral (data/h2f.js) — on ADTMC B- (MSK) protocols and in Profiles. / Referido a H2F */
 const h2f={cls:new Set(),f:2,w:4};
 function h2fTog(k){h2f.cls.has(k)?h2f.cls.delete(k):h2f.cls.add(k);renderMain();renderNote();}
@@ -2485,7 +2496,7 @@ function h2fText(){if(typeof H2F_CLASSES==='undefined'||!h2f.cls.size)return '';
   return 'Referred to H2F ('+H2F_LOC+'): '+c+' — '+h2f.f+'x/week x'+h2f.w+' weeks. H2F class slip given; Soldier brings slip to the COF / schedules via Visibook QR.'+(m?' Referring source: '+m+(/\.$/.test(m)?'':'.'):'');}
 function h2fCard(){if(typeof H2F_CLASSES==='undefined')return '';
   const sug=ad.pid?H2F_CLASSES.filter(x=>x[3].includes(ad.pid)).map(x=>x[0]):[];
-  let h='<div class="field h2f"><div class="lab"><span class="tag">🏃</span><span class="name">'+L('H2F class referral','Referido a clases de H2F')+'</span><span class="ask">'+L('unit level — instead of PT','a nivel unidad — en vez de PT')+'</span></div>';
+  let h='<div class="field h2f"><div class="lab"><span class="tag">🏃</span><span class="name">'+L('H2F class referral','Referido a clases de H2F')+'</span><span class="ask">'+L('unit level — instead of PT','a nivel unidad — en vez de PT')+'</span></div><div class="dim" style="font-size:.86em;margin:-2px 0 8px">'+L('Mendoza rule: injuries older than 48 h → H2F physical therapy evaluation, not sick call.','Regla de Mendoza: lesiones de más de 48 h → evaluación de terapia física en H2F, no sick call.')+'</div>';
   h+='<div class="chips">'+H2F_CLASSES.map(x=>'<span class="chip '+(h2f.cls.has(x[0])?'on':'')+'" onclick="h2fTog(\''+x[0]+'\')">'+(sug.includes(x[0])?'★ ':'')+x[1]+' <small style="opacity:.7">'+x[2]+'</small></span>').join('')+'</div>';
   h+='<div class="subrow" style="margin-top:8px"><div class="half"><div class="mini">'+L('Times per week','Veces por semana')+'</div><div class="chips">'+[1,2,3].map(n=>'<span class="chip '+(h2f.f===n?'on':'')+'" onclick="h2fSet(\'f\','+n+')">'+n+'x</span>').join('')+'</div></div><div class="half"><div class="mini">'+L('Weeks','Semanas')+'</div><div class="chips">'+[2,4,6,8].map(n=>'<span class="chip '+(h2f.w===n?'on':'')+'" onclick="h2fSet(\'w\','+n+')">'+n+'</span>').join('')+'</div></div></div>';
   h+='<div class="mini" style="margin-top:8px">'+L('Referring source (rank / name)','Quien refiere (rango / nombre)')+'</div><input type="text" value="'+q$(h2fMedic())+'" placeholder="SPC LAST, First" oninput="settings.medicName=this.value;saveSettings();renderNote()">';
@@ -2795,7 +2806,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v35';
+const APP_VER='v36';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};

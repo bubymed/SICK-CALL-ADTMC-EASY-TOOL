@@ -3,6 +3,8 @@
    Add a new entry at the TOP for every feature release (same value as APP_VER). Keep it short: 1–3 items.
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
+ {v:'v36',items:[
+   {i:'🏥',en:'<b>Mendoza Clinic sick call rules</b> — More → Mendoza Clinic (hours, DD 689, phones, what sick call is for). The patient QR now asks if the problem is new and if they only want documentation; injuries older than 48 h → H2F, documentation → appointment.',es:'<b>Reglas de sick call de la clínica Mendoza</b> — Más → Clínica Mendoza (horario, DD 689, teléfonos, para qué es sick call). El QR del paciente ahora pregunta si el problema es nuevo y si solo quiere documentación; lesiones de más de 48 h → H2F, documentación → cita.',go:'clinic',btn:['Open','Abrir']}]},
  {v:'v35',items:[
    {i:'🏃',en:'<b>H2F class referral</b> — on MSK protocols (B-) and in Profiles: pick the H2F class(es), times per week and weeks; the note line writes itself and you can print the H2F slip prefilled. Unit-level profiles now go up to 14 days; PT and longer profiles → clinic (Mendoza).',es:'<b>Referido a clases de H2F</b> — en los protocolos MSK (B-) y en Perfiles: escoge la(s) clase(s) de H2F, veces por semana y semanas; la línea de la nota se escribe sola y puedes imprimir el slip de H2F prellenado. Los profiles a nivel unidad ahora llegan hasta 14 días; PT y profiles largos → clínica (Mendoza).',go:'perfiles',btn:['Open Profiles','Abrir Perfiles']}]},
  {v:'v34',items:[
