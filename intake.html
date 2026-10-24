@@ -71,6 +71,7 @@ textarea{width:100%;min-height:90px;border:0;border-radius:14px;background:var(-
 .sum div:first-child{border-top:0}
 .sum span{color:var(--dim);flex:none;width:42%}
 .note{color:var(--dim);font-size:13px;margin-top:16px;text-align:center}
+.clinic{background:var(--card);border-radius:14px;padding:12px 16px;margin-top:12px;font-size:15px;line-height:1.45}.clinic p{margin:8px 0 0}.clinic .dim{color:var(--dim);font-size:13px}.clinic a{color:var(--acc)}
 </style>
 </head>
 <body>
@@ -84,9 +85,9 @@ let IQ_ES=/^es/i.test(navigator.language||'');
 try{const u=new URLSearchParams(location.search).get('lang');if(u)IQ_ES=u==='es';}catch(e){}
 const T=(e,s)=>IQ_ES?s:e;
 let q,step;
-function reset(){q={v:1,a:'',d:'',w:null,r:null,rw:null,s:null,j:null,f:[],n:'',x:{},rk:'',ln:''};step=0;clearTimeout(rulesT);draw();}
+function reset(){q={v:1,a:'',d:'',w:null,r:null,rw:null,old:null,doc:null,s:null,j:null,f:[],n:'',x:{},rk:'',ln:''};step=0;clearTimeout(rulesT);draw();}
 let rulesT=0,rulesLeft=0;
-const STEPS=['start','rules','who','area','fu','dur','worse','seen','seenw','sev','duty','flags','note','done'];
+const STEPS=['start','rules','who','area','fu','dur','old','worse','seen','seenw','doc','sev','duty','flags','note','done'];
 function vis(){return STEPS.filter(s=>(s!=='seenw'||q.r===1)&&(s!=='fu'||!q.a||iqFU(q.a).length));}
 function next(){const v=vis();step=Math.min(v.indexOf(cur())+1,v.length-1);draw();scrollTo(0,0);}
 function prev(){const v=vis();step=Math.max(v.indexOf(cur())-1,0);draw();scrollTo(0,0);}
@@ -96,6 +97,11 @@ function pick(k,v){if(k==='a'&&q.a!==v)q.x={};q[k]=v;if(k==='r'&&v===0)q.rw=null
 function fuSet(id,v,multi){if(multi){const a=Array.isArray(q.x[id])?q.x[id]:[];const i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);q.x[id]=a;}else q.x[id]=v;draw();}
 function fuDone(){return iqFU(q.a).every(Q=>Q[3]==='multi'||q.x[Q[0]]!==undefined);}
 function flag(c){if(c==='none'){q.f=[];next();return;}const i=q.f.indexOf(c);i<0?q.f.push(c):q.f.splice(i,1);draw();}
+function clinicBox(){return '<div class="clinic"><b>🏥 '+T('Sick call at ','Sick call en ')+'Mendoza</b>'
+  +'<p>'+T('<b>'+CLINIC.sc+', Monday–Friday.</b> Sign in on the clipboard at the front desk. A <b>DD 689</b> (sick slip) is required.','<b>'+CLINIC.sc+', lunes a viernes.</b> Firma en la hoja (clipboard) de la recepción. Se necesita un <b>DD 689</b> (sick slip).')+'</p>'
+  +'<p><b>'+T('Sick call is only for:','Sick call es solo para:')+'</b><br>• '+T('Active fever, nausea, vomiting or diarrhea','Fiebre, náusea, vómito o diarrea activos')+'<br>• '+T('New pain, rash or new symptoms you never had before','Dolor, sarpullido o síntomas nuevos que nunca habías tenido')+'<br>• '+T('An injury in the last 48 hours','Una lesión en las últimas 48 horas')+'</p>'
+  +'<p>'+T('Injury older than 48 h → H2F physical therapy evaluation. "I just want it documented" (chronic / VA) → <b>appointment</b>: ','Lesión de más de 48 h → evaluación de terapia física en H2F. "Solo quiero que lo documenten" (crónico / VA) → <b>cita</b>: ')+CLINIC.phones.map(p=>'<a href="tel:'+p.replace(/\D/g,'')+'">'+p+'</a>').join(' · ')+'</p>'
+  +'<p class="dim">'+T('No DD 689? You may be seen 0830–1600, but the wait can be 2–3 hours. The medic and provider decide what is medically appropriate.','¿Sin DD 689? Te pueden ver de 0830 a 1600, pero la espera puede ser de 2–3 horas. El médico y el proveedor deciden qué es apropiado.')+'</p></div>';}
 function rulesBox(big){return '<div class="rules'+(big?' big':'')+'"><b>⚖️ '+T('Be honest','Di la verdad')+'</b><p>'+T('The medic will examine you and decide your care — your answers only help us see you in the right order. Exaggerating will not change that.','El médico te va a examinar y decidir tu atención — tus respuestas solo nos ayudan a verte en el orden correcto. Exagerar no cambia eso.')+'</p><p class="art">'+T('UCMJ Article 115 (Malingering): feigning illness, physical disablement or mental lapse to avoid work, duty or service is punishable under the UCMJ.','UCMJ Artículo 115 (Malingering / fingir enfermedad): fingir una enfermedad, incapacidad física o mental para evitar el trabajo, el deber o el servicio se castiga bajo el UCMJ.')+'</p><p>'+T('If your symptoms are real, always tell us — that is never a problem.','Si tus síntomas son reales, siempre dínoslo — eso nunca es un problema.')+'</p></div>';}
 function ucmj(){return '<p class="ucmj">'+T('UCMJ Art. 115 (Malingering): feigning illness, physical disablement or mental lapse to avoid work, duty or service is punishable under the UCMJ. If your symptoms are real, always tell us — that is never a problem.','UCMJ Art. 115 (Malingering / fingir enfermedad): fingir una enfermedad, incapacidad física o mental para evitar el trabajo, el deber o el servicio se castiga bajo el UCMJ. Si tus síntomas son reales, siempre dínoslo — eso nunca es un problema.')+'</p>';}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -134,7 +140,11 @@ function draw(){
     Object.keys(IQ_GROUPS).forEach(g=>{h+='<div class="grp">'+IQ_GROUPS[g][IQ_ES?1:0]+'</div><div class="chips">'+IQ_AREAS.filter(a=>a[4]===g).map(a=>'<button class="chip'+(q.a===a[0]?' on':'')+'" onclick="pick(\'a\',\''+a[0]+'\')">'+(IQ_ES?a[2]:a[1])+'</button>').join('')+'</div>';});
     h+=backBtn();
   }else if(s==='dur'){
-    h+='<h1>'+T('When did it start?','¿Desde cuándo?')+'</h1><div class="list">'+IQ_DUR.map(d=>'<button class="opt'+(q.d===d[0]?' on':'')+'" onclick="pick(\'d\',\''+d[0]+'\')">'+(IQ_ES?d[2]:d[1])+'<span class="ck"></span></button>').join('')+'</div>'+backBtn();
+    h+='<h1>'+T('When did it start?','¿Desde cuándo?')+'</h1><div class="list">'+IQ_DUR.filter(d=>!d[3]).map(d=>'<button class="opt'+(q.d===d[0]?' on':'')+'" onclick="pick(\'d\',\''+d[0]+'\')">'+(IQ_ES?d[2]:d[1])+'<span class="ck"></span></button>').join('')+'</div>'+backBtn();
+  }else if(s==='old'){
+    h+='<h1>'+T('Have you had this same problem before?','¿Ya habías tenido este mismo problema antes?')+'</h1><p class="sub">'+T('Before this time — not a brand-new problem.','Antes de esta vez — no es un problema nuevo.')+'</p>'+yn('old')+backBtn();
+  }else if(s==='doc'){
+    h+='<h1>'+T('Are you here only to get something documented?','¿Vienes solo para que te documenten algo?')+'</h1><p class="sub">'+T('For example a chronic problem or a VA claim.','Por ejemplo un problema crónico o un reclamo del VA.')+'</p>'+yn('doc')+backBtn();
   }else if(s==='worse'){
     h+='<h1>'+T('Has it gotten worse in the last 2–3 days?','¿Ha empeorado en los últimos 2–3 días?')+'</h1>'+yn('w')+backBtn();
   }else if(s==='seen'){
@@ -155,7 +165,7 @@ function draw(){
      +'<p class="honest">'+T('Answer honestly — the medic will examine you and decide your care.','Contesta con la verdad — el médico te va a examinar y decidir tu atención.')+'</p>'
      +'<button class="btn" onclick="q.n=q.n.trim();next()">'+T('Get my code','Ver mi código')+'</button>'+backBtn();
   }else if(s==='done'){
-    const out={v:1,rk:q.rk,ln:q.ln.trim(),a:q.a,d:q.d,w:q.w?1:0,r:q.r?1:0,s:q.s||0,j:q.j?1:0,f:q.f,t:Math.round(Date.now()/60000),l:IQ_ES?'es':'en'};
+    const out={v:1,rk:q.rk,ln:q.ln.trim(),a:q.a,d:q.d,w:q.w?1:0,r:q.r?1:0,s:q.s||0,j:q.j?1:0,f:q.f,t:Math.round(Date.now()/60000),l:IQ_ES?'es':'en'};if(q.old)out.old=1;if(q.doc)out.doc=1;
     if(q.r)out.rw=q.rw?1:0;if(q.n)out.n=q.n.slice(0,100);if(Object.keys(q.x).length)out.x=q.x;
     const url=iqBase()+'#iq='+iqEncode(out);
     if(q.f.length)h+='<div class="warn">⚠️ '+T('Tell the medic NOW — don\'t wait in line.','Avísale al médico AHORA — no esperes en la fila.')
@@ -166,6 +176,7 @@ function draw(){
     iqFUAns(out).forEach(x=>rows.push([x.k,x.v]));
     if(q.n)rows.push([T('Note','Nota'),q.n]);
     h+='<div class="sum">'+rows.map(r=>'<div><span>'+r[0]+'</span><b>'+esc(r[1])+'</b></div>').join('')+'</div>'
+     +clinicBox()
      +'<button class="btn sec" onclick="prev()">‹ '+T('Change an answer','Cambiar una respuesta')+'</button>'
      +'<button class="btn sec" onclick="reset()">'+T('Start over / clear','Empezar de nuevo / borrar')+'</button>'
      +'<p class="note">'+T('Turn up your screen brightness if the medic can\'t scan it. Can\'t be there in person? Take a screenshot and send it to your medic. Nothing was saved or sent by this page.','Sube el brillo de la pantalla si el médico no lo puede escanear. ¿No puedes ir en persona? Sácale captura y mándasela a tu médico. Esta página no guardó ni envió nada.')+'</p>';

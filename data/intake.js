@@ -42,7 +42,10 @@ const IQ_AREAS=[
  ['paper','Paperwork / profile only','Solo papeleo / profile','L-11','a'],
  ['other','Something else','Otra cosa','L-11','o']];
 const IQ_GROUPS={h:['Head, face & ENT','Cabeza, cara y garganta'],m:['Muscles & joints','Músculos y articulaciones'],b:['Stomach, chest & urine','Estómago, pecho y orina'],s:['Skin','Piel'],o:['Other','Otro'],a:['Admin','Administrativo']};
-const IQ_DUR=[['today','Today','Hoy'],['1-3d','1–3 days','1–3 días'],['4-7d','4–7 days','4–7 días'],['1-4w','1–4 weeks','1–4 semanas'],['1mo+','More than a month','Más de un mes']];
+const IQ_DUR=[['today','Today','Hoy'],['1-2d','1–2 days (48 h or less)','1–2 días (48 h o menos)'],['3-7d','3–7 days','3–7 días'],['1-4w','1–4 weeks','1–4 semanas'],['1mo+','More than a month','Más de un mes'],
+ ['1-3d','1–3 days','1–3 días',1],['4-7d','4–7 days','4–7 días',1]]; // last two: legacy codes from older QR codes (hidden)
+/* Mendoza Clinic (2/1 AD Soldier Care) — Sick Call & Appointment Guidelines. / Guía de sick call de la clínica Mendoza. */
+const CLINIC={name:'Mendoza Clinic (2/1 AD Soldier Care)',addr:'11335 SSG Sims St, Fort Bliss, TX 79918',phones:['(915) 742-2273','(915) 742-0186'],sc:'0630–0700',walk:'0830–1600'};
 const IQ_FLAGS=[
  ['breath','Trouble breathing','Me cuesta respirar'],
  ['chest','Chest pain or pressure','Dolor o presión en el pecho'],
@@ -73,21 +76,27 @@ function iqTriage0(q){
   const ES=(typeof LANG!=='undefined'&&LANG==='es')||(typeof IQ_ES!=='undefined'&&IQ_ES);const t=(e,s)=>ES?s:e;
   const f=q.f||[];
   if(f.length)return{c:'red',why:t('Red flag: ','Bandera roja: ')+f.map(x=>iqLbl(IQ_FLAGS,x,ES?2:1)).join(', ')};
+  if(q.doc)return{c:'gray',why:t('Documentation only (chronic / VA) → appointment, not sick call','Solo documentar (crónico / VA) → cita, no sick call')};
   if(q.a==='shave'&&!q.r)return{c:'gray',why:t('Shaving profile / razor bumps — routine, after acute patients','Perfil de afeitar / granitos — rutina, después de los agudos')};
   if(iqArea(q.a)[4]==='a')return{c:'gray',why:t('Administrative — routine appointment','Administrativo — cita de rutina')};
   if(q.r){if(q.rw||q.w)return{c:'orange',why:t('Return visit, worse → AEM / clinic (ADTMC M-1)','Regreso, peor → AEM / clínica (ADTMC M-1)')};
     return{c:'gray',why:t('Already seen for this, not worse','Ya lo vieron por esto, no está peor')};}
-  if(q.d==='today'||q.d==='1-3d')return{c:'orange',why:t('Acute (3 days or less)','Agudo (3 días o menos)')};
+  const a4=iqArea(q.a)[4],d48=q.d==='today'||q.d==='1-2d';
+  if(a4==='m'){if(d48||q.d==='1-3d')return{c:'orange',why:t('Injury/pain within 48 h → sick call','Lesión/dolor en las últimas 48 h → sick call')};
+    return{c:'gray',why:t('Injury older than 48 h → H2F physical therapy evaluation (clinic rule)','Lesión de más de 48 h → evaluación de terapia física en H2F (regla de la clínica)')+(q.w?t(' · reports worse — medic decides',' · dice que empeoró — el médico decide'):'')};}
+  if(['fever','nausea','diarrhea'].includes(q.a))return{c:'orange',why:t('Active fever / nausea / vomiting / diarrhea → sick call','Fiebre / náusea / vómito / diarrea activos → sick call')};
+  if(q.old&&!q.w)return{c:'gray',why:t('Not new (had it before), not worse → appointment','No es nuevo (ya lo tuvo), no peor → cita')};
+  if(d48||q.d==='1-3d')return{c:'orange',why:t('New, started in the last 48 h','Nuevo, empezó en las últimas 48 h')};
   if(q.w)return{c:'orange',why:t('Older problem, worse in the last 2–3 days','Problema viejo, peor en los últimos 2–3 días')};
   if((q.s||0)>=8)return{c:'orange',why:t('Severe pain (8/10 or more)','Dolor fuerte (8/10 o más)')};
-  return{c:'gray',why:t('Ongoing more than 3 days, not worse → consider appointment / PCM','Más de 3 días, no peor → considerar cita / PCM')};
+  return{c:'gray',why:t('Started more than 48 h ago, not worse → consider appointment / PCM','Empezó hace más de 48 h, no peor → considerar cita / PCM')};
 }
 function iqEncode(q){const s=JSON.stringify(q);const b=btoa(unescape(encodeURIComponent(s)));return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function iqDecode(txt){
   try{let m=String(txt).match(/[#&?]iq=([A-Za-z0-9_-]+)/);const b=(m?m[1]:String(txt).trim()).replace(/-/g,'+').replace(/_/g,'/');
     const q=JSON.parse(decodeURIComponent(escape(atob(b+'==='.slice((b.length+3)%4)))));
     if(!q||q.v!==1||typeof q.a!=='string')return null;
-    q.f=Array.isArray(q.f)?q.f.filter(x=>IQ_FLAGS.some(y=>y[0]===x)):[];q.s=Math.max(0,Math.min(10,+q.s||0));q.n=String(q.n||'').slice(0,100);q.rk=IQ_RANKS.includes(q.rk)?q.rk:'';q.ln=String(q.ln||'').replace(/[^A-Za-zÀ-ÿ' -]/g,'').trim().slice(0,30);
+    q.f=Array.isArray(q.f)?q.f.filter(x=>IQ_FLAGS.some(y=>y[0]===x)):[];q.s=Math.max(0,Math.min(10,+q.s||0));q.n=String(q.n||'').slice(0,100);q.rk=IQ_RANKS.includes(q.rk)?q.rk:'';q.old=q.old?1:0;q.doc=q.doc?1:0;q.ln=String(q.ln||'').replace(/[^A-Za-zÀ-ÿ' -]/g,'').trim().slice(0,30);
     const x={};if(q.x&&typeof q.x==='object')Object.keys(q.x).slice(0,20).forEach(k=>{const v=q.x[k];if(/^[a-z]{1,8}$/.test(k)&&(v===0||v===1||(Number.isInteger(v)&&v>=0&&v<10)||(Array.isArray(v)&&v.every(n=>Number.isInteger(n)&&n>=0&&n<10))))x[k]=v;});q.x=x;
     return q;}catch(e){return null;}
 }
