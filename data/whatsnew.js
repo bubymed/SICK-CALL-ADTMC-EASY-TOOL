@@ -3,6 +3,8 @@
    Add a new entry at the TOP for every feature release (same value as APP_VER). Keep it short: 1–3 items.
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
+ {v:'v37',items:[
+   {i:'📘',en:'<b>Operator\'s manual in the app</b> — More → Operator\'s manual: the full TM-style guide (EN/ES PDF). Tap a chapter to open it on that page; it also suggests the chapter for the screen you came from. Works offline after you open it once.',es:'<b>Manual del operador en la app</b> — Más → Manual del operador: la guía completa estilo TM (PDF en EN/ES). Toca un capítulo para abrirlo en esa página; también te sugiere el capítulo de la pantalla de donde vienes. Funciona sin señal después de abrirlo una vez.',go:'manual',btn:['Open manual','Abrir manual']}]},
  {v:'v36',items:[
    {i:'🏥',en:'<b>Mendoza Clinic sick call rules</b> — More → Mendoza Clinic (hours, DD 689, phones, what sick call is for). The patient QR now asks if the problem is new and if they only want documentation; injuries older than 48 h → H2F, documentation → appointment.',es:'<b>Reglas de sick call de la clínica Mendoza</b> — Más → Clínica Mendoza (horario, DD 689, teléfonos, para qué es sick call). El QR del paciente ahora pregunta si el problema es nuevo y si solo quiere documentación; lesiones de más de 48 h → H2F, documentación → cita.',go:'clinic',btn:['Open','Abrir']}]},
  {v:'v35',items:[
