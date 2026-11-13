@@ -1468,9 +1468,9 @@ function renderQ(){
 }
 /* ---- Profile builder ---- */
 const PB_TYPES=['RTD (full duty)','RTD w/ light duty','Quarters'];
-const PB_DUR=['24h','48h','72h','7 days','14 days'];
+const PB_DUR=['24h','48h','72h','5 days']; // 2/1AD memo (16 Oct 2026): BN medic may issue quarters up to 24 h and/or limited duty up to 5 days
 const PB_RESTR=['no PT','no ruck','no running','no jumping','no lifting >20 lbs','no prolonged standing >30 min','no overhead activity','no push-ups/sit-ups','no field duty','low-impact PT only','avoid strenuous activity','avoid heat/friction exposure','no driving/operating equipment (sedating med)'];
-const PB_FU=['Re-eval at the end of the profile','Re-eval at sick call in 48–72h','Return sooner if symptoms worsen','Not improved at re-eval → clinic (Mendoza) / provider','Needs PT or a longer/permanent profile → clinic (Mendoza) provider'];
+const PB_FU=['Re-eval at the end of the profile','Re-eval at sick call in 48–72h','Return sooner if symptoms worsen','Not improved at re-eval → clinic (Mendoza) / provider','Needs more quarters this duty week, limited duty >5 days, PT or a permanent profile → re-eval at BN sick call, then refer to clinic sick call'];
 const PB_PRESETS=[
  {n:'Acute MSK 48h',t:1,d:1,r:[1,2,3,4],f:[0]},
  {n:'MSK + H2F',t:1,d:1,r:[1,2,3,4],f:[0],h:true},
@@ -1492,7 +1492,7 @@ function pbText(){
   if(pb.h)out.push(h2fText()||'Recommend referral to H2F for running/gait instruction, strengthening of weak muscle groups, and injury-prevention classes.');
   return out.join(' ');
 }
-function pbSet(k,v){pb[k]=pb[k]===v?null:v;renderMain();}
+function pbSet(k,v){pb[k]=pb[k]===v?null:v;if(pb.t===2&&pb.d!==null&&pb.d>0)pb.d=0;renderMain();} // quarters: 24 h max
 function pbTog(k,v){pb[k].has(v)?pb[k].delete(v):pb[k].add(v);renderMain();}
 function pbH2F(){pb.h=!pb.h;renderMain();}
 function pbPreset(i){const q=PB_PRESETS[i];pb={t:q.t,d:q.d,r:new Set(q.r),f:new Set(q.f),h:!!q.h,c:''};renderMain();}
@@ -1509,7 +1509,7 @@ function renderProfiles(){
   const sedating=TPLS.some(t=>[...state[t.id].plan].some(p=>/Benadryl|Actifed/.test(p)));
   const chip=(on,fn,label)=>`<span class="chip ${on?'on':''}" onclick="${fn}">${label}</span>`;
   let h=`<h2 class="tpl">🪖 Profiles — builder</h2><p class="tpl-sub">Build the recommendation: type, duration, restrictions and follow-up. The text generates itself — copy it or send it to the note's Disposition. Always as a recommendation, not a medical order.</p><div class="ref">`;
-  h+='<div class="note-hint" style="margin-bottom:10px">🪖 '+L('<b>Unit level:</b> temporary profiles up to <b>14 days</b>, H2F referral and basic treatment. Re-evaluate at the end of the profile; not improved → clinic (Mendoza). PT referrals and longer or permanent profiles are done by the provider at the clinic.','<b>A nivel unidad:</b> profiles temporales de hasta <b>14 días</b>, referido a H2F y tratamiento básico. Re-evaluar al terminar el profile; si no mejora → clínica (Mendoza). Los referidos a PT y los profiles largos o permanentes los hace el proveedor en la clínica.')+'</div>';
+  h+='<div class="note-hint" style="margin-bottom:10px">🪖 '+L('<b>Battalion level (2/1AD memo):</b> <b>quarters up to 24 h</b> and/or <b>limited duty up to 5 days</b>, based on your assessment. More quarters the same duty week or limited duty over 5 days → re-evaluate at battalion sick call, then refer to clinic sick call. PT referrals and longer or permanent profiles are done by the clinic provider. Concerns → battalion PA.','<b>Nivel batallón (memo 2/1AD):</b> <b>quarters hasta 24 h</b> y/o <b>limited duty hasta 5 días</b>, según tu evaluación. Más quarters la misma semana o limited duty de más de 5 días → re-evaluar en el sick call del batallón y luego referir a la clínica. Terapia física y profiles largos o permanentes los hace el proveedor de la clínica. Dudas → PA del batallón.')+'</div>';
   h+=pfbCard();
   h+=h2fCard();
   if(anyPos)h+=`<div class="rfbanner">🚩 There is a POSITIVE red flag in a section — do NOT recommend RTD / light duty / quarters. Escalate to provider/ER per protocol.</div>`;
@@ -1520,7 +1520,8 @@ function renderProfiles(){
   PB_TYPES.forEach((x,i)=>h+=chip(pb.t===i,`pbSet('t',${i})`,x));
   h+=`</div></div>`;
   h+=`<div class="field"><div class="lab"><span class="tag">2</span><span class="name">Duration</span><span class="ask">does not apply to RTD full duty</span></div><div class="chips">`;
-  PB_DUR.forEach((x,i)=>h+=chip(pb.d===i,`pbSet('d',${i})`,x));
+  PB_DUR.forEach((x,i)=>h+=(pb.t===2&&i>0)?'<span class="chip" style="opacity:.35" title="Quarters: 24 h max">'+x+'</span>':chip(pb.d===i,`pbSet('d',${i})`,x));
+  if(pb.t===2)h+='<div class="fuq">'+L('Quarters: <b>24 h max</b> at battalion level. More quarters the same duty week → re-eval at BN sick call, then clinic.','Quarters: <b>24 h máximo</b> a nivel batallón. Más quarters la misma semana → re-evaluar en sick call del batallón y luego clínica.')+'</div>';
   h+=`</div></div>`;
   h+=`<div class="field"><div class="lab"><span class="tag">3</span><span class="name">Restrictions</span><span class="ask">check all that apply</span></div><div class="chips">`;
   PB_RESTR.forEach((x,i)=>h+=chip(pb.r.has(i),`pbTog('r',${i})`,x));
@@ -2190,14 +2191,14 @@ function clr(tid,fid){const s=state[tid];
 function adClrRf(){ad.rf={};ad.rfDone=false;renderMain();renderNote();}
 function adClrPlan(){ad.pl={};ad.dur=null;renderMain();renderNote();}
 
-const DUR_OPTS=['24 h','48 h','72 h','5 days','7 days','until re-evaluated'];
+const DUR_OPTS=['24 h','48 h','72 h','5 days','until re-evaluated']; // limited duty max 5 days at BN level (2/1AD memo)
 function adDurSug(p){
   const a=p.act||'',r=p.rtc||'';let m;
   if(/x\s*3 days|for 3 days|3 days/i.test(a))return{v:'72 h',src:'ADTMC'};
   if((m=a.match(/x\s*(\d+)(?:\s*[–-]\s*(\d+))?\s*hours?/i))){const n=+(m[2]||m[1]);return{v:n<=24?'24 h':n<=48?'48 h':'72 h',src:'ADTMC'};}
   if(/one day|1 day/i.test(a))return{v:'24 h',src:'ADTMC'};
-  if(/1 week|7 days|one week/i.test(r))return{v:'7 days',src:'suggested'};
-  if((m=r.match(/(\d+)\s*days?/i))){const d=+m[1];return{v:d>=7?'7 days':d>=5?'5 days':d>=3?'72 h':'48 h',src:'suggested'};}
+  if(/1 week|7 days|one week/i.test(r))return{v:'5 days',src:'suggested'};
+  if((m=r.match(/(\d+)\s*days?/i))){const d=+m[1];return{v:d>=5?'5 days':d>=3?'72 h':'48 h',src:'suggested'};}
   if(/24 hours/i.test(r))return{v:'24 h',src:'suggested'};
   return{v:'48 h',src:'suggested'};
 }
@@ -2484,7 +2485,8 @@ function adDecisionHtml(p,R){
 }
 function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined')?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>':'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
 /* Mendoza Clinic sick call & appointment guidelines (CLINIC in data/intake.js). / Guía de la clínica Mendoza. */
-function clinicLine(){if(typeof CLINIC==='undefined')return '';return L('Mendoza sick call '+CLINIC.sc+' Mon–Fri with a DD 689 · no DD 689: provider '+CLINIC.walk+' (wait 2–3 h) · appointments ','Sick call en Mendoza '+CLINIC.sc+' lun–vie con DD 689 · sin DD 689: proveedor '+CLINIC.walk+' (espera 2–3 h) · citas ')+CLINIC.phones.join(' / ');}
+function clinicLine(){if(typeof CLINIC==='undefined')return '';const mod=(CLINIC.mod||[]).join(' & ');return L('Clinic sick call '+CLINIC.sc+' · MOD '+mod+' (Mon–Fri). Needs a <b>DD 689 signed by a BAS medic</b> + referral note in <b>SOAP</b> format (reason for referral and care already done) — <a href="#" onclick="event.preventDefault();clinicSoap()">use SOAP-D</a>. Tell the Soldier why and which service. Appointments ','Sick call de la clínica '+CLINIC.sc+' · MOD '+mod+' (lun–vie). Requiere <b>DD 689 firmado por un médico del BAS</b> + nota de referido en formato <b>SOAP</b> (razón del referido y lo que ya se hizo) — <a href="#" onclick="event.preventDefault();clinicSoap()">usar SOAP-D</a>. Explícale al soldado por qué y a qué servicio. Citas ')+CLINIC.phones.join(' / ');}
+function clinicSoap(){try{if(settings.noteFmt!=='soapd')toggleFmt();if(typeof sheetTog==='function')sheetTog(true);}catch(e){}}
 /* ===== Operator's manual (data/manual.js) — open the PDF in the reader's language, jump to a chapter, and suggest the chapter for the screen you came from.
    Manual del operador — abre el PDF en tu idioma, salta a un capítulo y sugiere el capítulo de la pantalla de donde vienes. */
 let manFrom=null,manLang=null;
@@ -2502,13 +2504,38 @@ function renderManual(){if(typeof MANUAL==='undefined')return '';
   h+='<div class="secbar">'+L('Contents','Contenido')+'</div><div class="plist">'+MANUAL.ch.map(row).join('')+'</div>';
   h+='<p class="note-hint foot">'+L('Tap a chapter to open the PDF on that page. On iPhone, if it opens on page 1, scroll to the page number shown. After you open it once with internet, it also works offline. Not an official DA publication.','Toca un capítulo para abrir el PDF en esa página. En iPhone, si abre en la página 1, baja hasta el número de página indicado. Después de abrirlo una vez con internet, también funciona sin señal. No es una publicación oficial del DA.')+'</p>';
   return h;}
-function renderClinic(){const C=CLINIC,tel=p=>'<a href="tel:'+p.replace(/\D/g,'')+'">'+p+'</a>';
-  let h='<h2 class="tpl">🏥 '+L('Mendoza Clinic','Clínica Mendoza')+'</h2><p class="tpl-sub">'+C.name+' · '+L('Sick Call & Appointment Guidelines','Guía de sick call y citas')+'</p>';
+function renderClinic(){const C=CLINIC,tel=p=>'<a href="tel:'+p.replace(/\D/g,'')+'">'+p+'</a>',mod=(C.mod||[]);
+  const box=(ic,t,items)=>'<div class="field"><div class="lab"><span class="tag">'+ic+'</span><span class="name">'+t+'</span></div><div style="line-height:1.6">'+items.map(x=>'• '+x).join('<br>')+'</div></div>';
+  let h='<h2 class="tpl">🏥 '+L('Mendoza Clinic','Clínica Mendoza')+'</h2><p class="tpl-sub">'+C.name+' · '+L('Clinic and unit sick call procedures','Procedimientos de sick call de la clínica y la unidad')+(C.memo?' ('+C.memo+')':'')+'</p>';
   h+='<div class="field"><div class="lab"><span class="tag">📍</span><span class="name">'+C.addr+'</span></div><div>'+L('Appointments: ','Citas: ')+C.phones.map(tel).join(' · ')+'</div></div>';
-  h+='<div class="field"><div class="lab"><span class="tag">⏰</span><span class="name">'+L('Sick call','Sick call')+' '+C.sc+' · '+L('Monday–Friday','lunes a viernes')+'</span></div><div style="line-height:1.6">• '+L('Soldiers sign in on the clipboard at the front desk.','Los soldados firman en la hoja (clipboard) de la recepción.')+'<br>• '+L('<b>The medic is in charge</b>; the medic and provider determine what is medically appropriate.','<b>El médico está a cargo</b>; el médico y el proveedor deciden qué es médicamente apropiado.')+'<br>• '+L('A <b>DD 689</b> is required to be seen during sick call hours.','Se requiere un <b>DD 689</b> para ser visto en horario de sick call.')+'<br>• '+L('No DD 689 but meets criteria: may be seen by the provider on duty '+C.walk+' — wait may exceed 2–3 h.','Sin DD 689 pero cumple criterios: lo puede ver el proveedor de turno de '+C.walk+' — la espera puede pasar de 2–3 h.')+'</div></div>';
-  h+='<div class="field"><div class="lab"><span class="tag">✅</span><span class="name">'+L('Sick call is ONLY for','Sick call es SOLO para')+'</span></div><div style="line-height:1.6">• '+L('Active fever, nausea, vomiting or diarrhea','Fiebre, náusea, vómito o diarrea activos')+'<br>• '+L('New-onset pain, rash or new concerning symptoms not previously experienced','Dolor, sarpullido o síntomas nuevos que no había tenido antes')+'<br>• '+L('Injury within the last 48 hours — <b>older than 48 h → H2F physical therapy evaluation</b>','Lesión en las últimas 48 horas — <b>más de 48 h → evaluación de terapia física en H2F</b>')+'</div></div>';
-  h+='<div class="field"><div class="lab"><span class="tag">⚠️</span><span class="name">'+L('Important reminders','Recordatorios importantes')+'</span></div><div style="line-height:1.6">• '+L('Sick call is not for documenting chronic conditions for VA claims or VA percentage.','Sick call no es para documentar condiciones crónicas para reclamos o porcentaje del VA.')+'<br>• '+L('"I just want it documented" → appointments only.','"Solo quiero que lo documenten" → solo con cita.')+'<br>• '+L('Not following these rules may mean a 2–3 h wait or being sent back to work without an excuse.','No seguir estas reglas puede significar esperar 2–3 h o regresar al trabajo sin excusa.')+'</div></div>';
-  h+='<p class="note-hint">'+L('The patient QR questionnaire applies these rules: injuries older than 48 h and documentation-only visits are sorted as routine (gray) with the reason shown in the triage list.','El cuestionario QR del paciente aplica estas reglas: lesiones de más de 48 h y visitas solo para documentar quedan como rutina (gris) con la razón en la lista de triaje.')+'</p>';
+  h+=box('⏰',L('Clinic sign-in hours (Monday–Friday)','Horario de firma en la clínica (lunes a viernes)'),[
+    L('<b>Clinic sick call '+C.sc+'</b> — sign in on the clipboard at the front desk.','<b>Sick call de la clínica '+C.sc+'</b> — firmar en la hoja de la recepción.'),
+    L('<b>MOD</b> (Medical Officer of the Day, walk-in): <b>'+mod.join('</b> and <b>')+'</b>.','<b>MOD</b> (Medical Officer of the Day, sin cita): <b>'+mod.join('</b> y <b>')+'</b>.'),
+    L('Outside these periods the patient may be told to come back at the next one, unless the condition needs care sooner.','Fuera de estos horarios lo pueden mandar a volver en el siguiente, a menos que necesite atención antes.')]);
+  h+=box('🪖',L('Unit (battalion) sick call comes first','Primero el sick call de la unidad (batallón)'),[
+    L('Unit sick call is the <b>routine first point of evaluation</b>. Soldiers should not bypass battalion screening for problems the battalion can manage.','El sick call de la unidad es el <b>primer punto de evaluación de rutina</b>. El soldado no debe saltarse al batallón con problemas que se pueden manejar ahí.'),
+    L('Do not routinely refer to the clinic what the battalion medical team can assess, treat, document or manage.','No se refiere de rutina a la clínica lo que el equipo médico del batallón puede evaluar, tratar, documentar o manejar.'),
+    L('Unit sick call should end early enough for referred Soldiers to drive out before the roads close at 0630 for PT and sign in at clinic sick call.','El sick call de la unidad debe terminar a tiempo para que el referido salga en vehículo antes de que cierren las calles a las 0630 por el PT y firme en la clínica.')]);
+  h+=box('📝',L('Sick slip and referral','Slip y referido'),[
+    L('Routine clinic sick call requires a <b>DD 689</b> or referral documentation <b>signed by a battalion aid station medic</b>. Without it the Soldier may be sent back to the battalion.','El sick call de rutina en la clínica requiere un <b>DD 689</b> o documentación de referido <b>firmada por un médico del BAS</b>. Sin eso lo pueden regresar al batallón.'),
+    L('The referral states the <b>reason for referral</b> and any assessment or care already done, in <b>SOAP note</b> format (use SOAP-D in the note).','El referido dice la <b>razón</b> y lo que ya se evaluó o hizo, en formato de <b>nota SOAP</b> (usa SOAP-D en la nota).'),
+    L('Make sure the Soldier understands why they are referred and to which service or appointment.','Asegúrate de que el soldado entienda por qué lo refieres y a qué servicio o cita.')]);
+  h+=box('🛏️',L('Quarters and limited duty (battalion medic)','Quarters y limited duty (médico del batallón)'),[
+    L('Battalion medics may issue <b>quarters up to 24 h</b> and/or <b>limited duty up to 5 days</b>, based on the medic assessment.','El médico del batallón puede dar <b>quarters hasta 24 h</b> y/o <b>limited duty hasta 5 días</b>, según su evaluación.'),
+    L('More quarters the same duty week, or limited duty over 5 days → re-evaluate at battalion sick call, then refer to clinic sick call.','Más quarters la misma semana, o limited duty de más de 5 días → re-evaluar en el sick call del batallón y luego referir a la clínica.'),
+    L('Concerns about quarters or limited duty → battalion PA.','Dudas sobre quarters o limited duty → PA del batallón.')]);
+  h+=box('✅',L('Clinic sick call is for','El sick call de la clínica es para'),[
+    L('Active fever, nausea, vomiting or diarrhea','Fiebre, náusea, vómito o diarrea activos'),
+    L('New-onset pain, rash or new concerning symptoms not previously experienced','Dolor, sarpullido o síntomas nuevos que no había tenido antes'),
+    L('Injury within the last 48 hours — <b>older than 48 h → H2F physical therapy evaluation</b>','Lesión en las últimas 48 horas — <b>más de 48 h → evaluación de terapia física en H2F</b>'),
+    L('"I just want it documented" (chronic / VA) → appointment.','"Solo quiero que lo documenten" (crónico / VA) → cita.')]);
+  h+=box('⏳',L('Capacity and wait times','Capacidad y espera'),[
+    L('A provider may have up to about <b>25 patients</b> per clinic period. When full, non-urgent care may be deferred, redirected or scheduled.','Un proveedor puede tener hasta unos <b>25 pacientes</b> por periodo. Cuando se llena, lo no urgente se puede posponer, redirigir o agendar.'),
+    L('Checking in does not guarantee immediate provider evaluation. Acuity comes first.','Firmar no garantiza que lo vea el proveedor de inmediato. Primero va lo más grave.')]);
+  h+=box('🚑',L('Emergencies and ER follow-up','Emergencias y seguimiento de ER'),[
+    L('Paperwork, sign-in windows and workload limits <b>never delay</b> care for an urgent or emergent condition.','El papeleo, los horarios y los límites <b>nunca retrasan</b> la atención de algo urgente o de emergencia.'),
+    L('ER follow-up depends on the reason. If the ER finished the work-up and nothing else is needed, it may be a record-review note (if clinic leadership authorizes). More treatment, meds, duty limits or referrals → clinic provider.','El seguimiento de ER depende del motivo. Si la ER ya terminó y no hace falta más, puede ser una nota de revisión de expediente (si lo autoriza la clínica). Si necesita más tratamiento, medicamentos, restricciones o referidos → proveedor de la clínica.')]);
+  h+='<p class="note-hint">'+L('The app applies these rules: profiles are capped at quarters 24 h / limited duty 5 days, referral results remind you of the DD 689 and SOAP note, and the patient QR sorts injuries older than 48 h and documentation-only visits as routine (gray).','La app aplica estas reglas: los profiles llegan hasta quarters 24 h / limited duty 5 días, los resultados de referido recuerdan el DD 689 y la nota SOAP, y el QR del paciente pone como rutina (gris) las lesiones de más de 48 h y las visitas solo para documentar.')+'</p>';
   return h;}
 /* H2F class referral (data/h2f.js) — on ADTMC B- (MSK) protocols and in Profiles. / Referido a H2F */
 const h2f={cls:new Set(),f:2,w:4};
@@ -2831,7 +2858,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v38';
+const APP_VER='v39';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
