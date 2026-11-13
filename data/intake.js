@@ -45,7 +45,7 @@ const IQ_GROUPS={h:['Head, face & ENT','Cabeza, cara y garganta'],m:['Muscles & 
 const IQ_DUR=[['today','Today','Hoy'],['1-2d','1–2 days (48 h or less)','1–2 días (48 h o menos)'],['3-7d','3–7 days','3–7 días'],['1-4w','1–4 weeks','1–4 semanas'],['1mo+','More than a month','Más de un mes'],
  ['1-3d','1–3 days','1–3 días',1],['4-7d','4–7 days','4–7 días',1]]; // last two: legacy codes from older QR codes (hidden)
 /* Mendoza Clinic (2/1 AD Soldier Care) — Sick Call & Appointment Guidelines. / Guía de sick call de la clínica Mendoza. */
-const CLINIC={name:'Mendoza Clinic (2/1 AD Soldier Care)',addr:'11335 SSG Sims St, Fort Bliss, TX 79918',phones:['(915) 742-2273','(915) 742-0186'],sc:'0630–0700',walk:'0830–1600'};
+const CLINIC={name:'Mendoza Clinic (2/1 AD Soldier Care)',addr:'11335 SSG Sims St, Fort Bliss, TX 79918',phones:['(915) 742-2273','(915) 742-0186'],sc:'0630–0700',mod:['0900–1000','1300–1400'],memo:'2/1AD memo AFAD-BCT-CDR, 16 Oct 2026'}; // MOD = Medical Officer of the Day (walk-in periods)
 const IQ_FLAGS=[
  ['breath','Trouble breathing','Me cuesta respirar'],
  ['chest','Chest pain or pressure','Dolor o presión en el pecho'],
