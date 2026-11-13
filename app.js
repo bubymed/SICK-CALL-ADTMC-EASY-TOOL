@@ -1757,6 +1757,29 @@ function sectionLines(t,s){
 const SD_HPI=['o','pw','pb','q','r','rr','t','sx','e','seen','s2'];
 const SD_AMPLE={a:'Allergies',m:'Meds',phx:'PMH',l:'Last oral intake'};
 const SD_CAT={PN:'I — Provider Now',AEM:'II — AEM Now',MCP:'III — Minor Care Protocol (MCP)',SP:'IV — Specialty referral',APPT:'Appointment / referral requested'};
+/* ===== Clinic referral documentation (2/1AD memo, 16 Oct 2026 — para 5d(5)/(6), 8):
+   referral in SOAP format with the reason for referral and care already done; DD 689 signed by a BAS medic;
+   Soldier understands why and to which service. Referrals switch the note to SOAP-D automatically. */
+function refIsClinic(hi){hi=hi===undefined?adHighest():hi;return !!hi&&(hi==='PN'||hi==='SP'||hi==='APPT'||(hi==='AEM'&&!settings.aemOn));}
+function soapOn(){return settings.noteFmt==='soapd'||(refIsClinic()&&!ad.noAutoSoap);}
+function refLines(){const hi=adHighest();if(!refIsClinic(hi))return [];if(!ad.ref)ad.ref={dd:false,told:false};
+  const entries=noteEntries().filter(e=>e.level&&e.level!=='MCP');
+  const reason=entries.map(e=>(e.sum||(e.title+' ('+e.id+')')).replace(/\.$/,'')+' ['+(SD_CAT[e.level]||e.level)+']'+((e.pos&&e.pos.length)?' — red flag: '+e.pos.join('; '):'')).join('; ');
+  const plans=[];noteActive().forEach(t=>[...state[t.id].plan].forEach(p=>{if(!plans.includes(p))plans.push(p);}));
+  const A=adNoteParts(),care=plans.concat(A.plan).map(x=>x.replace(/\.$/,''));
+  const to=hi==='PN'?'clinic provider now (ER if emergent) — per protocol':hi==='APPT'?'clinic appointment':hi==='SP'?'specialty service per protocol (via clinic)':'clinic sick call (0630–0700) or MOD (0900–1000 / 1300–1400)';
+  const out=['REFERRAL (2/1AD clinic & unit sick call procedures):',
+   '- Reason for referral: '+(reason||'per ADTMC screening')+'.',
+   '- Assessment/care already completed at BN: ADTMC screening'+(care.length?'; '+care.join('; '):'; no treatment given')+'.',
+   '- Referred to: '+to+'.'];
+  if(ad.ref.dd)out.push('- DD 689 completed and signed by BAS medic.');
+  if(ad.ref.told)out.push('- Soldier informed of the reason for referral and the clinic service/appointment.');
+  return out;}
+function refTog(k){if(!ad.ref)ad.ref={dd:false,told:false};ad.ref[k]=!ad.ref[k];renderMain();renderNote();}
+function refBox(){if(!refIsClinic())return '';const r=ad.ref||{},c=(k,t)=>'<span class="chip '+(r[k]?'on':'')+'" onclick="refTog(\''+k+'\')">'+(r[k]?'✓ ':'')+t+'</span>';
+  return '<div class="field" style="margin-top:6px"><div class="lab"><span class="tag">📝</span><span class="name">'+L('Clinic referral — note in SOAP format','Referido a la clínica — nota en formato SOAP')+'</span></div>'
+   +'<div class="dim" style="font-size:.9em;margin-bottom:6px">'+L('The note switched to <b>SOAP-D</b> and added a REFERRAL block (reason, care already done, where to). Tick when done:','La nota cambió a <b>SOAP-D</b> y agregó un bloque REFERRAL (razón, lo que ya se hizo, a dónde). Marca cuando esté hecho:')+'</div>'
+   +'<div class="chips">'+c('dd',L('DD 689 signed by BAS medic','DD 689 firmado por médico del BAS'))+c('told',L('Soldier told why & which service','Soldado sabe por qué y a qué servicio'))+'</div></div>';}
 function soapdNote(stamp){
   const entries=noteEntries();
   const active=noteActive();
@@ -1810,17 +1833,18 @@ function soapdNote(stamp){
   if(ad.prov.trim())L.push('Provider / AEM notified: '+ad.prov.trim()+'.');
   const dt=active.filter(t=>state[t.id].dispoTxt.trim());
   dt.forEach(t=>L.push('Disposition / counseling'+(dt.length>1?' ('+t.title.split('/')[0].trim()+')':'')+': '+state[t.id].dispoTxt.trim()));
+  const rl=refLines();if(rl.length){L.push('');rl.forEach(x=>L.push(x));}
   return L.join('\n');
 }
 function menuClose(){const m=document.getElementById('moreMenu');if(m)m.open=false;}
 document.addEventListener('click',e=>{const m=document.getElementById('moreMenu');if(m&&m.open&&!m.contains(e.target))m.open=false;});
-function toggleFmt(){settings.noteFmt=settings.noteFmt==='soapd'?'compact':'soapd';saveSettings();syncFmtBtn();renderNote();}
-function syncFmtBtn(){const b=document.getElementById('fmtBtn');if(b){b.textContent=settings.noteFmt==='soapd'?'SOAP-D ✓':'SOAP-D';b.classList.toggle('copied',settings.noteFmt==='soapd');}}
+function toggleFmt(){if(settings.noteFmt!=='soapd'&&soapOn()){ad.noAutoSoap=true;}else{settings.noteFmt=settings.noteFmt==='soapd'?'compact':'soapd';if(settings.noteFmt==='soapd')ad.noAutoSoap=false;saveSettings();}syncFmtBtn();renderNote();}
+function syncFmtBtn(){const b=document.getElementById('fmtBtn');if(b){const on=soapOn(),auto=on&&settings.noteFmt!=='soapd';b.textContent=on?'SOAP-D ✓'+(auto?' (auto)':''):'SOAP-D';b.classList.toggle('copied',on);}}
 
 function renderNote(){
-  persist();adPersist();
+  persist();adPersist();try{syncFmtBtn();}catch(e){}
   if(editMode||manualNote){renderNav();return;}
-  if(settings.noteFmt==='soapd'){
+  if(soapOn()){
     const _n=new Date(),_M=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
     const _st=String(_n.getDate()).padStart(2,'0')+' '+_M[_n.getMonth()]+' '+String(_n.getFullYear()).slice(2)+', '+String(_n.getHours()).padStart(2,'0')+String(_n.getMinutes()).padStart(2,'0');
     const _t=soapdNote(_st);
@@ -1871,6 +1895,7 @@ function renderNote(){
     if(A.dispo)L.push('DISPO: '+A.dispo);
     dtpls.forEach(t=>L.push('DISPO'+(dtpls.length>1?' ('+t.title.split('/')[0].trim()+')':'')+': '+state[t.id].dispoTxt.trim()));
   }
+  {const rl=refLines();if(rl.length){L.push('');rl.forEach(x=>L.push(x));}}
   const hasAny=active.length||vl.length||patient.trim()||A.assess.length;
   const el=document.getElementById('note');
   if(!hasAny){
@@ -1940,9 +1965,9 @@ const LV={
 };
 const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · GU',f:'F · Neuro/BH',g:'G · General',h:'H · Eyes',i:'I · Women',j:'J · Skin',k:'K · Environment',l:'L · Misc',m:'M · Return'};
 const gFlags={female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
-let ad={pfb:'',pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{}};
+let ad={pfb:'',pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{},ref:{dd:false,told:false},noAutoSoap:false};
 function adResetProto(){ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
-function adResetAll(){adResetProto();ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
+function adResetAll(){adResetProto();ad.ref={dd:false,told:false};ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 /* Screening answers -> history / exam wording (data/notetags.js) */
 function adTagLines(p){
@@ -2483,10 +2508,10 @@ function adDecisionHtml(p,R){
   h+='<div class="algo-actions"><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
   return h;
 }
-function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined')?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>':'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined')?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>'+refBox():'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
 /* Mendoza Clinic sick call & appointment guidelines (CLINIC in data/intake.js). / Guía de la clínica Mendoza. */
 function clinicLine(){if(typeof CLINIC==='undefined')return '';const mod=(CLINIC.mod||[]).join(' & ');return L('Clinic sick call '+CLINIC.sc+' · MOD '+mod+' (Mon–Fri). Needs a <b>DD 689 signed by a BAS medic</b> + referral note in <b>SOAP</b> format (reason for referral and care already done) — <a href="#" onclick="event.preventDefault();clinicSoap()">use SOAP-D</a>. Tell the Soldier why and which service. Appointments ','Sick call de la clínica '+CLINIC.sc+' · MOD '+mod+' (lun–vie). Requiere <b>DD 689 firmado por un médico del BAS</b> + nota de referido en formato <b>SOAP</b> (razón del referido y lo que ya se hizo) — <a href="#" onclick="event.preventDefault();clinicSoap()">usar SOAP-D</a>. Explícale al soldado por qué y a qué servicio. Citas ')+CLINIC.phones.join(' / ');}
-function clinicSoap(){try{if(settings.noteFmt!=='soapd')toggleFmt();if(typeof sheetTog==='function')sheetTog(true);}catch(e){}}
+function clinicSoap(){try{ad.noAutoSoap=false;if(!soapOn())toggleFmt();syncFmtBtn();renderNote();if(typeof sheetTog==='function')sheetTog(true);}catch(e){}}
 /* ===== Operator's manual (data/manual.js) — open the PDF in the reader's language, jump to a chapter, and suggest the chapter for the screen you came from.
    Manual del operador — abre el PDF en tu idioma, salta a un capítulo y sugiere el capítulo de la pantalla de donde vienes. */
 let manFrom=null,manLang=null;
