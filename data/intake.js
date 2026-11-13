@@ -161,3 +161,26 @@ function iqFUAns(q){/* → [{t:text EN/ES, lv}] for answered follow-ups */
 /* Rank + last name only (what's on the uniform) — no first name, no DoD ID. / Solo rango + apellido. */
 const IQ_RANKS=['PVT','PV2','PFC','SPC','CPL','SGT','SSG','SFC','MSG','1SG','SGM','CSM','WO1','CW2','CW3','CW4','CW5','2LT','1LT','CPT','MAJ','LTC','COL','CIV'];
 function iqWho(q){const rk=IQ_RANKS.includes(q.rk)?q.rk:'',ln=String(q.ln||'').trim();return (rk+' '+ln).trim();}
+
+/* Patient QR → history options (v40). When the medic starts a protocol from the triage list, these answers
+   are also ticked as history options — only when that exact option exists in the template.
+   [question id, answer (yes=1/no=0 or option index; 'd' = duration code), field id, option, deny?]
+   Respuestas del QR → opciones de la historia (solo si la opción existe en la plantilla). */
+const IQ_MAP=[ // optional 6th item: only for these areas (same question id can mean different things)
+ ['d','today','o','today'],
+ ['mech',1,'o','after a fall'],
+ ['swell',1,'sx','swelling'],
+ ['numb',0,'sx','numbness',1],['numb',0,'sx','tingling',1],
+ ['fev',1,'sx','fever',0,['throat','cold','tooth','belly','diarrhea']],['fev',0,'sx','fever',1,['throat','cold','tooth','belly','diarrhea']],
+ ['hit',1,'o','after hitting head',0,['head']],['hit',1,'e','hit head / fall',0,['head']],
+ ['sob',0,'sx','SOB',1,['chest']],
+ ['blood',0,'sx','bloody stool',1,['diarrhea']],
+ ['dia',1,'sx','loose stools',0,['nausea']],
+ ['face',0,'sx','tongue/lip swelling',1,['bite']]
+];
+function iqMapApply(q,t,s){/* → number of options ticked */let n=0;if(!t||!s)return 0;
+  IQ_MAP.forEach(([qid,val,fid,opt,deny,areas])=>{if(areas&&!areas.includes(q.a))return;const v=qid==='d'?q.d:(q.x||{})[qid];if(v===undefined||v===null)return;
+    const hit=v===val;if(!hit)return;
+    const f=t.fields.find(x=>x.id===fid);if(!f)return;const ok=deny?(f.deny||[]).includes(opt):(f.opts||[]).includes(opt);if(!ok)return;
+    const key=deny?'DENY::'+opt:opt;if(!s.fields[fid].has(key)){s.fields[fid].add(key);n++;}});
+  return n;}
