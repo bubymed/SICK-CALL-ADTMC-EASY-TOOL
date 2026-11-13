@@ -1083,7 +1083,7 @@ function updPeek(){
 function renderMore(){
   const row=(ic,txt,on)=>'<div class="prow" onclick="'+on+'"><span class="ptit">'+ic+' '+txt+'</span><span class="dim">›</span></div>';
   let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
-  h+=row('🆕',L('What\'s new','Novedades'),'wnShow(true)')+row('🏥',L('Mendoza Clinic — sick call rules','Clínica Mendoza — reglas de sick call'),"goRef('clinic')")+row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
+  h+=row('📘',L('Operator\'s manual — how to use the app','Manual del operador — cómo usar la app'),"goRef('manual')")+row('🆕',L('What\'s new','Novedades'),'wnShow(true)')+row('🏥',L('Mendoza Clinic — sick call rules','Clínica Mendoza — reglas de sick call'),"goRef('clinic')")+row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
   h+='</div><div class="plist" style="margin-top:14px">';
   h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
   h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
@@ -1091,7 +1091,7 @@ function renderMore(){
   return h;
 }
 function go(id){if(guided&&guided.tpl!==id)guided=null;cur=id;view='tpl';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;}
-function goRef(v){view=v;renderNav();renderMain();document.getElementById('main').scrollTop=0;}
+function goRef(v){if(v==='manual'&&view!=='manual')manFrom=(view==='tpl'&&!ad.pid)?'adtmc':view;view=v;renderNav();renderMain();document.getElementById('main').scrollTop=0;}
 
 /* =========================================================
    RENDER MAIN
@@ -1121,13 +1121,14 @@ function fuQs(t,s,fid){
   }
   return out;
 }
-const GUEST_OK=['admeds','mace','more','preguntas','assess','access','clinic'];
+const GUEST_OK=['admeds','mace','more','preguntas','assess','access','clinic','manual'];
 function isGuest(){return document.body.classList.contains('guest');}
 function guestLocked(){return '<div class="guest-lock"><div class="gl-ic">🔒</div><h2>'+L('For approved medics','Para médicos aprobados')+'</h2><p>'+L('Protocols, dispositions, profiles, notes and the patient list need medic access. As a guest you can use Meds, MACE, Assessments and Questions.','Los protocolos, disposiciones, perfiles, notas y la lista de pacientes necesitan acceso de médico. Como invitado puedes usar Meds, MACE, Assessments y Preguntas.')+'</p><button class="gl-btn" onclick="accGate(true)">🩺 '+L('Get medic access','Pedir acceso de médico')+'</button><button class="gl-sec" onclick="tabGo(\'admeds\')">💊 '+L('Go to Meds','Ir a Meds')+'</button></div>';}
 function renderMain(){
   const m=document.getElementById('main');
   if(isGuest()&&!GUEST_OK.includes(view)){m.innerHTML=guestLocked();return;}
   if(view==='clinic'){m.innerHTML=renderClinic();return;}
+  if(view==='manual'){m.innerHTML=renderManual();return;}
   if(view==='adtmc'){m.innerHTML=renderAD();return;}
   if(view==='admeds'){m.innerHTML=renderADMeds();return;}
   if(view==='ajustes'){m.innerHTML=renderSettings();return;}
@@ -2477,6 +2478,23 @@ function adDecisionHtml(p,R){
 function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined')?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>':'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
 /* Mendoza Clinic sick call & appointment guidelines (CLINIC in data/intake.js). / Guía de la clínica Mendoza. */
 function clinicLine(){if(typeof CLINIC==='undefined')return '';return L('Mendoza sick call '+CLINIC.sc+' Mon–Fri with a DD 689 · no DD 689: provider '+CLINIC.walk+' (wait 2–3 h) · appointments ','Sick call en Mendoza '+CLINIC.sc+' lun–vie con DD 689 · sin DD 689: proveedor '+CLINIC.walk+' (espera 2–3 h) · citas ')+CLINIC.phones.join(' / ');}
+/* ===== Operator's manual (data/manual.js) — open the PDF in the reader's language, jump to a chapter, and suggest the chapter for the screen you came from.
+   Manual del operador — abre el PDF en tu idioma, salta a un capítulo y sugiere el capítulo de la pantalla de donde vienes. */
+let manFrom=null,manLang=null;
+function manUrl(lg,pg){return MANUAL.pdf[lg]+(pg?'#page='+pg:'');}
+function manOpen(pg){const lg=manLang||(LANG==='es'?'es':'en');window.open(manUrl(lg,pg),'_blank','noopener');}
+function manSetLang(l){manLang=l;renderMain();}
+function renderManual(){if(typeof MANUAL==='undefined')return '';
+  const lg=manLang||(LANG==='es'?'es':'en'),T=c=>lg==='es'?c[2]:c[1],P=c=>lg==='es'?(c[4]||c[3]):c[3];
+  const row=c=>'<div class="prow" onclick="manOpen('+P(c)+')"><span class="pid">'+c[0]+'</span><span class="ptit">'+q$(T(c))+'</span><span class="dim">'+L('p. ','pág. ')+P(c)+' ›</span></div>';
+  let h='<h2 class="tpl">📘 '+L('Operator\'s manual','Manual del operador')+'</h2><p class="tpl-sub">'+L('The full guide to Sick Call: install, access, every feature step by step, troubleshooting and glossary. PDF, about 50 pages.','La guía completa de Sick Call: instalación, acceso, cada función paso a paso, solución de problemas y glosario. PDF de unas 50 páginas.')+'</p>';
+  h+='<div class="field"><div class="lab"><span class="tag">🌐</span><span class="name">'+L('Manual language','Idioma del manual')+'</span></div><div class="chips"><span class="chip '+(lg==='en'?'on':'')+'" onclick="manSetLang(\'en\')">English</span><span class="chip '+(lg==='es'?'on':'')+'" onclick="manSetLang(\'es\')">Español</span></div>'
+   +'<div class="algo-actions" style="margin-top:10px"><button onclick="manOpen(0)">📖 '+L('Open the full manual','Abrir el manual completo')+'</button></div></div>';
+  const cx=manFrom&&MANUAL.ctx[manFrom],cc=cx&&MANUAL.ch.find(c=>c[0]===cx);
+  if(cc)h+='<div class="note-hint" style="cursor:pointer" onclick="manOpen('+P(cc)+')">💡 '+L('For the screen you were on: ','Para la pantalla donde estabas: ')+'<b>'+L('Chapter ','Capítulo ')+cc[0]+' — '+q$(T(cc))+'</b> ('+L('p. ','pág. ')+cc[3]+') ›</div>';
+  h+='<div class="secbar">'+L('Contents','Contenido')+'</div><div class="plist">'+MANUAL.ch.map(row).join('')+'</div>';
+  h+='<p class="note-hint foot">'+L('Tap a chapter to open the PDF on that page. On iPhone, if it opens on page 1, scroll to the page number shown. After you open it once with internet, it also works offline. Not an official DA publication.','Toca un capítulo para abrir el PDF en esa página. En iPhone, si abre en la página 1, baja hasta el número de página indicado. Después de abrirlo una vez con internet, también funciona sin señal. No es una publicación oficial del DA.')+'</p>';
+  return h;}
 function renderClinic(){const C=CLINIC,tel=p=>'<a href="tel:'+p.replace(/\D/g,'')+'">'+p+'</a>';
   let h='<h2 class="tpl">🏥 '+L('Mendoza Clinic','Clínica Mendoza')+'</h2><p class="tpl-sub">'+C.name+' · '+L('Sick Call & Appointment Guidelines','Guía de sick call y citas')+'</p>';
   h+='<div class="field"><div class="lab"><span class="tag">📍</span><span class="name">'+C.addr+'</span></div><div>'+L('Appointments: ','Citas: ')+C.phones.map(tel).join(' · ')+'</div></div>';
@@ -2806,7 +2824,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v36';
+const APP_VER='v37';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};

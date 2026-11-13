@@ -29,7 +29,7 @@ Les sale un QR que **ayuda al médico a priorizar la fila de un vistazo**, y al 
 <a href="https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/demo.html"><img src="docs/demo/QR_Checkin_Guide_public.jpg" alt="QR check-in guide" width="560"></a>
 
 ## Manual / Manual del operador
-- 📘 [Operator's manual (EN, PDF)](docs/manual/Sick-Call-Manual-v36-EN.pdf) · [Manual del operador (ES, PDF)](docs/manual/Sick-Call-Manual-v36-ES.pdf) — TM-style guide: install, access, every feature step by step, troubleshooting, glossary and architecture. Not an official DA publication.
+- 📘 [Operator's manual (EN, PDF)](docs/manual/Sick-Call-Manual-EN.pdf) · [Manual del operador (ES, PDF)](docs/manual/Sick-Call-Manual-ES.pdf) — TM-style guide: install, access, every feature step by step, troubleshooting, glossary and architecture. Not an official DA publication.
 
 ## Privacy
 - Everything runs in your browser. **Nothing is sent to any server.**

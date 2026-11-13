@@ -68,6 +68,7 @@ async function accGate(force){
    +'<button class="mg-btn sec" onclick="location.href=\'intake.html\'">🤒 '+L('I\'m a Soldier and I feel sick','Soy soldado y me siento mal')+'</button>'
    +'<button class="mg-btn ghost" onclick="acGuest()">👤 '+L('Continue as a guest','Continuar como invitado')+'<small>'+L('Reference tools only','Solo herramientas de referencia')+'</small></button>'
    +'<div class="mg-links"><button onclick="acReqView(\'medic\')">'+L('No QR? Request access','¿Sin QR? Pedir acceso')+'</button><span>·</span><button onclick="acReqView(\'appr\')">'+L('NCO? Approver','¿NCO? Aprobador')+'</button>'+((typeof canInstall==='function'&&canInstall())?'<span>·</span><button onclick="installApp()">📲 '+L('Install app','Instalar app')+'</button>':'')+'</div>'
+   +'<div class="mg-links" style="margin-top:-4px"><button onclick="acClose();acGuest();goRef(\'manual\');manFrom=\'gate\';renderMain()">📘 '+L('Operator\'s manual','Manual del operador')+'</button></div>'
    +'<div class="mg-em">🚨 '+L('Emergency? Tell a medic now or call 911.','¿Emergencia? Avísale a un médico ya o llama al 911.')+'</div>');
 }
 function acLang(l){try{setLang(l);}catch(e){}accGate(true);}
