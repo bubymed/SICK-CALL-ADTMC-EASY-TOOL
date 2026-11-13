@@ -803,11 +803,11 @@ function renderGuided(){
     const v=gVitals;
     inner=`<div class="fname">VS</div><div class="qtxt">Vitals (skip if not taken yet)</div><div class="vit">
       <label>BP<input type="text" value="${v.bp}" placeholder="120/80" oninput="setVit('x','bp',this.value)"></label>
-      <label>HR<input type="text" value="${v.hr}" placeholder="72" oninput="setVit('x','hr',this.value)"></label>
-      <label>RR<input type="text" value="${v.rr}" placeholder="16" oninput="setVit('x','rr',this.value)"></label>
-      <label>TEMP<input type="text" value="${v.temp}" placeholder="98.6°F" oninput="setVit('x','temp',this.value)"></label>
-      <label>SpO2<input type="text" value="${v.spo2}" placeholder="98%" oninput="setVit('x','spo2',this.value)"></label>
-      <label>PAIN<input type="text" value="${v.pain}" placeholder="6/10" oninput="setVit('x','pain',this.value)"></label>
+      <label>HR<input type="text" inputmode="decimal" enterkeyhint="next" value="${v.hr}" placeholder="72" oninput="setVit('x','hr',this.value)"></label>
+      <label>RR<input type="text" inputmode="decimal" enterkeyhint="next" value="${v.rr}" placeholder="16" oninput="setVit('x','rr',this.value)"></label>
+      <label>TEMP<input type="text" inputmode="decimal" enterkeyhint="next" value="${v.temp}" placeholder="98.6°F" oninput="setVit('x','temp',this.value)"></label>
+      <label>SpO2<input type="text" inputmode="decimal" enterkeyhint="next" value="${v.spo2}" placeholder="98%" oninput="setVit('x','spo2',this.value)"></label>
+      <label>PAIN<input type="text" inputmode="decimal" enterkeyhint="next" value="${v.pain}" placeholder="6/10" oninput="setVit('x','pain',this.value)"></label>
     </div>`;
   } else if(step.k==='sev'){
     inner=`<div class="fname">S · Severity</div><div class="qtxt">"0 to 10, how bad is it?"</div>
@@ -1083,7 +1083,7 @@ function updPeek(){
 function renderMore(){
   const row=(ic,txt,on)=>'<div class="prow" onclick="'+on+'"><span class="ptit">'+ic+' '+txt+'</span><span class="dim">›</span></div>';
   let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
-  h+=row('📘',L('Operator\'s manual — how to use the app','Manual del operador — cómo usar la app'),"goRef('manual')")+row('🆕',L('What\'s new','Novedades'),'wnShow(true)')+row('🏥',L('Mendoza Clinic — sick call rules','Clínica Mendoza — reglas de sick call'),"goRef('clinic')")+row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
+  h+=row('📘',L('Operator\'s manual — how to use the app','Manual del operador — cómo usar la app'),"goRef('manual')")+row('⏱',L('Sick call times (this phone)','Tiempos de sick call (este teléfono)'),"goRef('times')")+row('🆕',L('What\'s new','Novedades'),'wnShow(true)')+row('🏥',L('Mendoza Clinic — sick call rules','Clínica Mendoza — reglas de sick call'),"goRef('clinic')")+row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
   h+='</div><div class="plist" style="margin-top:14px">';
   h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
   h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
@@ -1128,6 +1128,7 @@ function renderMain(){
   const m=document.getElementById('main');
   if(isGuest()&&!GUEST_OK.includes(view)){m.innerHTML=guestLocked();return;}
   if(view==='clinic'){m.innerHTML=renderClinic();return;}
+  if(view==='times'){m.innerHTML=renderTimes();return;}
   if(view==='manual'){m.innerHTML=renderManual();return;}
   if(view==='adtmc'){m.innerHTML=renderAD();return;}
   if(view==='admeds'){m.innerHTML=renderADMeds();return;}
@@ -1156,11 +1157,11 @@ function renderMain(){
   const vv=gVitals;
   if(!ad.pid)h+=`<div class="field"><div class="lab"><span class="tag">VS</span><span class="name">Vitals</span><span class="ask">added at the top of the note</span></div><div class="vit">
     <label>BP<input type="text" value="${vv.bp}" placeholder="120/80" oninput="setVit('${cur}','bp',this.value)"></label>
-    <label>HR<input type="text" value="${vv.hr}" placeholder="72" oninput="setVit('${cur}','hr',this.value)"></label>
-    <label>RR<input type="text" value="${vv.rr}" placeholder="16" oninput="setVit('${cur}','rr',this.value)"></label>
-    <label>TEMP<input type="text" value="${vv.temp}" placeholder="98.6°F" oninput="setVit('${cur}','temp',this.value)"></label>
-    <label>SpO2<input type="text" value="${vv.spo2}" placeholder="98%" oninput="setVit('${cur}','spo2',this.value)"></label>
-    <label>PAIN<input type="text" value="${vv.pain}" placeholder="6/10" oninput="setVit('${cur}','pain',this.value)"></label>
+    <label>HR<input type="text" inputmode="decimal" enterkeyhint="next" value="${vv.hr}" placeholder="72" oninput="setVit('${cur}','hr',this.value)"></label>
+    <label>RR<input type="text" inputmode="decimal" enterkeyhint="next" value="${vv.rr}" placeholder="16" oninput="setVit('${cur}','rr',this.value)"></label>
+    <label>TEMP<input type="text" inputmode="decimal" enterkeyhint="next" value="${vv.temp}" placeholder="98.6°F" oninput="setVit('${cur}','temp',this.value)"></label>
+    <label>SpO2<input type="text" inputmode="decimal" enterkeyhint="next" value="${vv.spo2}" placeholder="98%" oninput="setVit('${cur}','spo2',this.value)"></label>
+    <label>PAIN<input type="text" inputmode="decimal" enterkeyhint="next" value="${vv.pain}" placeholder="6/10" oninput="setVit('${cur}','pain',this.value)"></label>
   </div></div>`;
 
   // CC
@@ -1192,7 +1193,7 @@ function renderMain(){
   if(_hOpen){
   h+='<div class="hwrap'+(_fo?' fbody':'')+'">';
   if(vf.length>2){
-    h+='<div class="hprog">'+vf.map(f=>'<span class="hl'+(hasC(f)?' done':'')+(f.id===s.focus?' cur':'')+'" onclick="fOpen(\''+cur+'\',\''+f.id+'\')" title="'+q$(f.name)+'">'+f.tag+'</span>').join('')+(fi>0?'<span class="hall" onclick="fOpen(\''+cur+'\',null)">'+L('Show all','Ver todo')+'</span>':'')+'</div>';
+    h+='<div class="hprog">'+vf.map(f=>'<span class="hl'+(hasC(f)?' done':'')+(f.id===s.focus?' cur':'')+'" onclick="fOpen(\''+cur+'\',\''+f.id+'\')" title="'+q$(f.name)+'">'+f.tag+'</span>').join('')+(fi>0?'<span class="hall" onclick="fOpen(\''+cur+'\',null)">'+L('Show all','Ver todo')+'</span>':'')+(ampleCan(t,s)?'<span class="hall amp" onclick="ampleNeg()" title="NKDA · no meds · no relevant hx · normal intake">⚡ '+L('AMPLE negative','AMPLE negativo')+'</span>':'')+'</div>';
   }
   vf.forEach((f,i)=>{
     if(i<fi){
@@ -1492,8 +1493,8 @@ function pbText(){
   if(pb.h)out.push(h2fText()||'Recommend referral to H2F for running/gait instruction, strengthening of weak muscle groups, and injury-prevention classes.');
   return out.join(' ');
 }
-function pbSet(k,v){pb[k]=pb[k]===v?null:v;if(pb.t===2&&pb.d!==null&&pb.d>0)pb.d=0;renderMain();} // quarters: 24 h max
-function pbTog(k,v){pb[k].has(v)?pb[k].delete(v):pb[k].add(v);renderMain();}
+function pbSet(k,v){tmMark('plan');pb[k]=pb[k]===v?null:v;if(pb.t===2&&pb.d!==null&&pb.d>0)pb.d=0;renderMain();} // quarters: 24 h max
+function pbTog(k,v){tmMark('plan');pb[k].has(v)?pb[k].delete(v):pb[k].add(v);renderMain();}
 function pbH2F(){pb.h=!pb.h;renderMain();}
 function pbPreset(i){const q=PB_PRESETS[i];pb={t:q.t,d:q.d,r:new Set(q.r),f:new Set(q.f),h:!!q.h,c:''};renderMain();}
 function pbClear(){pb={t:null,d:null,r:new Set(),f:new Set(),h:false,c:''};renderMain();}
@@ -1603,17 +1604,57 @@ function tog(tid,fid,opt,deny){
   if(set.has(key))set.delete(key);
   else{set.add(key);excApply(s,fid,opt,deny);}
   if(fid!=='__cc')s.focus=fid;
-  renderMain();renderNote();
+  tmMark('hist');renderMain();renderNote();
   if(fid!=='__cc')fKeep(fid);
+  histDoneCheck();
 }
+/* ===== Faster sick call (v40) ===== */
+// AMPLE negative: NKDA, no meds, no relevant past hx, normal last intake — fills only the ones still empty.
+const AMPLE_NEG=['a','m','phx','l'];
+// Sick call timer — time per patient and per section, stored ONLY on this phone (sc_tm). No names, no note text.
+let tm=null;const TM_SEC=[['find','Find protocol','Buscar protocolo'],['rf','Red flags','Banderas rojas'],['hist','History (OPQRST/AMPLE)','Historia (OPQRST/AMPLE)'],['vitals','Vitals','Vitales'],['dp','Decision points','Puntos de decisión'],['plan','Plan / profile','Plan / profile'],['finish','Finish (note, forms, save)','Terminar (nota, formularios, guardar)']];
+function tmMark(sec){if(settings.timer===false)return;const now=Date.now();if(!tm){tm={s:now,l:now,sec:{}};return;}let d=now-tm.l;if(d>180000)d=180000;tm.sec[sec]=(tm.sec[sec]||0)+d;tm.l=now;}
+function tmGet(){try{return JSON.parse(localStorage.getItem('sc_tm')||'[]');}catch(e){return [];}}
+function tmEnd(){if(!tm)return;const tot=Object.values(tm.sec).reduce((a,b)=>a+b,0);
+  if(tot>=5000){const ids=noteEntries().map(e=>e.id);const a=tmGet();a.unshift({t:Date.now(),tot,sec:tm.sec,qr:!!ad.iq,ids});a.length=Math.min(a.length,300);try{localStorage.setItem('sc_tm',JSON.stringify(a));}catch(e){}}
+  tm=null;}
+function tmFmt(ms){const s=Math.round(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function tmClear(b){if(b.dataset.arm){try{localStorage.removeItem('sc_tm');}catch(e){}renderMain();return;}b.dataset.arm='1';b.textContent=L('Tap again to delete','Toca otra vez para borrar');}
+function renderTimes(){const a=tmGet(),avg=x=>x.length?x.reduce((p,c)=>p+c,0)/x.length:0,med=x=>{if(!x.length)return 0;const y=[...x].sort((p,q)=>p-q);return y[Math.floor(y.length/2)];};
+  let h='<h2 class="tpl">⏱ '+L('Sick call times','Tiempos de sick call')+'</h2><p class="tpl-sub">'+L('Measured on this phone only, from your first tap to Save. Pauses longer than 3 min count as 3 min. No names or note text are stored.','Medido solo en este teléfono, desde tu primer toque hasta Guardar. Pausas de más de 3 min cuentan como 3 min. No guarda nombres ni texto de notas.')+'</p>';
+  if(settings.timer===false)h+='<div class="note-hint">'+L('The timer is off (Settings).','El contador está apagado (Ajustes).')+'</div>';
+  if(!a.length)return h+'<div class="note-hint">'+L('No patients measured yet. Finish a patient with “Copy + save ➜ next” and the time shows up here.','Todavía no hay pacientes medidos. Termina un paciente con “Copiar + guardar” y el tiempo aparece aquí.')+'</div>';
+  const tots=a.map(x=>x.tot),wk=a.filter(x=>Date.now()-x.t<7*864e5);
+  const row=(k,v)=>'<tr><td>'+k+'</td><td style="text-align:right"><b>'+v+'</b></td></tr>';
+  h+='<div class="ref"><table>'+row(L('Patients measured','Pacientes medidos'),a.length+(wk.length!==a.length?' ('+wk.length+' '+L('this week','esta semana')+')':''))+row(L('Average per patient','Promedio por paciente'),tmFmt(avg(tots)))+row(L('Median per patient','Mediana por paciente'),tmFmt(med(tots)));
+  const qa=a.filter(x=>x.qr).map(x=>x.tot),na=a.filter(x=>!x.qr).map(x=>x.tot);
+  if(qa.length&&na.length)h+=row(L('With patient QR','Con QR del paciente'),tmFmt(avg(qa))+' ('+qa.length+')')+row(L('Without QR','Sin QR'),tmFmt(avg(na))+' ('+na.length+')');
+  h+='</table><h3>'+L('Where the time goes','En qué se va el tiempo')+'</h3><table>';
+  const all=avg(tots)||1;TM_SEC.forEach(([k,ne,ns])=>{const n=L(ne,ns);const v=avg(a.map(x=>x.sec[k]||0));if(v<500)return;const pc=Math.round(100*v/all);h+='<tr><td>'+n+'<div style="height:6px;border-radius:3px;background:var(--acc,#ff9f0a);width:'+Math.max(3,pc)+'%;margin-top:4px"></div></td><td style="text-align:right;white-space:nowrap"><b>'+tmFmt(v)+'</b> · '+pc+'%</td></tr>';});
+  h+='</table></div><div class="algo-actions"><button class="ghost" onclick="tmClear(this)">🗑 '+L('Delete times','Borrar tiempos')+'</button></div>';
+  return h;}
+function ampleCan(t,s){return t&&t.id!=='fu'&&AMPLE_NEG.some(id=>{const f=t.fields.find(x=>x.id===id);return f&&f.opts&&f.opts.length&&!s.fields[id].size&&!(s.custom[id]||'').trim();});}
+function ampleNeg(){const t=TPLS.find(x=>x.id===cur),s=state[cur];if(!t)return;let n=0;
+  AMPLE_NEG.forEach(id=>{const f=t.fields.find(x=>x.id===id);if(f&&f.opts&&f.opts.length&&!s.fields[id].size&&!(s.custom[id]||'').trim()){s.fields[id].add(f.opts[0]);n++;}});
+  const nx=visFields(t).find(f=>!s.fields[f.id].size&&!(s.custom[f.id]||'').trim());s.focus=nx?nx.id:null;
+  tmMark('hist');renderMain();renderNote();histDoneCheck();if(typeof iqToast==='function')iqToast('⚡ '+n+' '+L('AMPLE items set — check them','datos AMPLE marcados — revísalos'));}
+// Auto-advance: red flags done → history; history done → decision points; decision done → result.
+function advOn(){return settings.autoAdv!==false;}
+function advScroll(sel){setTimeout(()=>{const e=typeof sel==='string'?document.querySelector(sel):sel;if(e)e.scrollIntoView({block:'start',behavior:'smooth'});const m=document.getElementById('main');},30);}
+function histComplete(){const t=TPLS.find(x=>x.id===cur),s=state[cur];if(!t||!s)return false;const vf=visFields(t);
+  return vf.length>0&&vf.every(f=>s.fields[f.id].size||(s.custom[f.id]||'').trim())&&s.sev!==null&&s.sev!==undefined&&!!s.duty;}
+let _histWasDone=false;
+function histDoneCheck(){if(!ad.pid||!advOn())return;const d=histComplete();
+  if(d&&!_histWasDone){_histWasDone=true;if(foldOn())foldCur.hist=false;renderMain();advScroll('.dpq:not(.clear):not(.fired)')||0;}
+  if(!d)_histWasDone=false;}
 function fKeep(fid){const el=document.getElementById('fld_'+fid);if(el&&el.scrollIntoView)el.scrollIntoView({block:'nearest'});}
 function fOpen(tid,fid){const s=state[tid];if(!s)return;s.focus=fid;if(foldOn()&&!isFold('hist'))foldCur.hist=true;renderMain();if(fid)setTimeout(()=>{const el=document.getElementById('fld_'+fid);if(el)el.scrollIntoView({block:'center',behavior:'smooth'});},0);}
 function cust(tid,fid,val){
   if(fid==='__cc'){state[tid].ccCustom=val;}else{state[tid].custom[fid]=val;}
   renderNote();
 }
-function setSev(tid,v){state[tid].sev=v;renderMain();renderNote();}
-function setDuty(tid,v){state[tid].duty=state[tid].duty===v?null:v;renderMain();renderNote();}
+function setSev(tid,v){state[tid].sev=v;tmMark('hist');renderMain();renderNote();histDoneCheck();}
+function setDuty(tid,v){state[tid].duty=state[tid].duty===v?null:v;tmMark('hist');renderMain();renderNote();histDoneCheck();}
 function togPlan(tid,p){const s=state[tid].plan;s.has(p)?s.delete(p):s.add(p);renderMain();renderNote();}
 function setDispo(tid,k){
   const t=TPLS.find(x=>x.id===tid), s=state[tid];
@@ -1623,7 +1664,7 @@ function setDispo(tid,k){
     s.dispo=k;s.dispoTxt=t.dispo[k];}
   renderMain();renderNote();
 }
-function setVit(tid,k,v){gVitals[k]=v;adVU();}
+function setVit(tid,k,v){gVitals[k]=v;tmMark('vitals');adVU();}
 function cycleRf(tid,f){
   const rf=state[tid].rf;
   rf[f]=rf[f]==='neg'?'pos':(rf[f]==='pos'?undefined:'neg');
@@ -1647,7 +1688,7 @@ function clearAllAsk(b){
   b._t=setTimeout(()=>{delete b.dataset.arm;b.textContent=b.dataset.lbl;b.classList.remove('armed');},3000);
 }
 function resetAll(){
-  setNoteMode('auto');
+  tm=null;setNoteMode('auto');
   TPLS.forEach(t=>resetState(t.id));resetVitals();adResetAll();
   ad.q='';ad.cat='';ad.excl=[];guided=null;
   medQ='';for(const k in dcUsed)delete dcUsed[k];rfq={n:'',id:'',dob:'',med:''};
@@ -1681,6 +1722,7 @@ function savePatient(btn){
   const txt=document.getElementById('note').textContent.trim();
   if(!txt||txt.startsWith('Tap options'))return;
   const pii=piiFind(txt);if(pii.length){piiNoteWarn(pii);if(btn){const o=btn.textContent;btn.textContent=L('Blocked — remove personal info','Bloqueado — quita datos personales');btn.classList.add('armed');setTimeout(()=>{btn.textContent=o;btn.classList.remove('armed');},2500);}return;}
+  tmEnd();
   const arr=getSaved();
   arr.unshift({t:Date.now(),name:patient.trim()||'(no name)',txt,ad:adSnap()});
   setSaved(arr);
@@ -1930,7 +1972,18 @@ document.addEventListener('input',e=>{
   w.textContent=list.length?'🛡️ '+L('Looks like personal info','Parece un dato personal')+' ('+list.join(', ')+'). '+L('Do not type patient identifiers here.','No escribas identificadores del paciente aquí.'):'';
   w.style.display=list.length?'block':'none';
 },true);
-function copyNote(btn){
+// Finish patient in one tap: copy the note, save it to Saved, clear for the next Soldier; offer the next one in the triage line.
+function finishPatient(btn){const txt=document.getElementById('note').textContent.trim();
+  if(!txt||txt.startsWith('Tap options')||txt.startsWith('Pick a complaint'))return;
+  if(piiFind(txt).length){savePatient(btn);return;}
+  const warnRef=refIsClinic()&&!(ad.ref&&ad.ref.dd);
+  copyTxt(txt,null);tmMark('finish');savePatient(btn);
+  const nx=(typeof iqList!=='undefined')?iqList.filter(e=>!e.seen).sort((a,b)=>iqRank(b)-iqRank(a))[0]:null;
+  const msg='✓ '+L('Note copied and saved','Nota copiada y guardada')+(warnRef?' · ⚠️ '+L('DD 689 not marked','DD 689 sin marcar'):'');
+  if(typeof iqToast==='function')iqToast(msg);
+  if(nx){view='queue';renderNav();renderMain();}else{try{tabGo('adtmc');}catch(e){}}}
+function iqRank(e){try{return ({r:3,o:2,g:1})[e.tr.c]||0;}catch(x){return 0;}}
+function copyNote(btn){tmMark('finish');
   const txt=document.getElementById('note').textContent;
   copyTxt(txt,btn);
 }
@@ -2149,7 +2202,7 @@ function protoTpl(id){
   return find(pref)||Object.keys(CCMAP).map(find).find(Boolean)||{tid:pref,ccs:[]};
 }
 function adOpen(id){
-  foldPid=null;foldCur={};ccRawOff();const keep=ad.prev;adResetProto();ad.pid=id;ad.prev=keep;
+  tmMark('find');_histWasDone=false;foldPid=null;foldCur={};ccRawOff();const keep=ad.prev;adResetProto();ad.pid=id;ad.prev=keep;
   const m=protoTpl(id);if(guided&&guided.tpl!==m.tid)guided=null;
   cur=m.tid;view='tpl';
   if(m.ccs.length===1&&!state[cur].cc.size)state[cur].cc.add(m.ccs[0]);
@@ -2177,7 +2230,7 @@ function adPlanItems(p){
   meds.forEach(x=>{const m=medLookup(x.t);x.m=m;x.sf=m?medSafety(m):{w:[],i:[]};if(x.sf.w.length&&ov[x.key]===undefined)x.on=false;});
   const sg=adDurSug(p);return{adv:fin(adv,'a'),meds,act:fin(act,'c'),rtc:{t:rtc,key:'r',on:ov.r!==undefined?ov.r:!!rtc},dur:{sel:ad.dur||sg.v,sug:sg.v,src:sg.src}};
 }
-function adPlTog(k){const p=getP(ad.pid);const it=adPlanItems(p);const all=[...it.adv,...it.meds,...it.act,it.rtc].find(x=>x.key===k);ad.pl[k]=!(all&&all.on);renderMain();renderNote();}
+function adPlTog(k){tmMark('plan');const p=getP(ad.pid);const it=adPlanItems(p);const all=[...it.adv,...it.meds,...it.act,it.rtc].find(x=>x.key===k);ad.pl[k]=!(all&&all.on);renderMain();renderNote();}
 function adMedLine(x){const m=x.m;if(!m)return x.t;return m.n.replace(/\s+\d.*$/,'')+' — '+m.dose;}
 function adPlanLines(it){
   const L=[];
@@ -2273,7 +2326,7 @@ function adVBanner(){
 }
 function adVitalsInputs(){
   const vv=gVitals,bad=adVitals();
-  const f=(k,l,ph)=>'<label>'+l+'<input type="text" value="'+q$(vv[k])+'" placeholder="'+ph+'" oninput="setVit(\'\',\''+k+'\',this.value)" onchange="adVC()"></label>';
+  const f=(k,l,ph)=>'<label>'+l+'<input type="text" '+(k==='bp'?'':'inputmode="decimal" ')+'enterkeyhint="next" value="'+q$(vv[k])+'" placeholder="'+ph+'" oninput="setVit(\'\',\''+k+'\',this.value)" onchange="adVC()"></label>';
   let h='<div class="field"><div class="lab"><span class="tag">VS</span><span class="name">Vitals</span><span class="ask">optional — only if you have the equipment</span></div><div class="vit">'+f('bp','BP','120/80')+f('hr','HR','72')+f('rr','RR','16')+f('temp','TEMP','98.6')+f('spo2','SpO2','98%')+f('pain','PAIN','0/10')+'</div>';
   h+='<div class="subrow"><div class="half"><div class="mini">Standing (optional, orthostatic): BP</div><input type="text" value="'+q$(ad.stBP)+'" placeholder="110/70" oninput="ad.stBP=this.value;adVU()"></div><div class="half"><div class="mini">Standing HR</div><input type="text" value="'+q$(ad.stHR)+'" placeholder="95" oninput="ad.stHR=this.value;adVU()"></div></div>';
   h+='<div class="chips" style="margin-top:8px"><span class="chip '+(ad.sympBP?'on':'')+'" onclick="ad.sympBP=!ad.sympBP;renderMain();renderNote()">Low BP with symptoms (dizzy/presyncope)</span><span class="chip '+(ad.vovr?'on':'')+'" onclick="ad.vovr=!ad.vovr;renderMain();renderNote()" title="Only if the provider already reviewed and cleared you to continue">Provider reviewed abnormal vitals → continue</span></div></div>';
@@ -2282,10 +2335,13 @@ function adVitalsInputs(){
 function adVC(){if(view==='adtmc'&&ad.pid)renderMain();}
 function adVU(){const e=document.getElementById('vbanner');if(e)e.outerHTML=adVBanner();renderNote();}
 function adRf(f){ad.rf[f]=ad.rf[f]==='neg'?'pos':(ad.rf[f]==='pos'?undefined:'neg');if(ad.rf[f]===undefined)delete ad.rf[f];renderMain();renderNote();}
-function adRfSet(f){ad.rf[f]=ad.rf[f]==='pos'?'neg':'pos';renderMain();renderNote();}
-function adRfAll(){rfList(getP(ad.pid)).forEach(f=>{if(ad.rf[f]!=='pos')ad.rf[f]='neg';});ad.rfDone=true;renderMain();renderNote();}
-function adDPTog(i,j){const a=ad.dp[i]||(ad.dp[i]=[]);const k=a.indexOf(j);k<0?a.push(j):a.splice(k,1);ad.dpDone[i]=true;delete ad.out[i];renderMain();renderNote();}
-function adDPNone(i){ad.dp[i]=[];ad.dpDone[i]=true;delete ad.out[i];renderMain();renderNote();}
+function adRfSet(f){ad.rf[f]=ad.rf[f]==='pos'?'neg':'pos';tmMark('rf');renderMain();renderNote();}
+function adRfAll(){rfList(getP(ad.pid)).forEach(f=>{if(ad.rf[f]!=='pos')ad.rf[f]='neg';});ad.rfDone=true;tmMark('rf');
+  if(advOn()&&!rfList(getP(ad.pid)).some(f=>ad.rf[f]==='pos')){if(histComplete()){renderMain();renderNote();advScroll('.dpq:not(.clear):not(.fired)');return;}if(foldOn())foldCur.hist=true;renderMain();renderNote();advScroll('#fld_'+((state[cur]&&state[cur].focus)||(visFields(TPLS.find(x=>x.id===cur))[0]||{}).id)||'.hwrap');return;}
+  renderMain();renderNote();}
+function adDPTog(i,j){const a=ad.dp[i]||(ad.dp[i]=[]);const k=a.indexOf(j);k<0?a.push(j):a.splice(k,1);ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();}
+function adDPNone(i){ad.dp[i]=[];ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();dpAdv();}
+function dpAdv(){if(!advOn()||!ad.pid)return;const R=adEval(getP(ad.pid));if(R.final)advScroll('.resbox');else advScroll('.dpq:not(.clear):not(.fired)');}
 function adOut(i,o){ad.out[i]=o;renderMain();renderNote();}
 function adUndo(i){delete ad.dpDone[i];delete ad.out[i];delete ad.out['x'+i];renderMain();renderNote();}
 function adHeadHtml(p){
@@ -2358,6 +2414,7 @@ function iqStart(id){const e=iqList.find(x=>x.id===id);if(!e)return;const q=e.q,
   if(s.sev===null||s.sev===undefined)s.sev=q.s;
   if(!s.duty)s.duty=q.j?'Yes':'No';
   if(q.r){ad.ret=true;ad.worse=!!(q.rw||q.w);}
+  ad.iqN=(typeof iqMapApply==='function')?iqMapApply(q,TPLS.find(x=>x.id===cur),s):0;
   ad.iq={q,tr:iqTriage(q)};
   renderMain();renderNote();document.getElementById('main').scrollTop=0;}
 function iqBanner(x){const q=x.q,f=q.f||[];
@@ -2365,7 +2422,7 @@ function iqBanner(x){const q=x.q,f=q.f||[];
   if(f.length)h+='<span class="iq-rf">🚩 '+L('Patient reported: ','El paciente marcó: ')+q$(f.map(c=>iqLbl(IQ_FLAGS,c,LANG==='es'?2:1)).join(', '))+' — '+L('screen the red flags below now.','revisa las banderas rojas ahora.')+'</span>';
   h+=iqFUHtml(q);
   if(q.n)h+='<span>“'+q$(q.n)+'”</span>';
-  return h+'<span class="iq-small">'+L('Onset, severity, duty impact and return visit were pre-filled — check them.','Inicio, severidad, impacto en el trabajo y regreso se prellenaron — revísalos.')+'</span></div>';}
+  return h+'<span class="iq-small">'+L('Onset, severity, duty impact and return visit were pre-filled'+(ad.iqN?', plus '+ad.iqN+' history option(s) from the patient\'s answers':'')+' — check them.','Inicio, severidad, impacto en el trabajo y regreso se prellenaron'+(ad.iqN?', y '+ad.iqN+' opción(es) de la historia con las respuestas del paciente':'')+' — revísalos.')+'</span></div>';}
 let iqStream=null,iqRaf=0;
 function iqLoadJs(src){return new Promise((ok,no)=>{const sc=document.createElement('script');sc.src=src;sc.onload=ok;sc.onerror=no;document.head.appendChild(sc);});}
 async function iqScan(cb){
@@ -2505,7 +2562,7 @@ function adDecisionHtml(p,R){
   }
   const _po=isFold('prov');h+=foldRow('prov',L('Notified at clinic','Avisado en la clínica'),ad.prov&&ad.prov.trim()?q$(ad.prov.trim()):L('optional','opcional'),_po);
   if(_po)h+='<div class="field'+(foldOn()?' fbody':'')+'"><div class="lab"><span class="tag s2">☎</span><span class="name">Notified at clinic (optional)</span></div><input type="text" style="margin-top:0" value="'+q$(ad.prov)+'" placeholder="Rank Last name, if you contacted them" oninput="ad.prov=this.value;renderNote()"></div>';
-  h+='<div class="algo-actions"><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
+  h+='<div class="algo-actions"><button style="background:var(--green);color:var(--on-green)" onclick="finishPatient(this)">✅ '+L('Finish patient — copy + save','Terminar paciente — copiar + guardar')+'</button><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
   return h;
 }
 function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined')?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>'+refBox():'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
@@ -2564,7 +2621,7 @@ function renderClinic(){const C=CLINIC,tel=p=>'<a href="tel:'+p.replace(/\D/g,''
   return h;}
 /* H2F class referral (data/h2f.js) — on ADTMC B- (MSK) protocols and in Profiles. / Referido a H2F */
 const h2f={cls:new Set(),f:2,w:4};
-function h2fTog(k){h2f.cls.has(k)?h2f.cls.delete(k):h2f.cls.add(k);renderMain();renderNote();}
+function h2fTog(k){tmMark('plan');h2f.cls.has(k)?h2f.cls.delete(k):h2f.cls.add(k);renderMain();renderNote();}
 function h2fSet(k,v){h2f[k]=v;renderMain();renderNote();}
 function h2fMedic(){try{return (acRole&&acRole.reg&&acRole.reg.name)||settings.medicName||'';}catch(e){return settings.medicName||'';}}
 function h2fText(){if(typeof H2F_CLASSES==='undefined'||!h2f.cls.size)return '';
@@ -2584,7 +2641,7 @@ function h2fCard(){if(typeof H2F_CLASSES==='undefined')return '';
 /* H2F Class Appointment Slip — printable, prefilled from the H2F card (same print flow as DD 689). Nothing is saved.
    Slip de citas de clases de H2F — imprimible y prellenado. No se guarda nada. */
 function h2fSlipTog(k){h2fTog(k);const el=document.querySelector('#slipOv [data-h2f="'+k+'"]');if(el)el.classList.toggle('sel',h2f.cls.has(k));}
-function h2fSlipOpen(){
+function h2fSlipOpen(){tmMark('finish');
   if(typeof sheetTog==='function')sheetTog(false);
   let o=document.getElementById('slipOv');if(o)o.remove();o=document.createElement('div');o.id='slipOv';
   let qr='';try{const q=qrcode(0,'M');q.addData(H2F_VISIBOOK);q.make();qr=q.createSvgTag({cellSize:3,margin:1,scalable:true});}catch(e){}
@@ -2883,7 +2940,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v39';
+const APP_VER='v40';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -2943,6 +3000,8 @@ function renderSettings(){
   h+='<div class="field"><div class="lab"><span class="tag">✎</span><span class="name">'+L('Note detail (screening)','Detalle de la nota (screening)')+'</span></div><div class="chips">'+[['minimal',L('Minimal — positives only','Mínimo — solo positivos')],['short',L('Short — skip red-flag negatives','Corto — sin negativos de banderas rojas')],['full',L('Full — every pertinent negative','Completo — todos los negativos')]].map(([v,l])=>'<span class="chip '+((settings.noteDetail||'short')===v?'on':'')+'" onclick="settings.noteDetail=\''+v+'\';saveSettings();renderMain();renderNote()">'+l+'</span>').join('')+'</div><div class="fuq">'+L('When all red flags are negative the note already says "No red flags." Short leaves out the long "Denies…" list of each red flag.','Si todas las banderas rojas son negativas, la nota ya dice "No red flags." Corto quita la lista larga de "Denies…" de cada bandera.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">▸</span><span class="name">'+L('Folded sections','Secciones plegadas')+'</span></div><div class="chips"><span class="chip '+(foldOn()?'on':'')+'" onclick="settings.fold=!foldOn();saveSettings();renderMain()">'+(foldOn()?L('ON — sections show as one line; tap to open','ENCENDIDO — cada sección es una línea; toca para abrir'):L('Off — everything open (classic)','Apagado — todo abierto (clásico)'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">≡</span><span class="name">'+L('Compact history','Historial compacto')+'</span></div><div class="chips"><span class="chip '+(settings.hcompact!==false?'on':'')+'" onclick="settings.hcompact=settings.hcompact===false;saveSettings();renderMain()">'+(settings.hcompact!==false?L('ON — answered letters fold up as you move on','ENCENDIDO — las letras respondidas se pliegan al avanzar'):L('Off — show every letter open','Apagado — todas las letras abiertas'))+'</span></div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">⏭</span><span class="name">'+L('Auto-advance','Avance automático')+'</span></div><div class="chips"><span class="chip '+(settings.autoAdv!==false?'on':'')+'" onclick="settings.autoAdv=settings.autoAdv===false;saveSettings();renderMain()">'+(settings.autoAdv!==false?L('ON — red flags done → history → decision points → result','ENCENDIDO — banderas rojas → historia → puntos de decisión → resultado'):L('Off — scroll by hand','Apagado — bajar a mano'))+'</span></div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">⏱</span><span class="name">'+L('Sick call timer','Contador de tiempo')+'</span></div><div class="chips"><span class="chip '+(settings.timer!==false?'on':'')+'" onclick="settings.timer=settings.timer===false;saveSettings();renderMain()">'+(settings.timer!==false?L('ON — measures time per patient on this phone only','ENCENDIDO — mide el tiempo por paciente solo en este teléfono'):L('Off','Apagado'))+'</span><span class="chip" onclick="goRef(\'times\')">'+L('See times ›','Ver tiempos ›')+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🛡️</span><span class="name">Daily auto-delete</span></div><div class="chips"><span class="chip '+(settings.purge?'on':'')+'" onclick="togPurge()">'+(settings.purge?'ON — notes and data from previous days are deleted on open':'Off')+'</span></div><div class="fuq">Recommended: notes contain Soldier information (PII/PHI). Export what you need before the day ends.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🔒</span><span class="name">Lock PIN</span><span class="ask">'+(settings.pin?'active':'no PIN')+'</span></div>';
   h+=settings.pin?'<div class="algo-actions" style="margin-top:0"><button onclick="lockNow()">Lock now</button><button class="ghost" onclick="clearPin()">Remove PIN</button></div>':'<div class="subrow"><div class="half"><input type="password" id="pinNew" inputmode="numeric" maxlength="8" placeholder="4–8 digit PIN" style="margin-top:0"></div><div><button class="gstart" style="width:auto;padding:8px 16px;margin:0" onclick="setPin()">Save PIN</button></div></div>';
@@ -2971,7 +3030,7 @@ function slipData(){
   const hEnd=i<0?lines.length:i;const hist=lines.slice(lines.length-body.length,hEnd).join('\n').replace(/\n{2,}/g,'\n').trim();
   return{cond:cc.join('; '),ymd,name:patient.trim(),rem,hist,full:lines.join('\n').trim()};
 }
-function slipOpen(){
+function slipOpen(){tmMark('finish');
   if(typeof sheetTog==='function')sheetTog(false);
   const D=slipData();let org='';try{org=localStorage.getItem('sc_org')||'';}catch(e){}
   let o=document.getElementById('slipOv');if(o)o.remove();
@@ -3095,7 +3154,7 @@ function daData(){
   const d=new Date(),ymd=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
   return{ymd,cc:cc.join('; '),al,v:gVitals,ent,hi,sum,plan,firstVisit:!ad.ret,ret:ad.ret};
 }
-function daOpen(){
+function daOpen(){tmMark('finish');
   if(typeof sheetTog==='function')sheetTog(false);
   const D=daData();let org='';try{org=localStorage.getItem('sc_org')||'';}catch(e){}
   let o=document.getElementById('slipOv');if(o)o.remove();
@@ -3276,3 +3335,7 @@ function wnInit(n){n=n||0;
   if(document.getElementById('mgOv')||document.getElementById('instOv')||(document.getElementById('lock')||{}).style&&document.getElementById('lock').style.display==='flex'){if(n<600)setTimeout(()=>wnInit(n+1),1500);return;}
   wnShow(false);}
 setTimeout(()=>wnInit(0),1200);
+
+// Vitals: Enter / Next jumps to the following vitals box. / Enter pasa al siguiente signo vital.
+document.addEventListener('keydown',e=>{const t=e.target;if(e.key!=='Enter'||!t||t.tagName!=='INPUT'||!/setVit\(/.test(t.getAttribute('oninput')||''))return;
+  const all=[...document.querySelectorAll('input[oninput*="setVit("]')];const i=all.indexOf(t);e.preventDefault();if(i>=0&&all[i+1])all[i+1].focus();else t.blur();});
