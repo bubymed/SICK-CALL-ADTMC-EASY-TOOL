@@ -1285,7 +1285,10 @@ function phItems(){
 }
 function renderAssess(){
   let h=`<h2 class="tpl">🧪 Assessments / Special Tests</h2><p class="tpl-sub">How to perform each screening test and what a positive means. 68W level — a positive test is documented in EX and escalated, not diagnosed.</p><div class="ref">`;
-  if(typeof HOWTO!=='undefined'){h+='<h3>ⓘ '+L('Step-by-step cards','Tarjetas paso a paso')+'</h3><div class="chips" style="margin-bottom:10px">'+Object.keys(HOWTO).map(k=>'<span class="chip" onclick="htOpen(\''+k+'\')">ⓘ '+q$(HOWTO[k].t)+'</span>').join('')+'</div>';}
+  if(typeof HOWTO!=='undefined'){const chip=k=>'<span class="chip" onclick="htOpen(\''+k+'\')">ⓘ '+q$(HOWTO[k].t)+'</span>';h+='<h3>ⓘ '+L('Step-by-step cards','Tarjetas paso a paso')+'</h3>';
+    if(typeof HOWTO_GROUPS!=='undefined'){const used=new Set();HOWTO_GROUPS.forEach(([g,ks])=>{ks=ks.filter(k=>HOWTO[k]);ks.forEach(k=>used.add(k));if(ks.length)h+='<div class="dim" style="margin:8px 0 4px;font-weight:600">'+L(g[0],g[1])+'</div><div class="chips">'+ks.map(chip).join('')+'</div>';});
+      const rest=Object.keys(HOWTO).filter(k=>!used.has(k));if(rest.length)h+='<div class="dim" style="margin:8px 0 4px;font-weight:600">'+L('🩺 General','🩺 General')+'</div><div class="chips">'+rest.map(chip).join('')+'</div>';h+='<div style="margin-bottom:10px"></div>';}
+    else h+='<div class="chips" style="margin-bottom:10px">'+Object.keys(HOWTO).map(chip).join('')+'</div>';}
   ASSESS.forEach(([sec,rows])=>{
     h+=`<h3>${sec}</h3><table><tr><th style="width:32%">Test / Sign</th><th>How / Interpretation</th></tr>`;
     rows.forEach(r=>h+=`<tr><td class="med">${r[0]}</td><td>${r[1]}</td></tr>`);
@@ -2390,7 +2393,7 @@ function htOpen(k){const c=HOWTO[k];if(!c)return;let o=document.getElementById('
    +'<div class="ht-res"><div><b>'+L('Normal','Normal')+'</b><span>'+q$(c.normal)+'</span></div><div class="pos"><b>'+L('Positive / abnormal','Positivo / anormal')+'</b><span>'+q$(c.pos)+'</span></div></div>'
    +'<p class="ht-act"><b>'+L('What to do','Qué hacer')+':</b> '+q$(c.act)+'</p>'
    +'<p class="ht-unsure">'+L('Not sure how to do it? Mark it as not done and ask your NCO, AEM or provider — never guess.','¿No estás seguro? Márcalo como no hecho y pregunta a tu NCO, AEM o proveedor — nunca adivines.')+'</p>'
-   +'<p class="ht-src">'+L('Source','Fuente')+': '+q$(c.src)+'</p></div>';
+   +'<p class="ht-src">'+L('Source','Fuente')+': '+q$(c.src)+(c.url?' · <a href="'+q$(c.url)+'" target="_blank" rel="noopener">'+L('More on Physiopedia ↗','Más en Physiopedia ↗')+'</a>':'')+'</p></div>';
   o.onclick=e=>{if(e.target===o)htClose();};document.body.appendChild(o);}
 function htClose(){const o=document.getElementById('htOv');if(o)o.remove();}
 function adRfBlock(p){
@@ -2413,6 +2416,10 @@ function adScreenHtml(p,R,opts){
   if(p.note)h+='<div class="note-hint">'+scrLink(p.note)+'</div>';
   if(p.ddx&&p.ddx.length){if(foldOn()){const o=isFold('ddx');h+=foldRow('ddx',L('Differential','Diferencial'),p.ddx.length+' '+L('options','opciones'),o);if(o)h+='<div class="field fbody" style="font-size:.9em;color:var(--dim)">'+p.ddx.map(q$).join(' · ')+'</div>';}
     else h+='<details class="dd"><summary>Differential (ADTMC)</summary><div style="padding:6px 10px;font-size:.9em;color:var(--dim)">'+p.ddx.map(q$).join(' · ')+'</div></details>';}
+  // Special tests for this complaint (data/specialtests.js) — step-by-step ⓘ cards / Pruebas especiales de esta queja
+  if(typeof HOWTO_BY_PROTO!=='undefined'&&HOWTO_BY_PROTO[p.id]){const ks=HOWTO_BY_PROTO[p.id].filter(k=>HOWTO[k]);if(ks.length){const chips='<div class="chips">'+ks.map(k=>'<span class="chip" onclick="htOpen(\''+k+'\')">ⓘ '+q$(HOWTO[k].t)+'</span>').join('')+'</div>';
+    if(foldOn()){const o=isFold('stx');h+=foldRow('stx',L('Special tests — how to','Pruebas especiales — cómo hacerlas'),ks.length+' '+L('cards','tarjetas'),o);if(o)h+='<div class="field fbody">'+chips+'</div>';}
+    else h+='<details class="dd"><summary>'+L('Special tests — how to','Pruebas especiales — cómo hacerlas')+'</summary><div style="padding:6px 10px">'+chips+'</div></details>';}}
   h+=adVBanner();
   if(!(opts&&opts.noRf))h+=adRfBlock(p);
   // flow
@@ -2824,7 +2831,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v37';
+const APP_VER='v38';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};

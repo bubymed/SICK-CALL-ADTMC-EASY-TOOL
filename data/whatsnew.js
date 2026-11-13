@@ -3,6 +3,9 @@
    Add a new entry at the TOP for every feature release (same value as APP_VER). Keep it short: 1–3 items.
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
+ {v:'v38',items:[
+   {i:'🧪',en:'<b>32 new special-test cards</b> — knee (Lachman, drawer, McMurray…), ankle, shoulder, back/hip, neck, elbow/wrist, neuro and abdomen. Step by step, with what a positive means and where to escalate.',es:'<b>32 tarjetas nuevas de pruebas especiales</b> — rodilla (Lachman, cajón, McMurray…), tobillo, hombro, espalda/cadera, cuello, codo/muñeca, neuro y abdomen. Paso a paso, con qué significa un positivo y a dónde escalar.',go:'assess',btn:['See tests','Ver pruebas']},
+   {i:'ⓘ',en:'Each protocol now shows <b>Special tests — how to</b> with the tests for that complaint (e.g. Knee Pain → Lachman, McMurray…).',es:'Cada protocolo ahora muestra <b>Pruebas especiales — cómo hacerlas</b> con las pruebas de esa queja (ej.: Dolor de rodilla → Lachman, McMurray…).'}]},
  {v:'v37',items:[
    {i:'📘',en:'<b>Operator\'s manual in the app</b> — More → Operator\'s manual: the full TM-style guide (EN/ES PDF). Tap a chapter to open it on that page; it also suggests the chapter for the screen you came from. Works offline after you open it once.',es:'<b>Manual del operador en la app</b> — Más → Manual del operador: la guía completa estilo TM (PDF en EN/ES). Toca un capítulo para abrirlo en esa página; también te sugiere el capítulo de la pantalla de donde vienes. Funciona sin señal después de abrirlo una vez.',go:'manual',btn:['Open manual','Abrir manual']}]},
  {v:'v36',items:[
