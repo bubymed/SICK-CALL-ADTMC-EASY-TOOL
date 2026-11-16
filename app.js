@@ -1776,18 +1776,33 @@ function joinSel(f,s){
 function tplHasContent(t,s){
   return !!([...s.cc].length||s.ccCustom.trim()||s.plan.size||s.dispoTxt.trim()||s.sev!==null||s.duty||Object.keys(s.rf).length||t.fields.some(f=>s.fields[f.id].size||(s.custom[f.id]||'').trim()));
 }
+/* ===== History as one paragraph (v41) — faster to copy onto paper. Empty items are left out entirely.
+   Historia en un párrafo — más rápido de copiar a papel. Lo que no se llenó no aparece. */
+function paraOn(){return settings.hpiPara!==false;}
+const SD_LBL={a:'Allergies',m:'Meds',phx:'PMH',l:'Last oral intake',e:'Events',seen:'Seen before',lmp:'LMP'};
+function cap1(x){return x?x.charAt(0).toUpperCase()+x.slice(1):x;}
+function fieldSentence(f,s){const v=joinSel(f,s);if(!v)return '';
+  if(f.prefix!==undefined&&f.prefix!=='')return cap1(v);           // e.g. "Started today, after a fall" / "Worse w/ ruck"
+  return (SD_LBL[f.id]||f.name)+': '+v;}                          // e.g. "Allergies: NKDA"
+function sevSentence(s){const p=[];if(s.sev!==null&&s.sev!==undefined)p.push('Pain/severity '+s.sev+'/10');
+  if(s.duty){const d=String(s.duty);p.push(/^yes$/i.test(d)?'interferes w/ duty/PT':/^no$/i.test(d)?'no duty/PT impact':'duty/PT impact: '+d);}
+  return cap1(p.join(', '));}
+const AMPLE_IDS=['a','m','phx','l','e'];
+function hpiPara(t,s,skip){const out=[];const sv=sevSentence(s);let svDone=!sv;
+  t.fields.forEach(f=>{if(skip&&skip.includes(f.id))return;if(!svDone&&AMPLE_IDS.includes(f.id)){out.push(sv);svDone=true;}let x=fieldSentence(f,s);if(!x)return;
+    if(f.id==='a'&&/^Allergies: NKDA$/i.test(x))x='NKDA';if(f.id==='m'&&/^Meds: none$/i.test(x))x='No meds';out.push(x.replace(/\.$/,''));});
+  if(!svDone)out.push(sv);return out.length?out.join('. ')+'.':'';}
 function sectionLines(t,s){
   const L=[];
   const ccParts=[...s.cc]; if(s.ccCustom.trim())ccParts.push(s.ccCustom.trim());
   if(ccParts.length)L.push(s.ccRaw&&!s.cc.size?'CC: '+ccParts.join(', ')+'.':'CC: C/o '+(t.ccPrefix||'')+ccParts.join(', ')+'.');
+  if(paraOn()){const h=hpiPara(t,s,['exam']);if(h)L.push('HPI: '+h);const ex=t.fields.find(f=>f.id==='exam');if(ex){const v=joinSel(ex,s);if(v)L.push('EX: '+v+'.');}}
+  else{
   t.fields.forEach(f=>{
     const v=joinSel(f,s);
     if(v)L.push(f.tag+': '+v+'.');
   });
-  if(s.sev!==null||s.duty){
-    let line='S: '+(s.sev!==null?s.sev+'/10':'__/10');
-    if(s.duty)line+='. Interferes w/ duty/PT: '+s.duty;
-    L.push(line+'.');
+  {const sv=sevSentence(s);if(sv)L.push('S: '+sv+'.');}
   }
   const rfNeg=(t.redFlags||[]).filter(f=>s.rf[f]==='neg');
   const rfAllN=(t.redFlags||[]).length&&rfNeg.length===(t.redFlags||[]).length;
@@ -1833,48 +1848,55 @@ function soapdNote(stamp){
   const ccAll=[];active.forEach(t=>{const s=state[t.id];const parts=[...s.cc];if(s.ccCustom.trim())parts.push(s.ccCustom.trim());if(parts.length)ccAll.push(s.ccRaw&&!s.cc.size?'CC: '+parts.join(', ')+'.':'CC: C/o '+(t.ccPrefix||'')+parts.join(', ')+'.');});
   if(ccAll.length)ccAll.forEach(x=>L.push(x));else if(entries.length)L.push('CC: '+entries.map(e=>e.title).join('; ')+'.');
   const prot=entries.map(e=>e.title+' ('+e.id+')');
-  if(prot.length)L.push('HPI — protocol: '+prot.join('; ')+'.');
+  if(prot.length&&!paraOn())L.push('HPI — protocol: '+prot.join('; ')+'.');
   const ample=[];
+  if(paraOn()){active.forEach(t=>{const h=hpiPara(t,state[t.id],['exam','lmp']);if(h)L.push((active.length>1?t.title.split('/')[0].trim()+' — ':'')+'HPI: '+h);});}
+  else{
   active.forEach(t=>{const s=state[t.id];t.fields.forEach(f=>{const val=joinSel(f,s);if(!val)return;
     if(SD_HPI.includes(f.id))L.push((prot.length?'':'HPI ')+f.tag+': '+val+'.');
     else if(SD_AMPLE[f.id])ample.push(SD_AMPLE[f.id]+': '+val+'.');
     else if(f.id==='lmp'||f.id==='exam'){/* handled below */}
     else L.push(f.tag+': '+val+'.');});
-    if(s.sev!==null||s.duty){let line='Severity: '+(s.sev!==null?s.sev+'/10':'__/10');if(s.duty)line+='. Interferes w/ duty/PT: '+s.duty;L.push(line+'.');}});
+    {const sv=sevSentence(s);if(sv)L.push(sv+'.');}});
   ample.forEach(x=>L.push(x));
-  if(gFlags.female){const ld=lmpDays();L.push('LMP: '+(gFlags.lmp?(new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)'):'not documented')+(gFlags.preg?' — possible pregnancy':'')+(gFlags.lact?' — lactating':'')+'.');}
+  }
+  if(gFlags.female&&(gFlags.lmp||gFlags.preg||gFlags.lact)){const ld=lmpDays();L.push((gFlags.lmp?'LMP: '+new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)':'')+(gFlags.preg?(gFlags.lmp?' — ':'')+'possible pregnancy':'')+(gFlags.lact?((gFlags.lmp||gFlags.preg)?' — ':'')+'lactating':'')+'.');}
   active.forEach(t=>{const f=t.fields.find(x=>x.id==='lmp');if(f&&!gFlags.female){const val=joinSel(f,state[t.id]);if(val)L.push('LMP: '+val+'.');}});
-  L.push('MRC status / delinquent readiness: '+(gFlags.mrc.trim()||'not documented')+'.');
+  if(gFlags.mrc.trim())L.push('MRC status / delinquent readiness: '+gFlags.mrc.trim()+'.');
   if(gFlags.aviation)L.push('Flight/dive status.');
-  entries.forEach(e=>{if(e.hpi)L.push('Screening ('+e.id+'): '+e.hpi);});
-  L.push('');L.push('O — OBJECTIVE');
-  const vl=[['T',v.temp],['HR',v.hr],['BP',v.bp],['RR',v.rr],['SpO2',v.spo2],['Pain',v.pain]].map(x=>x[0]+' '+(String(x[1]).trim()||'__'));
-  L.push('VS: '+vl.join(', ')+'.');
-  active.forEach(t=>{const s=state[t.id];t.fields.filter(f=>f.id==='exam').forEach(f=>{const val=joinSel(f,s);if(val)L.push('EX: '+val+'.');});});
-  entries.forEach(e=>{if(e.pe)L.push('PE ('+e.id+'): '+e.pe);});
-  L.push('');L.push('A — ASSESSMENT');
+  {const hi=L.findIndex(x=>x.startsWith('HPI: '));const hp=entries.filter(e=>e.hpi).map(e=>e.hpi.trim());
+   if(paraOn()&&active.length===1&&hi>=0&&hp.length)L[hi]+=' '+hp.join(' ');else entries.forEach(e=>{if(e.hpi)L.push('Screening ('+e.id+'): '+e.hpi);});}
+  const OL=[];
+  const vl=[['T',v.temp],['HR',v.hr],['BP',v.bp],['RR',v.rr],['SpO2',v.spo2],['Pain',v.pain]].filter(x=>String(x[1]).trim()).map(x=>x[0]+' '+String(x[1]).trim());
+  if(vl.length)OL.push('VS: '+vl.join(', ')+'.');
+  active.forEach(t=>{const s=state[t.id];t.fields.filter(f=>f.id==='exam').forEach(f=>{const val=joinSel(f,s);if(val)OL.push('EX: '+val+'.');});});
+  entries.forEach(e=>{if(e.pe)OL.push('PE ('+e.id+'): '+e.pe);});
+  if(OL.length){L.push('');L.push('O — OBJECTIVE');OL.forEach(x=>L.push(x));}
+  const aStart=L.length;L.push('');L.push('A — ASSESSMENT');
   if(entries.length){L.push('Algorithm / code: '+entries.map(e=>e.title+' ('+e.id+')').join('; ')+'.');
     L.push('Protocol summary:');
     entries.forEach(e=>{if(entries.length>1)L.push(' '+e.title+' ('+e.id+'):');(e.lines||[]).forEach(x=>L.push('  '+x));});
     const pos=[];entries.forEach(e=>(e.pos||[]).forEach(x=>{if(!pos.includes(x))pos.push(x);}));
     if(pos.length)L.push('*** RED FLAG: '+pos.join('; ')+' ***');
-  }else L.push('No ADTMC protocol screened.');
+  }
   active.forEach(t=>{const rn=(t.redFlags||[]).filter(f=>state[t.id].rf[f]==='pos');if(rn.length)L.push('*** RED FLAG PRESENT: '+rn.join('; ')+' — ESCALATED to provider/ER. ***');});
-  L.push('');L.push('P — PLAN');
+  if(L.length===aStart+2)L.splice(aStart,2);
+  const PL=[];
   const plans=[];active.forEach(t=>[...state[t.id].plan].forEach(p=>{if(!plans.includes(p))plans.push(p);}));
   const A=adNoteParts();
-  plans.forEach(p=>L.push('- Recommend '+p+'.'));A.plan.forEach(p=>L.push('- '+p));
-  if(plans.some(p=>p.includes('— Mendoza Pharmacy')))L.push('Meds are recommendations; pick up at Mendoza Pharmacy (not a prescription).');
-  if(!plans.length&&!A.plan.length)L.push('- Per protocol endpoint / provider direction.');
-  L.push('');L.push('D — DISPOSITION');
+  plans.forEach(p=>PL.push('- Recommend '+p+'.'));A.plan.forEach(p=>PL.push('- '+p));
+  if(plans.some(p=>p.includes('— Mendoza Pharmacy')))PL.push('Meds are recommendations; pick up at Mendoza Pharmacy (not a prescription).');
+  if(PL.length){L.push('');L.push('P — PLAN');PL.forEach(x=>L.push(x));}
+  const dStart=L.length;L.push('');L.push('D — DISPOSITION');
   const hi=adHighest();
-  L.push('Care category: '+(hi?SD_CAT[hi]||LV[hi].s:'not yet determined')+(entries.length>1&&hi?' (higher of the protocols screened)':'')+'.');
+  if(hi)L.push('Care category: '+(SD_CAT[hi]||LV[hi].s)+(entries.length>1?' (higher of the protocols screened)':'')+'.');
   if(hi==='AEM')L.push(settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' for evaluation.':'No AEM available in unit — referred to supervising privileged provider (clinic).');
   const mcp=entries.filter(e=>e.level==='MCP').map(e=>e.id);
   if(mcp.length)L.push('MCP protocol(s): '+mcp.join(', ')+'.');
   if(ad.prov.trim())L.push('Provider / AEM notified: '+ad.prov.trim()+'.');
   const dt=active.filter(t=>state[t.id].dispoTxt.trim());
   dt.forEach(t=>L.push('Disposition / counseling'+(dt.length>1?' ('+t.title.split('/')[0].trim()+')':'')+': '+state[t.id].dispoTxt.trim()));
+  if(L.length===dStart+2)L.splice(dStart,2);
   const rl=refLines();if(rl.length){L.push('');rl.forEach(x=>L.push(x));}
   return L.join('\n');
 }
@@ -1918,7 +1940,9 @@ function renderNote(){
     L.push(...sectionLines(t,state[t.id]));
     if(multi)L.push('');
   });
-  {const _sc=noteEntries().filter(e=>e.hpi||e.pe);if(_sc.length){if(L[L.length-1]!=='')L.push('');_sc.forEach(e=>{const pre=_sc.length>1?e.id+' ':'';if(e.hpi)L.push(pre+'HPI (screening): '+e.hpi);if(e.pe)L.push(pre+'PE (screening): '+e.pe);});}}
+  {const _sc=noteEntries().filter(e=>e.hpi||e.pe);let _merged=false;
+   if(paraOn()&&active.length===1){const hi=L.findIndex(x=>x.startsWith('HPI: '));const hp=_sc.filter(e=>e.hpi).map(e=>e.hpi.trim());if(hi>=0&&hp.length){L[hi]+=' '+hp.join(' ');_merged=true;}}
+   if(_sc.length){if(L[L.length-1]!=='')L.push('');_sc.forEach(e=>{const pre=_sc.length>1?e.id+' ':'';if(e.hpi&&!_merged)L.push(pre+'HPI (screening): '+e.hpi);if(e.pe)L.push(pre+'PE (screening): '+e.pe);});}}
   if(A.assess.length){if(L[L.length-1]!=='')L.push('');L.push('ASSESSMENT:');L.push(...A.assess);}
   // combined plan (dedupe across sections)
   const plans=[];
@@ -2721,7 +2745,7 @@ function adCommit(){
 function adProtoLines(p,R){
   const L=[];let n=0;const v=adVitals();
   const anyV=Object.values(gVitals).some(x=>String(x).trim());
-  L.push(++n+'. Vitals: '+(!anyV?'not taken (field screening)':(v.abn.length?'ABNORMAL — '+v.abn.join('; ')+(ad.vovr?' (provider reviewed, cleared to continue)':''):'within ADTMC limits'))+'.');
+  if(anyV)L.push(++n+'. Vitals: '+((v.abn.length?'ABNORMAL — '+v.abn.join('; ')+(ad.vovr?' (provider reviewed, cleared to continue)':''):'within ADTMC limits'))+'.');
   const rfs=rfList(p),neg=rfs.filter(f=>ad.rf[f]==='neg'),pos=rfs.filter(f=>ad.rf[f]==='pos');
   if(!pos.length&&neg.length&&neg.length===rfs.length)L.push(++n+'. No red flags.');
   else if(pos.length||neg.length)L.push(++n+'. Red flags: '+(pos.length?'PRESENT — '+pos.join('; ')+'. ':'')+(neg.length?'Denies '+neg.join(', ')+'.':''));
@@ -2745,7 +2769,7 @@ function adNoteParts(){
   const entries=noteEntries();
   if(!entries.length)return out;
   const ld=lmpDays();
-  if(gFlags.female){out.assess.push('LMP: '+(gFlags.lmp?(new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)'):'not documented')+(gFlags.preg?' — possible pregnancy':'')+(gFlags.lact?' — lactating':'')+'.');}
+  if(gFlags.female&&(gFlags.lmp||gFlags.preg||gFlags.lact)){out.assess.push((gFlags.lmp?'LMP: '+new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)':'')+(gFlags.preg?(gFlags.lmp?' — ':'')+'possible pregnancy':'')+(gFlags.lact?((gFlags.lmp||gFlags.preg)?' — ':'')+'lactating':'')+'.');}
   if(gFlags.mrc.trim())out.assess.push('MRC: '+gFlags.mrc.trim()+'.');
   if(gFlags.aviation)out.assess.push('Flight/dive status.');
   entries.forEach(e=>{
@@ -2940,7 +2964,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v40';
+const APP_VER='v41';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -3000,6 +3024,7 @@ function renderSettings(){
   h+='<div class="field"><div class="lab"><span class="tag">✎</span><span class="name">'+L('Note detail (screening)','Detalle de la nota (screening)')+'</span></div><div class="chips">'+[['minimal',L('Minimal — positives only','Mínimo — solo positivos')],['short',L('Short — skip red-flag negatives','Corto — sin negativos de banderas rojas')],['full',L('Full — every pertinent negative','Completo — todos los negativos')]].map(([v,l])=>'<span class="chip '+((settings.noteDetail||'short')===v?'on':'')+'" onclick="settings.noteDetail=\''+v+'\';saveSettings();renderMain();renderNote()">'+l+'</span>').join('')+'</div><div class="fuq">'+L('When all red flags are negative the note already says "No red flags." Short leaves out the long "Denies…" list of each red flag.','Si todas las banderas rojas son negativas, la nota ya dice "No red flags." Corto quita la lista larga de "Denies…" de cada bandera.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">▸</span><span class="name">'+L('Folded sections','Secciones plegadas')+'</span></div><div class="chips"><span class="chip '+(foldOn()?'on':'')+'" onclick="settings.fold=!foldOn();saveSettings();renderMain()">'+(foldOn()?L('ON — sections show as one line; tap to open','ENCENDIDO — cada sección es una línea; toca para abrir'):L('Off — everything open (classic)','Apagado — todo abierto (clásico)'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">≡</span><span class="name">'+L('Compact history','Historial compacto')+'</span></div><div class="chips"><span class="chip '+(settings.hcompact!==false?'on':'')+'" onclick="settings.hcompact=settings.hcompact===false;saveSettings();renderMain()">'+(settings.hcompact!==false?L('ON — answered letters fold up as you move on','ENCENDIDO — las letras respondidas se pliegan al avanzar'):L('Off — show every letter open','Apagado — todas las letras abiertas'))+'</span></div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">¶</span><span class="name">'+L('History in the note','Historia en la nota')+'</span></div><div class="chips"><span class="chip '+(settings.hpiPara!==false?'on':'')+'" onclick="settings.hpiPara=true;saveSettings();renderMain();renderNote()">'+L('One paragraph (faster to copy)','Un párrafo (más rápido de copiar)')+'</span><span class="chip '+(settings.hpiPara===false?'on':'')+'" onclick="settings.hpiPara=false;saveSettings();renderMain();renderNote()">'+L('One line per letter (O:, P:, Q:…)','Una línea por letra (O:, P:, Q:…)')+'</span></div><div class="dim" style="font-size:.88em;margin-top:6px">'+L('Anything you did not fill in is left out of the note — no empty “__” fields to copy.','Lo que no llenaste no aparece en la nota — no hay campos vacíos “__” que copiar.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">⏭</span><span class="name">'+L('Auto-advance','Avance automático')+'</span></div><div class="chips"><span class="chip '+(settings.autoAdv!==false?'on':'')+'" onclick="settings.autoAdv=settings.autoAdv===false;saveSettings();renderMain()">'+(settings.autoAdv!==false?L('ON — red flags done → history → decision points → result','ENCENDIDO — banderas rojas → historia → puntos de decisión → resultado'):L('Off — scroll by hand','Apagado — bajar a mano'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">⏱</span><span class="name">'+L('Sick call timer','Contador de tiempo')+'</span></div><div class="chips"><span class="chip '+(settings.timer!==false?'on':'')+'" onclick="settings.timer=settings.timer===false;saveSettings();renderMain()">'+(settings.timer!==false?L('ON — measures time per patient on this phone only','ENCENDIDO — mide el tiempo por paciente solo en este teléfono'):L('Off','Apagado'))+'</span><span class="chip" onclick="goRef(\'times\')">'+L('See times ›','Ver tiempos ›')+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🛡️</span><span class="name">Daily auto-delete</span></div><div class="chips"><span class="chip '+(settings.purge?'on':'')+'" onclick="togPurge()">'+(settings.purge?'ON — notes and data from previous days are deleted on open':'Off')+'</span></div><div class="fuq">Recommended: notes contain Soldier information (PII/PHI). Export what you need before the day ends.</div></div>';

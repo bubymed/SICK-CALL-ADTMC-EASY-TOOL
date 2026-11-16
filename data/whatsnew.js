@@ -3,6 +3,9 @@
    Add a new entry at the TOP for every feature release (same value as APP_VER). Keep it short: 1–3 items.
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
+ {v:'v41',items:[
+   {i:'¶',en:'<b>History as one paragraph:</b> the note writes OPQRST/AMPLE as a single HPI paragraph — faster to copy onto paper. Prefer one line per letter? Settings → History in the note.',es:'<b>Historia en un párrafo:</b> la nota escribe OPQRST/AMPLE como un solo párrafo de HPI — más rápido de copiar a papel. ¿Prefieres una línea por letra? Ajustes → Historia en la nota.'},
+   {i:'✂️',en:'<b>Nothing empty in the note:</b> vitals you did not take, "not documented" items and empty SOAP-D sections no longer appear.',es:'<b>Nada vacío en la nota:</b> los vitales que no tomaste, lo "no documentado" y las secciones SOAP-D vacías ya no aparecen.'}]},
  {v:'v40',items:[
    {i:'⚡',en:'<b>Faster sick call:</b> "AMPLE negative" in one tap, the screen moves on by itself (red flags → history → decision points → result), and <b>✅ Copy + save ➜ next</b> finishes the patient in one tap.',es:'<b>Sick call más rápido:</b> "AMPLE negativo" con un toque, la pantalla avanza sola (banderas rojas → historia → puntos de decisión → resultado) y <b>✅ Copiar + guardar</b> termina al paciente con un toque.'},
    {i:'📋',en:'The patient QR now also ticks history options (onset today, fall, swelling, no numbness, fever…), not just text.',es:'El QR del paciente ahora también marca opciones de la historia (empezó hoy, caída, hinchazón, sin adormecimiento, fiebre…), no solo texto.'},
