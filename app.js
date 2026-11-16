@@ -1783,7 +1783,7 @@ function paraOn(){return settings.hpiPara!==false;}
    vitals (which ones were not taken), allergies when a medication is recommended, LMP for female Soldiers.
    Lo importante que no se hizo sí aparece, en una frase corta. */
 function vsLine(vl){const taken=vl.map(x=>x.split(' ')[0]);const miss=['T','HR','BP','RR','SpO2'].filter(k=>!taken.includes(k));
-  if(!vl.length)return 'VS: not taken';return 'VS: '+vl.join(', ')+(miss.length?' ('+miss.join(', ')+' not taken)':'');}
+  if(!vl.length)return paraOn()?'VS not taken':'VS: not taken';return 'VS: '+vl.join(', ')+(miss.length?' ('+miss.join(', ')+' not taken)':'');}
 function medsRecommended(){try{if(noteActive().some(t=>[...state[t.id].plan].some(p=>/Mendoza Pharmacy|mg|tab/i.test(p))))return true;return adNoteParts().plan.some(p=>/^Meds:/i.test(p));}catch(e){return false;}}
 function lmpLine(){if(!gFlags.female)return '';const ld=lmpDays();
   return (gFlags.lmp?'LMP: '+new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)':'LMP: not documented')+(gFlags.preg?' — possible pregnancy':'')+(gFlags.lact?' — lactating':'')+'.';}
@@ -1796,11 +1796,63 @@ function sevSentence(s){const p=[];if(s.sev!==null&&s.sev!==undefined)p.push('Pa
   if(s.duty){const d=String(s.duty);p.push(/^yes$/i.test(d)?'interferes w/ duty/PT':/^no$/i.test(d)?'no duty/PT impact':'duty/PT impact: '+d);}
   return cap1(p.join(', '));}
 const AMPLE_IDS=['a','m','phx','l','e'];
-function hpiPara(t,s,skip){const out=[];const sv=sevSentence(s);let svDone=!sv;
+/* ===== Natural wording (v42) — the paragraph note reads like a medic wrote it, not a form:
+   "Male SM c/o R ankle pain. Started today after PT. Worse w/ movement, better w/ rest. Rates it 4/10, not affecting duty/PT. NKDA, no meds."
+   Redacción natural — la nota en párrafo suena escrita por un medic, no por un formulario. */
+const H_SIDE={right:'R',left:'L',bilateral:'bilat','right side':'R','left side':'L'};
+const H_ACT=['lifting','sports','duty shift','field training','PT','ruck','field','duty','ruck w/ kevlar'];
+function hSel(f,s){const all=[...(s.fields[f.id]||[])];const sel=all.filter(x=>!x.startsWith('DENY::'));const den=all.filter(x=>x.startsWith('DENY::')).map(x=>x.slice(6));const c=(s.custom[f.id]||'').trim();if(c)sel.push(c);return{sel,den};}
+function hSide(t,s){const f=t.fields.find(x=>x.id==='r');if(!f)return '';const {sel}=hSel(f,s);return sel.length===1&&H_SIDE[sel[0]]?H_SIDE[sel[0]]:'';}
+function hCC(t,s){const parts=[...s.cc];if(s.ccCustom.trim())parts.push(s.ccCustom.trim());if(!parts.length)return '';
+  const sd=hSide(t,s),pre=t.ccPrefix||'';const msk=sd&&(t.fields.find(x=>x.id==='r')||{opts:[]}).opts.includes('right');
+  return msk?sd+' '+pre+parts.join(', '):pre+parts.join(', ')+(sd?', '+sd+' side':'');}
+function hWho(){return gFlags.sex==='M'?'Male SM':gFlags.sex==='F'?'Female SM':'SM';}
+function hpiParaOld(t,s,skip){const out=[];const sv=sevSentence(s);let svDone=!sv;
   t.fields.forEach(f=>{if(skip&&skip.includes(f.id))return;if(!svDone&&AMPLE_IDS.includes(f.id)){out.push(sv);svDone=true;}let x=fieldSentence(f,s);
     if(!x&&f.id==='a'&&medsRecommended())x='Allergies: not documented';if(!x)return;
     if(f.id==='a'&&/^Allergies: NKDA$/i.test(x))x='NKDA';if(f.id==='m'&&/^Meds: none$/i.test(x))x='No meds';out.push(x.replace(/\.$/,''));});
   if(!svDone)out.push(sv);return out.length?out.join('. ')+'.':'';}
+function hpiPara(t,s,skip){const fo0=t.fields.find(f=>f.id==='o');if(t.id==='fu'||(fo0&&!/^(Started|Symptoms) $/.test(fo0.prefix||'')))return hpiParaOld(t,s,skip);const out=[];const F=id=>t.fields.find(f=>f.id===id&&!(skip&&skip.includes(id)));const done=new Set(skip||[]);
+  // onset + events
+  {const fo=F('o'),fe=F('e');let on='';const extra=[];
+   if(fo){const {sel,den}=hSel(fo,s);if(sel.length){const pre=(fo.prefix||'Started ');const af=sel.filter(x=>/^after /.test(x)),ot=sel.filter(x=>!/^after /.test(x));on=pre+[ot.join(', '),af.join(', ')].filter(Boolean).join(' ');}
+     if(den.length)extra.push('Denies '+den.join(', '));}
+   if(fe){const {sel}=hSel(fe,s);sel.forEach(x=>{if(on.includes(x))return;
+     if(/^after /.test(x)||x==='at rest')on=on?on+(/after /.test(on)&&/^after /.test(x)?', ':' ')+x:'Started '+x;
+     else if(H_ACT.includes(x))on=on?on+' during '+x:'Started during '+x;
+     else extra.push(cap1(x));});}
+   if(on)out.push(on);extra.forEach(x=>out.push(x));done.add('o');done.add('e');}
+  // location (side already in the CC when it is just R/L/bilat) + radiation
+  {const fr=F('r');if(fr&&!hSide(t,s)){const v=joinSel(fr,s);if(v)out.push(cap1(v));}done.add('r');
+   const frr=F('rr');if(frr){const v=joinSel(frr,s);if(v)out.push(cap1(v));}done.add('rr');}
+  // quality
+  {const fq=F('q');if(fq){const {sel}=hSel(fq,s);if(sel.length)out.push(fq.name==='Quality'?'Describes it as '+sel.join(', '):cap1(sel.join(', ')));}done.add('q');}
+  // worse / better
+  {const a=[F('pw'),F('pb')].filter(Boolean).map(f=>joinSel(f,s)).filter(Boolean);if(a.length)out.push(cap1(a.map((x,i)=>i?x.charAt(0).toLowerCase()+x.slice(1):x).join(', ')));done.add('pw');done.add('pb');}
+  // timing
+  {const ft=F('t');if(ft){const v=joinSel(ft,s);if(v)out.push(cap1(v));}done.add('t');}
+  // other symptoms (+ what they deny)
+  {const fx=F('sx');if(fx){const v=joinSel(fx,s);if(v)out.push(cap1(v));}done.add('sx');}
+  // severity + duty
+  {const p=[];if(s.sev!==null&&s.sev!==undefined)p.push('Rates it '+s.sev+'/10');
+   if(s.duty){const d=String(s.duty);p.push(/^yes$/i.test(d)?'affecting duty/PT':/^no$/i.test(d)?'not affecting duty/PT':'duty/PT: '+d);}
+   if(p.length)out.push(cap1(p.join(', ')));}
+  // past history
+  {const fp=F('phx');if(fp){const v=joinSel(fp,s);if(v)out.push(/^no (relevant )?hx$/i.test(v)?'No relevant PMH':/similar/i.test(v)?cap1(v):'PMH: '+v);}done.add('phx');}
+  // allergies + meds in one short sentence
+  {const fa=F('a'),fm=F('m');const b=[];
+   if(fa&&!(fa.opts||[]).includes('NKDA')){const x=fieldSentence(fa,s);if(x)b.push(x);}else if(fa){const v=joinSel(fa,s);if(v)b.push(/^NKDA$/i.test(v)?'NKDA':'Allergic to '+v.replace(/^NKDA,\s*/i,''));else if(medsRecommended())b.push('allergies not documented');}
+   if(fm){const v=joinSel(fm,s);if(v)b.push(/^none$/i.test(v)?'no meds':(fm.opts||[]).includes('none')?'takes '+v:'meds: '+v);}
+   if(b.length)out.push(cap1(b.join(', ')));done.add('a');done.add('m');}
+  // last intake
+  {const fl=F('l');if(fl){const v=joinSel(fl,s);if(v)out.push(cap1(v));}done.add('l');}
+  // anything else (seen at sick call, last visit, LMP typed in a template…)
+  t.fields.forEach(f=>{if(done.has(f.id)||(skip&&skip.includes(f.id)))return;const x=fieldSentence(f,s);if(x)out.push(x.replace(/\.$/,''));});
+  return out.length?out.map(x=>x.replace(/\.$/,'')).join('. ')+'.':'';}
+/* Assessment in plain words: "Ankle pain (ADTMC B-9), no red flags — minor care at sick call." */
+function hTitle(x){return String(x).split(' ').map((w,i)=>i&&!/[A-Z]{2}|^[A-Z]-|\//.test(w)&&!/^[A-Z]{1}$/.test(w)?w.toLowerCase():w).join(' ');}
+function hLvl(lv){return {PN:'needs a provider now',AEM:'needs '+aemTxt()+' today',MCP:'minor care at sick call',SP:'specialty referral',APPT:'clinic appointment'}[lv]||(LV[lv]?LV[lv].s:'');}
+function hBits(bits){return bits.map(b=>b.replace(/\.$/,'').replace(/^Positive: (.)(?=[a-z])/,(m,c)=>'positive for '+c.toLowerCase()).replace(/^Positive: /,'positive for ').replace(/^(Test )?[Rr]esult: /,'').replace(/^No red flags$/,'no red flags').replace(/^Denies /,'denies ').replace(/^Abnormal vitals: /,'abnormal vitals: ').replace(/^RED FLAG present: /,'RED FLAG: ')).filter(Boolean);}
 function sectionLines(t,s){
   const L=[];
   const ccParts=[...s.cc]; if(s.ccCustom.trim())ccParts.push(s.ccCustom.trim());
@@ -1831,7 +1883,7 @@ function refIsClinic(hi){hi=hi===undefined?adHighest():hi;return !!hi&&(hi==='PN
 function soapOn(){return settings.noteFmt==='soapd'||(refIsClinic()&&!ad.noAutoSoap);}
 function refLines(){const hi=adHighest();if(!refIsClinic(hi))return [];if(!ad.ref)ad.ref={dd:false,told:false};
   const entries=noteEntries().filter(e=>e.level&&e.level!=='MCP');
-  const reason=entries.map(e=>(e.sum||(e.title+' ('+e.id+')')).replace(/\.$/,'')+' ['+(SD_CAT[e.level]||e.level)+']'+((e.pos&&e.pos.length)?' — red flag: '+e.pos.join('; '):'')).join('; ');
+  const reason=paraOn()?entries.map(e=>(e.sumH||e.sum).replace(/\.$/,'')).join('; '):entries.map(e=>(e.sum||(e.title+' ('+e.id+')')).replace(/\.$/,'')+' ['+(SD_CAT[e.level]||e.level)+']'+((e.pos&&e.pos.length)?' — red flag: '+e.pos.join('; '):'')).join('; ');
   const plans=[];noteActive().forEach(t=>[...state[t.id].plan].forEach(p=>{if(!plans.includes(p))plans.push(p);}));
   const A=adNoteParts(),care=plans.concat(A.plan).map(x=>x.replace(/\.$/,''));
   const to=hi==='PN'?'clinic provider now (ER if emergent) — per protocol':hi==='APPT'?'clinic appointment':hi==='SP'?'specialty service per protocol (via clinic)':'clinic sick call (0630–0700) or MOD (0900–1000 / 1300–1400)';
@@ -1847,7 +1899,55 @@ function refBox(){if(!refIsClinic())return '';const r=ad.ref||{},c=(k,t)=>'<span
   return '<div class="field" style="margin-top:6px"><div class="lab"><span class="tag">📝</span><span class="name">'+L('Clinic referral — note in SOAP format','Referido a la clínica — nota en formato SOAP')+'</span></div>'
    +'<div class="dim" style="font-size:.9em;margin-bottom:6px">'+L('The note switched to <b>SOAP-D</b> and added a REFERRAL block (reason, care already done, where to). Tick when done:','La nota cambió a <b>SOAP-D</b> y agregó un bloque REFERRAL (razón, lo que ya se hizo, a dónde). Marca cuando esté hecho:')+'</div>'
    +'<div class="chips">'+c('dd',L('DD 689 signed by BAS medic','DD 689 firmado por médico del BAS'))+c('told',L('Soldier told why & which service','Soldado sabe por qué y a qué servicio'))+'</div></div>';}
+/* ===== Natural note (paragraph setting, default): S / O / A / P (/ D) written in plain sentences.
+   Nota natural: S / O / A / P (/ D) en oraciones simples, como la escribiría un medic. */
+function humanNote(stamp,soap){
+  const entries=noteEntries(),active=noteActive(),A=adNoteParts();
+  const v=gVitals,vl=[['T',v.temp],['HR',v.hr],['BP',v.bp],['RR',v.rr],['SpO2',v.spo2],['Pain',v.pain]].filter(x=>String(x[1]).trim()).map(x=>x[0]+' '+String(x[1]).trim());
+  if(!active.length&&!entries.length&&!vl.length&&!patient.trim())return '';
+  const L=[];L.push((patient.trim()?('PT: '+patient.trim()+' — '):'')+stamp);
+  const posAll=[];active.forEach(t=>(t.redFlags||[]).forEach(f=>{if(state[t.id].rf[f]==='pos')posAll.push(f);}));
+  if(posAll.length)L.push('*** RED FLAG: '+posAll.join('; ')+' — sent to provider/ER ***');
+  if(A.rfpos.length)L.push('*** RED FLAG: '+A.rfpos.join('; ')+' ***');
+  if(adHighest()==='PN')L.push('*** SEND TO CLINIC — PROVIDER NOW ***');
+  L.push('');
+  // S
+  const multi=active.length>1,hp=entries.filter(e=>e.hpi).map(e=>e.hpi.trim());let who=hWho(),first=true;
+  active.forEach(t=>{const s=state[t.id];let cc=hCC(t,s);if(!cc&&first&&entries.length)cc=entries.map(e=>hTitle(e.title).toLowerCase()).join(', ');let h=hpiPara(t,s,['exam','lmp']);
+    const rfs=t.redFlags||[],neg=rfs.filter(f=>s.rf[f]==='neg');if(neg.length)h+=(h?' ':'')+(neg.length===rfs.length?'No red flags.':'Denies '+neg.join(', ')+'.');
+    const lead=cc?(first?who+' c/o ':'Also c/o ')+cc+'.':(first&&gFlags.sex?who+'.':'');
+    let line=[lead,h].filter(Boolean).join(' ');if(!multi&&hp.length)line+=(line?' ':'')+hp.join(' ');
+    if(line)L.push((first?'S: ':'')+line);first=false;});
+  if(!active.length&&entries.length)L.push('S: '+who+' c/o '+entries.map(e=>hTitle(e.title).toLowerCase()).join(', ')+'.'+(hp.length?' '+hp.join(' '):''));
+  else if(multi&&hp.length)hp.forEach(x=>L.push(x));
+  {const x=lmpLine();if(x)L.push(x);}
+  active.forEach(t=>{const f=t.fields.find(x=>x.id==='lmp');if(f&&!gFlags.female){const val=joinSel(f,state[t.id]);if(val)L.push('LMP: '+val+'.');}});
+  if(gFlags.mrc.trim())L.push('MRC: '+gFlags.mrc.trim()+'.');
+  if(gFlags.aviation)L.push('On flight/dive status.');
+  // O
+  const O=[vsLine(vl)];active.forEach(t=>{const f=t.fields.find(x=>x.id==='exam');if(f){const val=joinSel(f,state[t.id]);if(val)O.push('Exam: '+val);}});
+  entries.forEach(e=>{if(e.pe)O.push(e.pe.trim());});
+  L.push('O: '+O.map(x=>x.replace(/\.$/,'')).join('. ')+'.');
+  // A
+  const as=A.assess.filter(x=>!/^(MRC:|Flight\/dive)/.test(x));if(as.length)L.push('A: '+as.join(' '));
+  // P
+  const plans=[];active.forEach(t=>[...state[t.id].plan].forEach(p=>{if(!plans.includes(p))plans.push(p);}));
+  const P=plans.map(p=>cap1(p)+'.').concat(A.plan);
+  if(P.length){L.push('P:');P.forEach(x=>L.push('- '+x));if(plans.some(p=>p.includes('— Mendoza Pharmacy')))L.push('Meds are recommendations; pick up at Mendoza Pharmacy (not a prescription).');}
+  // D
+  const D=[];const hi=adHighest();
+  if(soap&&hi){const mcp=entries.filter(e=>e.level==='MCP').map(e=>e.id);
+    if(hi==='MCP')D.push('Cat III — minor care at sick call'+(mcp.length?' ('+mcp.join(', ')+')':'')+'.');
+    else D.push(({PN:'Cat I — ',AEM:'Cat II — ',SP:'Cat IV — ',APPT:''}[hi]||'')+((A.dispo?A.dispo.charAt(0).toLowerCase()+A.dispo.slice(1):'')||hLvl(hi)+'.'));}
+  else if(A.dispo)D.push(A.dispo);
+  if(soap&&ouOn()&&hi==='MCP')D.push(ouLine(hi));
+  if(ad.prov.trim())D.push('Notified: '+ad.prov.trim()+'.');
+  active.forEach(t=>{const d=state[t.id].dispoTxt.trim();if(d)D.push(d);});
+  if(D.length)L.push('D: '+D.join(' '));
+  const rl=refLines();if(rl.length){L.push('');rl.forEach(x=>L.push(x));}
+  return L.join('\n');}
 function soapdNote(stamp){
+  if(paraOn())return humanNote(stamp,true);
   const entries=noteEntries();
   const active=noteActive();
   const v=gVitals,anyV=Object.values(v).some(x=>String(x).trim());
@@ -1929,6 +2029,9 @@ function renderNote(){
     const _t=soapdNote(_st);
     if(_t){document.getElementById('note').textContent=_t;renderNav();return;}
   }
+  if(paraOn()){const _n=new Date(),_M=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+    const _st=String(_n.getDate()).padStart(2,'0')+' '+_M[_n.getMonth()]+' '+String(_n.getFullYear()).slice(2)+', '+String(_n.getHours()).padStart(2,'0')+String(_n.getMinutes()).padStart(2,'0');
+    const _t=humanNote(_st,false);if(_t){document.getElementById('note').textContent=_t;renderNav();return;}}
   const L=[];const A=adNoteParts();
   // header: date/time + patient
   const now=new Date();
@@ -2271,7 +2374,7 @@ function adPlanItems(p){
   const sg=adDurSug(p);return{adv:fin(adv,'a'),meds,act:fin(act,'c'),rtc:{t:rtc,key:'r',on:ov.r!==undefined?ov.r:!!rtc},dur:{sel:ad.dur||sg.v,sug:sg.v,src:sg.src}};
 }
 function adPlTog(k){tmMark('plan');const p=getP(ad.pid);const it=adPlanItems(p);const all=[...it.adv,...it.meds,...it.act,it.rtc].find(x=>x.key===k);ad.pl[k]=!(all&&all.on);renderMain();renderNote();}
-function adMedLine(x){const m=x.m;if(!m)return x.t;return m.n.replace(/\s+\d.*$/,'')+' — '+m.dose;}
+function adMedLine(x){const m=x.m;if(!m)return x.t;return m.n.replace(/\s+\d.*$/,'')+(paraOn()?' '+m.dose.charAt(0).toLowerCase()+m.dose.slice(1):' — '+m.dose);}
 function adPlanLines(it){
   const L=[];
   const meds=it.meds.filter(x=>x.on).map(adMedLine);
@@ -2281,6 +2384,7 @@ function adPlanLines(it){
   const act=it.act.filter(x=>x.on).map(x=>x.t.replace(/[.;]+$/,''));
   if(act.length){const hasD=act.every(x=>/\b\d+\s*(h|hrs?|hours?|days?)\b/i.test(x));const d=it.dur.sel;L.push('Activity'+(hasD?'':(d==='until re-evaluated'?' until re-evaluated':' x'+d.replace(/ h$/,'h')))+': '+act.join('; ')+'.');}
   if(it.rtc.on&&it.rtc.t)L.push(it.rtc.t.replace(/\.$/,'')+'.');
+  if(paraOn())return L.map(x=>x.replace(/(; |: )([A-Z])([a-z])/g,(m,a,b,c)=>a+b.toLowerCase()+c));
   return L;
 }
 function adDPSug(st){
@@ -2324,8 +2428,28 @@ function adDurSet(v){ad.dur=v;renderMain();renderNote();}
 function adBack(){adResetProto();view='adtmc';renderNav();renderMain();renderNote();}
 function adSetCat(c){ad.cat=ad.cat===c?'':c;renderMain();}
 function adSearch(v){ad.q=v;const el=document.getElementById('adlist');if(el)el.innerHTML=adListItems();}
+/* ===== Smart protocol search (v42): lay terms EN/ES (data/searchterms.js), any word order, accents ignored, ranked.
+   Buscador inteligente: términos comunes en inglés y español, cualquier orden, sin acentos, ordenado por relevancia. */
+const SQ_STOP=new Set(['the','a','an','my','in','on','of','and','or','to','with','has','have','is','it','i','pt','soldier','c/o','co','de','del','la','el','los','las','en','con','y','o','mi','me','tiene','un','una','por','que','se','al','dolor','pain']);
+function sqNorm(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9\- ]+/g,' ').replace(/\s+/g,' ').trim();}
+let _sqIdx=null;
+function sqIndex(){if(_sqIdx)return _sqIdx;_sqIdx=PR.map(p=>{const terms=(typeof SEARCH_TERMS!=='undefined'&&SEARCH_TERMS[p.id])||[];
+  let es='';try{if(typeof ES_DICT!=='undefined'&&ES_DICT[p.title])es=ES_DICT[p.title];}catch(e){}
+  return {p,id:p.id.toLowerCase(),title:sqNorm(p.title+' '+es),terms:terms.map(sqNorm),ddx:sqNorm((p.ddx||[]).join(' '))};});return _sqIdx;}
+function sqWords(x){return (' '+x+' ');}
+function sqHit(hay,tok){return sqWords(hay).includes(' '+tok)||(tok.length>=5&&hay.includes(tok));}
+function sqScore(e,qn,toks){if(qn===e.id)return 1000;let sc=0,hit=0;
+  if(e.title.includes(qn))sc+=120;if(e.terms.some(t=>t===qn))sc+=110;else if(e.terms.some(t=>t.includes(qn)))sc+=80;
+  toks.forEach(t=>{let h=0;if(sqHit(e.title,t)){sc+=25;h=1;}if(e.terms.some(x=>sqHit(x,t))){sc+=15;h=1;}if(sqHit(e.ddx,t)){sc+=6;h=1;}hit+=h;});
+  if(toks.length&&hit<toks.length)sc=hit?sc*hit/toks.length/2:0;return sc;}
+function sqSearch(q){const qn=sqNorm(q);if(!qn)return [];const toks=qn.split(' ').filter(t=>t&&!SQ_STOP.has(t));const tk=toks.length?toks:qn.split(' ');
+  return sqIndex().map(e=>({p:e.p,s:sqScore(e,qn,tk)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);}
 function adListItems(){
   const q=ad.q.trim().toLowerCase();let out='';
+  if(q){const r=sqSearch(q);const row=p=>{const done=ad.log.some(x=>x.id===p.id);return '<div class="prow" onclick="adOpen(\''+p.id+'\')"><span class="pid">'+p.id+'</span><span class="ptit">'+q$(p.title)+'</span>'+(done?'<span style="color:var(--green)">✓</span>':'')+'</div>';};
+    if(r.length){const top=r[0].s,best=r.filter(x=>x.s>=top*0.35).slice(0,8);out+='<div class="cathead">'+L('Best matches','Mejores resultados')+'</div>'+best.map(x=>row(x.p)).join('');}
+    const l11=PR.find(p=>p.id==='L-11');out+='<div class="cathead">'+L('Not here?','¿No está?')+'</div>'+(l11?row(l11):'');
+    return out;}
   Object.keys(CATS).forEach(c=>{
     const items=PR.filter(p=>p.cat===c&&(!q||(p.id+' '+p.title+' '+(p.ddx||[]).join(' ')).toLowerCase().includes(q)));
     if(!items.length)return;
@@ -2814,7 +2938,7 @@ function adNoteParts(){
   if(gFlags.mrc.trim())out.assess.push('MRC: '+gFlags.mrc.trim()+'.');
   if(gFlags.aviation)out.assess.push('Flight/dive status.');
   entries.forEach(e=>{
-    out.assess.push(e.sum);
+    out.assess.push(paraOn()&&e.sumH?e.sumH:e.sum);
     (e.pos||[]).forEach(x=>{if(!out.rfpos.includes(x))out.rfpos.push(x);});
     (e.plan||[]).forEach(x=>out.plan.push(x));
   });
@@ -2845,7 +2969,7 @@ function adEntry(p,R){
   if(pf.length)bits.push('Positive: '+pf.join(', ')+'.');
   if(ad.ret)bits.push(ad.worse?'Return visit — worse / already seen by provider or AEM.':'Return visit for the same complaint.');
   const _tg=adTagLines(p);
-  return{id:p.id,title:p.title,level:R.final||null,pos,hpi:_tg.hpi,pe:_tg.pe,lines:adProtoLines(p,R),sum:p.title+' ('+p.id+')'+(bits.length||R.final?': ':'')+bits.join(' ')+(R.final?' → '+({PN:'Provider now.',AEM:'AEM today.',MCP:'Minor care.',SP:'Specialty referral.',APPT:'Appointment/referral.'}[R.final]||LV[R.final].s):''),plan:R.final==='MCP'?adPlanLines(adPlanItems(p)):[]};
+  return{id:p.id,title:p.title,level:R.final||null,pos,hpi:_tg.hpi,pe:_tg.pe,lines:adProtoLines(p,R),sumH:hTitle(p.title)+' (ADTMC '+p.id+')'+(hBits(bits).length?', '+hBits(bits).join('; '):'')+(R.final?' — '+hLvl(R.final):'')+'.',sum:p.title+' ('+p.id+')'+(bits.length||R.final?': ':'')+bits.join(' ')+(R.final?' → '+({PN:'Provider now.',AEM:'AEM today.',MCP:'Minor care.',SP:'Specialty referral.',APPT:'Appointment/referral.'}[R.final]||LV[R.final].s):''),plan:R.final==='MCP'?adPlanLines(adPlanItems(p)):[]};
 }
 /* ---- suggestions inside the classic templates ---- */
 const CCMAP={
@@ -3025,7 +3149,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v41';
+const APP_VER='v42';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -3086,7 +3210,7 @@ function renderSettings(){
   h+='<div class="field"><div class="lab"><span class="tag">✎</span><span class="name">'+L('Note detail (screening)','Detalle de la nota (screening)')+'</span></div><div class="chips">'+[['minimal',L('Minimal — positives only','Mínimo — solo positivos')],['short',L('Short — skip red-flag negatives','Corto — sin negativos de banderas rojas')],['full',L('Full — every pertinent negative','Completo — todos los negativos')]].map(([v,l])=>'<span class="chip '+((settings.noteDetail||'short')===v?'on':'')+'" onclick="settings.noteDetail=\''+v+'\';saveSettings();renderMain();renderNote()">'+l+'</span>').join('')+'</div><div class="fuq">'+L('When all red flags are negative the note already says "No red flags." Short leaves out the long "Denies…" list of each red flag.','Si todas las banderas rojas son negativas, la nota ya dice "No red flags." Corto quita la lista larga de "Denies…" de cada bandera.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">▸</span><span class="name">'+L('Folded sections','Secciones plegadas')+'</span></div><div class="chips"><span class="chip '+(foldOn()?'on':'')+'" onclick="settings.fold=!foldOn();saveSettings();renderMain()">'+(foldOn()?L('ON — sections show as one line; tap to open','ENCENDIDO — cada sección es una línea; toca para abrir'):L('Off — everything open (classic)','Apagado — todo abierto (clásico)'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">≡</span><span class="name">'+L('Compact history','Historial compacto')+'</span></div><div class="chips"><span class="chip '+(settings.hcompact!==false?'on':'')+'" onclick="settings.hcompact=settings.hcompact===false;saveSettings();renderMain()">'+(settings.hcompact!==false?L('ON — answered letters fold up as you move on','ENCENDIDO — las letras respondidas se pliegan al avanzar'):L('Off — show every letter open','Apagado — todas las letras abiertas'))+'</span></div></div>';
-  h+='<div class="field"><div class="lab"><span class="tag">¶</span><span class="name">'+L('History in the note','Historia en la nota')+'</span></div><div class="chips"><span class="chip '+(settings.hpiPara!==false?'on':'')+'" onclick="settings.hpiPara=true;saveSettings();renderMain();renderNote()">'+L('One paragraph (faster to copy)','Un párrafo (más rápido de copiar)')+'</span><span class="chip '+(settings.hpiPara===false?'on':'')+'" onclick="settings.hpiPara=false;saveSettings();renderMain();renderNote()">'+L('One line per letter (O:, P:, Q:…)','Una línea por letra (O:, P:, Q:…)')+'</span></div><div class="dim" style="font-size:.88em;margin-top:6px">'+L('Anything you did not fill in is left out of the note — no empty “__” fields to copy.','Lo que no llenaste no aparece en la nota — no hay campos vacíos “__” que copiar.')+'</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">¶</span><span class="name">'+L('Note style','Estilo de la nota')+'</span></div><div class="chips"><span class="chip '+(settings.hpiPara!==false?'on':'')+'" onclick="settings.hpiPara=true;saveSettings();renderMain();renderNote()">'+L('Natural — reads like a medic wrote it (S/O/A/P)','Natural — como la escribe un medic (S/O/A/P)')+'</span><span class="chip '+(settings.hpiPara===false?'on':'')+'" onclick="settings.hpiPara=false;saveSettings();renderMain();renderNote()">'+L('Structured — one line per letter (O:, P:, Q:…)','Estructurada — una línea por letra (O:, P:, Q:…)')+'</span></div><div class="dim" style="font-size:.88em;margin-top:6px">'+L('Anything you did not fill in is left out of the note — no empty “__” fields to copy.','Lo que no llenaste no aparece en la nota — no hay campos vacíos “__” que copiar.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">⏭</span><span class="name">'+L('Auto-advance','Avance automático')+'</span></div><div class="chips"><span class="chip '+(settings.autoAdv!==false?'on':'')+'" onclick="settings.autoAdv=settings.autoAdv===false;saveSettings();renderMain()">'+(settings.autoAdv!==false?L('ON — red flags done → history → decision points → result','ENCENDIDO — banderas rojas → historia → puntos de decisión → resultado'):L('Off — scroll by hand','Apagado — bajar a mano'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">⏱</span><span class="name">'+L('Sick call timer','Contador de tiempo')+'</span></div><div class="chips"><span class="chip '+(settings.timer!==false?'on':'')+'" onclick="settings.timer=settings.timer===false;saveSettings();renderMain()">'+(settings.timer!==false?L('ON — measures time per patient on this phone only','ENCENDIDO — mide el tiempo por paciente solo en este teléfono'):L('Off','Apagado'))+'</span><span class="chip" onclick="goRef(\'times\')">'+L('See times ›','Ver tiempos ›')+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🛡️</span><span class="name">Daily auto-delete</span></div><div class="chips"><span class="chip '+(settings.purge?'on':'')+'" onclick="togPurge()">'+(settings.purge?'ON — notes and data from previous days are deleted on open':'Off')+'</span></div><div class="fuq">Recommended: notes contain Soldier information (PII/PHI). Export what you need before the day ends.</div></div>';
