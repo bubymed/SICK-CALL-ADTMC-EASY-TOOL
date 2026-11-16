@@ -2324,8 +2324,28 @@ function adDurSet(v){ad.dur=v;renderMain();renderNote();}
 function adBack(){adResetProto();view='adtmc';renderNav();renderMain();renderNote();}
 function adSetCat(c){ad.cat=ad.cat===c?'':c;renderMain();}
 function adSearch(v){ad.q=v;const el=document.getElementById('adlist');if(el)el.innerHTML=adListItems();}
+/* ===== Smart protocol search (v42): lay terms EN/ES (data/searchterms.js), any word order, accents ignored, ranked.
+   Buscador inteligente: términos comunes en inglés y español, cualquier orden, sin acentos, ordenado por relevancia. */
+const SQ_STOP=new Set(['the','a','an','my','in','on','of','and','or','to','with','has','have','is','it','i','pt','soldier','c/o','co','de','del','la','el','los','las','en','con','y','o','mi','me','tiene','un','una','por','que','se','al','dolor','pain']);
+function sqNorm(x){return String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9\- ]+/g,' ').replace(/\s+/g,' ').trim();}
+let _sqIdx=null;
+function sqIndex(){if(_sqIdx)return _sqIdx;_sqIdx=PR.map(p=>{const terms=(typeof SEARCH_TERMS!=='undefined'&&SEARCH_TERMS[p.id])||[];
+  let es='';try{if(typeof ES_DICT!=='undefined'&&ES_DICT[p.title])es=ES_DICT[p.title];}catch(e){}
+  return {p,id:p.id.toLowerCase(),title:sqNorm(p.title+' '+es),terms:terms.map(sqNorm),ddx:sqNorm((p.ddx||[]).join(' '))};});return _sqIdx;}
+function sqWords(x){return (' '+x+' ');}
+function sqHit(hay,tok){return sqWords(hay).includes(' '+tok)||(tok.length>=5&&hay.includes(tok));}
+function sqScore(e,qn,toks){if(qn===e.id)return 1000;let sc=0,hit=0;
+  if(e.title.includes(qn))sc+=120;if(e.terms.some(t=>t===qn))sc+=110;else if(e.terms.some(t=>t.includes(qn)))sc+=80;
+  toks.forEach(t=>{let h=0;if(sqHit(e.title,t)){sc+=25;h=1;}if(e.terms.some(x=>sqHit(x,t))){sc+=15;h=1;}if(sqHit(e.ddx,t)){sc+=6;h=1;}hit+=h;});
+  if(toks.length&&hit<toks.length)sc=hit?sc*hit/toks.length/2:0;return sc;}
+function sqSearch(q){const qn=sqNorm(q);if(!qn)return [];const toks=qn.split(' ').filter(t=>t&&!SQ_STOP.has(t));const tk=toks.length?toks:qn.split(' ');
+  return sqIndex().map(e=>({p:e.p,s:sqScore(e,qn,tk)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);}
 function adListItems(){
   const q=ad.q.trim().toLowerCase();let out='';
+  if(q){const r=sqSearch(q);const row=p=>{const done=ad.log.some(x=>x.id===p.id);return '<div class="prow" onclick="adOpen(\''+p.id+'\')"><span class="pid">'+p.id+'</span><span class="ptit">'+q$(p.title)+'</span>'+(done?'<span style="color:var(--green)">✓</span>':'')+'</div>';};
+    if(r.length){const top=r[0].s,best=r.filter(x=>x.s>=top*0.35).slice(0,8);out+='<div class="cathead">'+L('Best matches','Mejores resultados')+'</div>'+best.map(x=>row(x.p)).join('');}
+    const l11=PR.find(p=>p.id==='L-11');out+='<div class="cathead">'+L('Not here?','¿No está?')+'</div>'+(l11?row(l11):'');
+    return out;}
   Object.keys(CATS).forEach(c=>{
     const items=PR.filter(p=>p.cat===c&&(!q||(p.id+' '+p.title+' '+(p.ddx||[]).join(' ')).toLowerCase().includes(q)));
     if(!items.length)return;
@@ -3025,7 +3045,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v41';
+const APP_VER='v42';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
