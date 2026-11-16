@@ -1779,6 +1779,14 @@ function tplHasContent(t,s){
 /* ===== History as one paragraph (v41) — faster to copy onto paper. Empty items are left out entirely.
    Historia en un párrafo — más rápido de copiar a papel. Lo que no se llenó no aparece. */
 function paraOn(){return settings.hpiPara!==false;}
+/* Important items that were NOT done still show, in one short phrase (everything else that is empty is left out):
+   vitals (which ones were not taken), allergies when a medication is recommended, LMP for female Soldiers.
+   Lo importante que no se hizo sí aparece, en una frase corta. */
+function vsLine(vl){const taken=vl.map(x=>x.split(' ')[0]);const miss=['T','HR','BP','RR','SpO2'].filter(k=>!taken.includes(k));
+  if(!vl.length)return 'VS: not taken';return 'VS: '+vl.join(', ')+(miss.length?' ('+miss.join(', ')+' not taken)':'');}
+function medsRecommended(){try{if(noteActive().some(t=>[...state[t.id].plan].some(p=>/Mendoza Pharmacy|mg|tab/i.test(p))))return true;return adNoteParts().plan.some(p=>/^Meds:/i.test(p));}catch(e){return false;}}
+function lmpLine(){if(!gFlags.female)return '';const ld=lmpDays();
+  return (gFlags.lmp?'LMP: '+new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)':'LMP: not documented')+(gFlags.preg?' — possible pregnancy':'')+(gFlags.lact?' — lactating':'')+'.';}
 const SD_LBL={a:'Allergies',m:'Meds',phx:'PMH',l:'Last oral intake',e:'Events',seen:'Seen before',lmp:'LMP'};
 function cap1(x){return x?x.charAt(0).toUpperCase()+x.slice(1):x;}
 function fieldSentence(f,s){const v=joinSel(f,s);if(!v)return '';
@@ -1789,7 +1797,8 @@ function sevSentence(s){const p=[];if(s.sev!==null&&s.sev!==undefined)p.push('Pa
   return cap1(p.join(', '));}
 const AMPLE_IDS=['a','m','phx','l','e'];
 function hpiPara(t,s,skip){const out=[];const sv=sevSentence(s);let svDone=!sv;
-  t.fields.forEach(f=>{if(skip&&skip.includes(f.id))return;if(!svDone&&AMPLE_IDS.includes(f.id)){out.push(sv);svDone=true;}let x=fieldSentence(f,s);if(!x)return;
+  t.fields.forEach(f=>{if(skip&&skip.includes(f.id))return;if(!svDone&&AMPLE_IDS.includes(f.id)){out.push(sv);svDone=true;}let x=fieldSentence(f,s);
+    if(!x&&f.id==='a'&&medsRecommended())x='Allergies: not documented';if(!x)return;
     if(f.id==='a'&&/^Allergies: NKDA$/i.test(x))x='NKDA';if(f.id==='m'&&/^Meds: none$/i.test(x))x='No meds';out.push(x.replace(/\.$/,''));});
   if(!svDone)out.push(sv);return out.length?out.join('. ')+'.':'';}
 function sectionLines(t,s){
@@ -1801,6 +1810,7 @@ function sectionLines(t,s){
   t.fields.forEach(f=>{
     const v=joinSel(f,s);
     if(v)L.push(f.tag+': '+v+'.');
+    else if(f.id==='a'&&medsRecommended())L.push('A: not documented.');
   });
   {const sv=sevSentence(s);if(sv)L.push('S: '+sv+'.');}
   }
@@ -1852,7 +1862,7 @@ function soapdNote(stamp){
   const ample=[];
   if(paraOn()){active.forEach(t=>{const h=hpiPara(t,state[t.id],['exam','lmp']);if(h)L.push((active.length>1?t.title.split('/')[0].trim()+' — ':'')+'HPI: '+h);});}
   else{
-  active.forEach(t=>{const s=state[t.id];t.fields.forEach(f=>{const val=joinSel(f,s);if(!val)return;
+  active.forEach(t=>{const s=state[t.id];t.fields.forEach(f=>{const val=joinSel(f,s);if(!val){if(f.id==='a'&&medsRecommended())ample.push('Allergies: not documented.');return;}
     if(SD_HPI.includes(f.id))L.push((prot.length?'':'HPI ')+f.tag+': '+val+'.');
     else if(SD_AMPLE[f.id])ample.push(SD_AMPLE[f.id]+': '+val+'.');
     else if(f.id==='lmp'||f.id==='exam'){/* handled below */}
@@ -1860,7 +1870,7 @@ function soapdNote(stamp){
     {const sv=sevSentence(s);if(sv)L.push(sv+'.');}});
   ample.forEach(x=>L.push(x));
   }
-  if(gFlags.female&&(gFlags.lmp||gFlags.preg||gFlags.lact)){const ld=lmpDays();L.push((gFlags.lmp?'LMP: '+new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)':'')+(gFlags.preg?(gFlags.lmp?' — ':'')+'possible pregnancy':'')+(gFlags.lact?((gFlags.lmp||gFlags.preg)?' — ':'')+'lactating':'')+'.');}
+  {const x=lmpLine();if(x)L.push(x);}
   active.forEach(t=>{const f=t.fields.find(x=>x.id==='lmp');if(f&&!gFlags.female){const val=joinSel(f,state[t.id]);if(val)L.push('LMP: '+val+'.');}});
   if(gFlags.mrc.trim())L.push('MRC status / delinquent readiness: '+gFlags.mrc.trim()+'.');
   if(gFlags.aviation)L.push('Flight/dive status.');
@@ -1868,7 +1878,7 @@ function soapdNote(stamp){
    if(paraOn()&&active.length===1&&hi>=0&&hp.length)L[hi]+=' '+hp.join(' ');else entries.forEach(e=>{if(e.hpi)L.push('Screening ('+e.id+'): '+e.hpi);});}
   const OL=[];
   const vl=[['T',v.temp],['HR',v.hr],['BP',v.bp],['RR',v.rr],['SpO2',v.spo2],['Pain',v.pain]].filter(x=>String(x[1]).trim()).map(x=>x[0]+' '+String(x[1]).trim());
-  if(vl.length)OL.push('VS: '+vl.join(', ')+'.');
+  OL.push(vsLine(vl)+'.');
   active.forEach(t=>{const s=state[t.id];t.fields.filter(f=>f.id==='exam').forEach(f=>{const val=joinSel(f,s);if(val)OL.push('EX: '+val+'.');});});
   entries.forEach(e=>{if(e.pe)OL.push('PE ('+e.id+'): '+e.pe);});
   if(OL.length){L.push('');L.push('O — OBJECTIVE');OL.forEach(x=>L.push(x));}
@@ -1924,7 +1934,7 @@ function renderNote(){
   const v=gVitals, vl=[];
   if(v.bp)vl.push('BP '+v.bp); if(v.hr)vl.push('HR '+v.hr); if(v.rr)vl.push('RR '+v.rr);
   if(v.temp)vl.push('T '+v.temp); if(v.spo2)vl.push('SpO2 '+v.spo2); if(v.pain)vl.push('Pain '+v.pain);
-  if(vl.length)L.push('VS: '+vl.join(', '));
+  if(vl.length||noteActive().length||noteEntries().length)L.push(vsLine(vl));
   // active sections (any template with content)
   const active=noteActive();
   // positive red flags from ALL sections → top
@@ -2769,7 +2779,7 @@ function adNoteParts(){
   const entries=noteEntries();
   if(!entries.length)return out;
   const ld=lmpDays();
-  if(gFlags.female&&(gFlags.lmp||gFlags.preg||gFlags.lact)){out.assess.push((gFlags.lmp?'LMP: '+new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)':'')+(gFlags.preg?(gFlags.lmp?' — ':'')+'possible pregnancy':'')+(gFlags.lact?((gFlags.lmp||gFlags.preg)?' — ':'')+'lactating':'')+'.');}
+  {const x=lmpLine();if(x)out.assess.push(x);}
   if(gFlags.mrc.trim())out.assess.push('MRC: '+gFlags.mrc.trim()+'.');
   if(gFlags.aviation)out.assess.push('Flight/dive status.');
   entries.forEach(e=>{
