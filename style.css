@@ -857,3 +857,7 @@ h2.tpl.ptitle{display:flex;align-items:center;gap:8px;font-size:24px}
 .exqrw{display:flex;gap:12px;align-items:center}.exqrc{width:110px;flex:none;background:#fff;padding:4px;border-radius:6px}.exqrc svg{width:100%;height:auto;display:block}
 .exreg .chip{padding:5px 10px;font-size:.86em;margin:3px 4px 3px 0}
 .exend{height:110px}
+.exqr{margin-bottom:10px}.exqrc{width:150px;cursor:zoom-in}
+.exqrov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.exqrbig{width:min(86vw,420px);background:#fff;padding:10px;border-radius:12px}.exqrbig svg{width:100%;height:auto;display:block}
+.exqrt{color:#fff;font-size:1.1em}

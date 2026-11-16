@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Home Exercises</title>
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex">
+<!-- Soldier-facing page: opened by scanning the QR on the medic's phone. No patient data — only body area + language in the URL.
+     Página para el soldado: se abre escaneando el QR del teléfono del médico. Sin datos del paciente — solo la zona y el idioma en la URL. -->
+<style>
+:root{--bg:#F2F2F7;--card:#FFFFFF;--card2:#E9E9EE;--txt:#000;--dim:#6C6C70;--acc:#FF9500;--acc-t:#000;--red:#FF3B30;--green:#34C759;--line:#E5E5EA}
+@media (prefers-color-scheme:dark){:root{--bg:#000;--card:#1C1C1E;--card2:#2C2C2E;--txt:#fff;--dim:#8E8E93;--acc:#FF9F0A;--red:#FF453A;--green:#30D158;--line:#38383A}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:17px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 16px calc(28px + env(safe-area-inset-bottom))}
+.wrap{max-width:560px;margin:0 auto}
+.top{display:flex;align-items:center;gap:10px;padding:14px 0 6px}
+.top b{font-size:16px;color:var(--dim)}
+.lang{margin-left:auto;display:flex;background:var(--card2);border-radius:9px;padding:2px}
+.lang button{border:0;background:none;color:var(--dim);font-family:inherit;font-size:14px;font-weight:600;padding:6px 12px;border-radius:7px}
+.lang button.on{background:var(--acc);color:var(--acc-t)}
+h1{font-size:28px;line-height:1.15;margin:8px 0 6px}
+p.sub{color:var(--dim);margin:0 0 14px}
+.prog{background:var(--card);border-radius:14px;padding:12px 14px;margin:0 0 14px}
+.prog .row{display:flex;justify-content:space-between;font-weight:600}
+.bar{height:8px;background:var(--card2);border-radius:4px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--green);transition:width .25s}
+.days{color:var(--dim);font-size:14px;margin-top:6px}
+.why{background:var(--card);border-left:4px solid var(--acc);border-radius:10px;padding:10px 12px;margin:0 0 14px;font-size:15px}
+.rules{background:var(--card);border-radius:14px;padding:12px 14px;margin:0 0 6px;font-size:15px}
+.rules b{display:block;margin-bottom:4px}
+.rules li{margin:4px 0}.rules ul{margin:0;padding-left:20px}
+.grp{font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin:20px 4px 8px;display:flex;justify-content:space-between;gap:8px}
+.grp span:last-child{text-transform:none;letter-spacing:0}
+.list{background:var(--card);border-radius:14px;overflow:hidden}
+.ex{display:flex;gap:12px;padding:13px 14px;border-top:1px solid var(--line)}
+.ex:first-child{border-top:0}
+.ck{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--dim);background:none;color:transparent;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.ex.done .ck{background:var(--green);border-color:var(--green);color:#fff}
+.ex.done .nm{text-decoration:line-through;opacity:.6}
+.bd{flex:1;min-width:0}
+.nm{font-weight:600}
+.ds{color:var(--acc);font-size:15px;font-weight:600;margin-top:1px}
+.cue{color:var(--dim);font-size:15px;margin-top:3px}
+.tm{margin-top:7px;border:0;background:var(--card2);color:var(--txt);font-family:inherit;font-size:14px;font-weight:600;padding:7px 12px;border-radius:16px}
+.tm.run{background:var(--acc);color:var(--acc-t)}
+.more{display:block;text-align:center;background:var(--card);border-radius:14px;padding:14px;margin-top:16px;color:var(--acc);text-decoration:none;font-weight:600}
+.foot{color:var(--dim);font-size:13px;margin-top:16px;line-height:1.45}
+.pick{display:flex;flex-wrap:wrap;gap:8px}
+.pick a{background:var(--card);color:var(--txt);text-decoration:none;padding:12px 16px;border-radius:22px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script src="data/exercises.js"></script>
+<script>
+(function(){
+var qs=new URLSearchParams(location.search);
+var reg=qs.get('r')||'';
+var lang=(qs.get('l')||(navigator.language||'en')).slice(0,2)==='es'?'es':'en';
+function L(en,es){return lang==='es'?es:en;}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function today(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+var KEY='ex_'+reg;
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){return {};}}
+function save(o){try{localStorage.setItem(KEY,JSON.stringify(o));}catch(e){}}
+var st=load();if(!st.days)st.days={};
+function doneSet(){return st.days[today()]||[];}
+var timer=null;
+
+function items(r){var out=[];
+  r.ex.forEach(function(x,i){out.push({k:'r'+i,x:x,g:'home'});});
+  r.drills.forEach(function(d){EX_DRILLS[d].ex.forEach(function(x,i){out.push({k:d+i,x:x,g:d});});});
+  return out;}
+function secs(d){var m=String(d).match(/(\d+)\s*s\b/g);if(!m)return 0;var n=m[m.length-1].match(/\d+/)[0];var all=String(d).match(/(\d+)\s*[–-]\s*(\d+)\s*s\b/);return all?+all[2]:+n;}
+
+function render(){
+  var app=document.getElementById('app');
+  var top='<div class="top"><b>🏋️ '+L('Sick Call · Home exercises','Sick Call · Ejercicios en casa')+'</b><div class="lang"><button class="'+(lang==='en'?'on':'')+'" data-l="en">EN</button><button class="'+(lang==='es'?'on':'')+'" data-l="es">ES</button></div></div>';
+  if(typeof EX_REG==='undefined'||!EX_REG[reg]){
+    app.innerHTML=top+'<h1>'+L('Pick your area','Escoge tu zona')+'</h1><div class="pick">'+Object.keys(EX_REG||{}).map(function(k){var r=EX_REG[k];return '<a href="?r='+k+'&l='+lang+'">'+r.ic+' '+esc(L(r.t[0],r.t[1]))+'</a>';}).join('')+'</div>';
+    bindLang();return;}
+  var r=EX_REG[reg],all=items(r),ds=doneSet(),n=all.filter(function(i){return ds.indexOf(i.k)>=0;}).length;
+  var nd=Object.keys(st.days).filter(function(k){return (st.days[k]||[]).length;}).length;
+  var h=top+'<h1>'+r.ic+' '+esc(L(r.t[0],r.t[1]))+'</h1><p class="sub">'+L('Do the home exercises once a day. Do the FM 7-22 drills during PT — your PT leader knows them. Tap the circle when you finish one.','Haz los ejercicios de casa una vez al día. Los drills del FM 7-22 se hacen durante el PT — tu líder de PT los conoce. Toca el círculo cuando termines uno.')+'</p>';
+  h+='<div class="prog"><div class="row"><span>'+L('Today','Hoy')+'</span><span>'+n+' / '+all.length+'</span></div><div class="bar"><i style="width:'+(all.length?Math.round(100*n/all.length):0)+'%"></i></div><div class="days">'+L('Days with exercises done: ','Días con ejercicios hechos: ')+nd+'</div></div>';
+  h+='<div class="why">'+esc(L(r.why[0],r.why[1]))+'</div>';
+  h+='<div class="rules"><b>⚠️ '+L('Rules','Reglas')+'</b><ul>'+EX_RULES[lang].map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'<li>'+L('Not better in 1 week, or worse → back to sick call.','¿No mejoras en 1 semana o empeoras? → regresa a sick call.')+'</li></ul></div>';
+  function sec(title,when,list){if(!list.length)return '';
+    return '<div class="grp"><span>'+esc(title).replace('FM 7-22','FM\u00a07\u201122')+'</span><span>'+esc(when)+'</span></div><div class="list">'+list.map(function(it){var x=it.x,dn=ds.indexOf(it.k)>=0,d=L(x.d,x.ds||x.d),s=secs(x.d);
+      return '<div class="ex'+(dn?' done':'')+'"><button class="ck" data-k="'+it.k+'" aria-label="done">✓</button><div class="bd"><div class="nm">'+esc(L(x.n,x.es||x.n))+'</div><div class="ds">'+esc(d)+'</div>'+(x.c?'<div class="cue">'+esc(L(x.c,x.cs||x.c))+'</div>':'')+(s?'<button class="tm" data-s="'+s+'">⏱ '+s+' s</button>':'')+'</div></div>';}).join('')+'</div>';}
+  h+=sec(L(r.t[0]+' — at home','Casa — '+r.t[1].toLowerCase()),L('1×/day','1 vez al día'),all.filter(function(i){return i.g==='home';}));
+  r.drills.forEach(function(d){var D=EX_DRILLS[d];h+=sec(L(D.n,D.es)+' · FM 7-22',L(D.when[0],D.when[1]),all.filter(function(i){return i.g===d;}));});
+  if(r.url)h+='<a class="more" href="'+r.url+'" target="_blank" rel="noopener">📖 '+L('Full program with photos (AAOS) ›','Programa completo con fotos (AAOS, en inglés) ›')+'</a>';
+  h+='<div class="foot">'+L('From your unit sick call. General exercises for a minor injury — not a substitute for medical care. Stay inside your profile. Sources: FM 7-22; ','De tu sick call de la unidad. Ejercicios generales para una lesión menor — no reemplazan la atención médica. Respeta tu profile. Fuentes: FM 7-22; ')+esc(r.src)+'. '+L('Your check marks stay only on this phone.','Tus marcas se guardan solo en este teléfono.')+'</div>';
+  app.innerHTML=h;bindLang();
+  Array.prototype.forEach.call(document.querySelectorAll('.ck'),function(b){b.onclick=function(){var k=b.getAttribute('data-k'),t=today(),a=st.days[t]||[];var i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k);st.days[t]=a;save(st);render();};});
+  Array.prototype.forEach.call(document.querySelectorAll('.tm'),function(b){b.onclick=function(){var s=+b.getAttribute('data-s');if(timer){clearInterval(timer.id);if(timer.b===b){timer.b.textContent='⏱ '+s+' s';timer.b.classList.remove('run');timer=null;return;}timer.b.classList.remove('run');timer.b.textContent='⏱ '+timer.s+' s';}
+    var left=s;b.classList.add('run');b.textContent='⏱ '+left;timer={b:b,s:s,id:setInterval(function(){left--;if(left<=0){clearInterval(timer.id);b.classList.remove('run');b.textContent='✅ '+L('Done','Listo');try{navigator.vibrate&&navigator.vibrate(300);}catch(e){}timer=null;return;}b.textContent='⏱ '+left;},1000)};};});
+}
+function bindLang(){Array.prototype.forEach.call(document.querySelectorAll('.lang button'),function(b){b.onclick=function(){lang=b.getAttribute('data-l');document.documentElement.lang=lang;try{history.replaceState(null,'','?r='+reg+'&l='+lang);}catch(e){}render();};});}
+document.documentElement.lang=lang;render();
+})();
+</script>
+</body>
+</html>
