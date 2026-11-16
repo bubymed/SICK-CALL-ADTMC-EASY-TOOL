@@ -1886,7 +1886,10 @@ function soapdNote(stamp){
   const aStart=L.length;L.push('');L.push('A — ASSESSMENT');
   if(entries.length){L.push('Algorithm / code: '+entries.map(e=>e.title+' ('+e.id+')').join('; ')+'.');
     L.push('Protocol summary:');
-    entries.forEach(e=>{if(entries.length>1)L.push(' '+e.title+' ('+e.id+'):');(e.lines||[]).forEach(x=>L.push('  '+x));});
+    entries.forEach(e=>{if(entries.length>1)L.push(' '+e.title+' ('+e.id+'):');
+      const ls=(e.lines||[]).map(x=>x.replace(/^\d+\.\s*/,''));const neg=ls.filter(x=>/^Negative:/.test(x));const rest=ls.filter(x=>!/^Negative:/.test(x));
+      const outL=(neg.length&&!ls.some(x=>/Positive:/.test(x)))?rest.concat(['No ADTMC decision criteria met.']):ls;
+      outL.forEach((x,i)=>L.push('  '+(i+1)+'. '+x));});
     const pos=[];entries.forEach(e=>(e.pos||[]).forEach(x=>{if(!pos.includes(x))pos.push(x);}));
     if(pos.length)L.push('*** RED FLAG: '+pos.join('; ')+' ***');
   }
@@ -1951,6 +1954,7 @@ function renderNote(){
     L.push(...sectionLines(t,state[t.id]));
     if(multi)L.push('');
   });
+  {const x=lmpLine();if(x){if(multi&&L[L.length-1]==='')L.splice(L.length-1,0,x);else L.push(x);}}
   {const _sc=noteEntries().filter(e=>e.hpi||e.pe);let _merged=false;
    if(paraOn()&&active.length===1){const hi=L.findIndex(x=>x.startsWith('HPI: '));const hp=_sc.filter(e=>e.hpi).map(e=>e.hpi.trim());if(hi>=0&&hp.length){L[hi]+=' '+hp.join(' ');_merged=true;}}
    if(_sc.length){if(L[L.length-1]!=='')L.push('');_sc.forEach(e=>{const pre=_sc.length>1?e.id+' ':'';if(e.hpi&&!_merged)L.push(pre+'HPI (screening): '+e.hpi);if(e.pe)L.push(pre+'PE (screening): '+e.pe);});}}
@@ -2788,7 +2792,7 @@ function adNoteParts(){
   const entries=noteEntries();
   if(!entries.length)return out;
   const ld=lmpDays();
-  {const x=lmpLine();if(x)out.assess.push(x);}
+  /* LMP goes with the history in the note (see renderNote / soapdNote) */
   if(gFlags.mrc.trim())out.assess.push('MRC: '+gFlags.mrc.trim()+'.');
   if(gFlags.aviation)out.assess.push('Flight/dive status.');
   entries.forEach(e=>{
