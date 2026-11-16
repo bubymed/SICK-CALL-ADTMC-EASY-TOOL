@@ -48,12 +48,15 @@ p.sub{color:var(--dim);margin:0 0 14px}
 .more{display:block;text-align:center;background:var(--card);border-radius:14px;padding:14px;margin-top:16px;color:var(--acc);text-decoration:none;font-weight:600}
 .foot{color:var(--dim);font-size:13px;margin-top:16px;line-height:1.45}
 .pick{display:flex;flex-wrap:wrap;gap:8px}
+.xa{display:block;width:100%;max-width:300px;height:auto;background:var(--card2);border-radius:10px;margin:0 0 8px}
+.xa line{stroke-linecap:round}.xa-body{stroke:var(--txt)}.xa-far{stroke:var(--dim);opacity:.7}.xa-hot{stroke:var(--acc)}.xa-head{fill:var(--txt)}.xa-floor{stroke:var(--dim);stroke-width:2;opacity:.5}
 .pick a{background:var(--card);color:var(--txt);text-decoration:none;padding:12px 16px;border-radius:22px}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
 <script src="data/exercises.js"></script>
+<script src="data/exanim.js"></script>
 <script>
 (function(){
 var qs=new URLSearchParams(location.search);
@@ -89,12 +92,12 @@ function render(){
   h+='<div class="rules"><b>⚠️ '+L('Rules','Reglas')+'</b><ul>'+EX_RULES[lang].map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'<li>'+L('Not better in 1 week, or worse → back to sick call.','¿No mejoras en 1 semana o empeoras? → regresa a sick call.')+'</li></ul></div>';
   function sec(title,when,list){if(!list.length)return '';
     return '<div class="grp"><span>'+esc(title).replace('FM 7-22','FM\u00a07\u201122')+'</span><span>'+esc(when)+'</span></div><div class="list">'+list.map(function(it){var x=it.x,dn=ds.indexOf(it.k)>=0,d=L(x.d,x.ds||x.d),s=secs(x.d);
-      return '<div class="ex'+(dn?' done':'')+'"><button class="ck" data-k="'+it.k+'" aria-label="done">✓</button><div class="bd"><div class="nm">'+esc(L(x.n,x.es||x.n))+'</div><div class="ds">'+esc(d)+'</div>'+(x.c?'<div class="cue">'+esc(L(x.c,x.cs||x.c))+'</div>':'')+(s?'<button class="tm" data-s="'+s+'">⏱ '+s+' s</button>':'')+'</div></div>';}).join('')+'</div>';}
+      return '<div class="ex'+(dn?' done':'')+'"><button class="ck" data-k="'+it.k+'" aria-label="done">✓</button><div class="bd">'+(x.a&&typeof exAnimSvg==='function'?exAnimSvg(x.a):'')+'<div class="nm">'+esc(L(x.n,x.es||x.n))+'</div><div class="ds">'+esc(d)+'</div>'+(x.c?'<div class="cue">'+esc(L(x.c,x.cs||x.c))+'</div>':'')+(s?'<button class="tm" data-s="'+s+'">⏱ '+s+' s</button>':'')+'</div></div>';}).join('')+'</div>';}
   h+=sec(L(r.t[0]+' — at home','Casa — '+r.t[1].toLowerCase()),L('1×/day','1 vez al día'),all.filter(function(i){return i.g==='home';}));
   r.drills.forEach(function(d){var D=EX_DRILLS[d];h+=sec(L(D.n,D.es)+' · FM 7-22',L(D.when[0],D.when[1]),all.filter(function(i){return i.g===d;}));});
   if(r.url)h+='<a class="more" href="'+r.url+'" target="_blank" rel="noopener">📖 '+L('Full program with photos (AAOS) ›','Programa completo con fotos (AAOS, en inglés) ›')+'</a>';
   h+='<div class="foot">'+L('From your unit sick call. General exercises for a minor injury — not a substitute for medical care. Stay inside your profile. Sources: FM 7-22; ','De tu sick call de la unidad. Ejercicios generales para una lesión menor — no reemplazan la atención médica. Respeta tu profile. Fuentes: FM 7-22; ')+esc(r.src)+'. '+L('Your check marks stay only on this phone.','Tus marcas se guardan solo en este teléfono.')+'</div>';
-  app.innerHTML=h;bindLang();
+  app.innerHTML=h;bindLang();try{exAnimStart();}catch(e){}
   Array.prototype.forEach.call(document.querySelectorAll('.ck'),function(b){b.onclick=function(){var k=b.getAttribute('data-k'),t=today(),a=st.days[t]||[];var i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k);st.days[t]=a;save(st);render();};});
   Array.prototype.forEach.call(document.querySelectorAll('.tm'),function(b){b.onclick=function(){var s=+b.getAttribute('data-s');if(timer){clearInterval(timer.id);if(timer.b===b){timer.b.textContent='⏱ '+s+' s';timer.b.classList.remove('run');timer=null;return;}timer.b.classList.remove('run');timer.b.textContent='⏱ '+timer.s+' s';}
     var left=s;b.classList.add('run');b.textContent='⏱ '+left;timer={b:b,s:s,id:setInterval(function(){left--;if(left<=0){clearInterval(timer.id);b.classList.remove('run');b.textContent='✅ '+L('Done','Listo');try{navigator.vibrate&&navigator.vibrate(300);}catch(e){}timer=null;return;}b.textContent='⏱ '+left;},1000)};};});

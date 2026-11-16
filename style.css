@@ -861,3 +861,5 @@ h2.tpl.ptitle{display:flex;align-items:center;gap:8px;font-size:24px}
 .exqrov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 .exqrbig{width:min(86vw,420px);background:#fff;padding:10px;border-radius:12px}.exqrbig svg{width:100%;height:auto;display:block}
 .exqrt{color:#fff;font-size:1.1em}
+.xa{display:block;width:100%;max-width:280px;height:auto;background:rgba(127,127,127,.12);border-radius:10px;margin:2px 0 8px 28px}
+.xa line{stroke-linecap:round}.xa-body{stroke:var(--txt,#fff)}.xa-far{stroke:var(--dim,#888);opacity:.7}.xa-hot{stroke:var(--accent,#FF9F0A)}.xa-head{fill:var(--txt,#fff)}.xa-floor{stroke:var(--dim,#888);stroke-width:2;opacity:.5}

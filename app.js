@@ -1129,7 +1129,7 @@ function renderMain(){
   if(isGuest()&&!GUEST_OK.includes(view)){m.innerHTML=guestLocked();return;}
   if(view==='clinic'){m.innerHTML=renderClinic();return;}
   if(view==='times'){m.innerHTML=renderTimes();return;}
-  if(view==='exercises'){m.innerHTML=renderExercises();return;}
+  if(view==='exercises'){m.innerHTML=renderExercises();try{exAnimStart();}catch(e){}return;}
   if(view==='manual'){m.innerHTML=renderManual();return;}
   if(view==='adtmc'){m.innerHTML=renderAD();return;}
   if(view==='admeds'){m.innerHTML=renderADMeds();return;}
@@ -2766,7 +2766,7 @@ function exOpen(k){exReg=k||exReg||'knee';if(view!=='exercises')exFrom=view;goRe
 function exBack(){goRef(exFrom&&exFrom!=='exercises'?exFrom:'adtmc');}
 function exRow(id){if(typeof EX_REG==='undefined')return '';const k=exRegFor(id);if(!k)return '';const r=EX_REG[k];
   return '<div class="exrow" role="button" onclick="exOpen(\''+k+'\')"><span>🏋️</span><b>'+L('Home exercises','Ejercicios en casa')+' — '+L(r.t[0],r.t[1])+'</b><span class="fsum">'+r.drills.join(' + ')+' · '+L('show the Soldier','enséñaselos al soldado')+'</span><span class="chev">›</span></div>';}
-function exItem(x,num){return '<div class="exi"><div class="exn"><span class="exnum">'+num+'</span><b>'+L(x.n,x.es||x.n)+'</b><span class="exd">'+L(x.d,x.ds||x.d)+'</span></div>'+(x.c?'<div class="exc">'+L(x.c,x.cs||x.c)+'</div>':'')+'</div>';}
+function exItem(x,num){return '<div class="exi"><div class="exn"><span class="exnum">'+num+'</span><b>'+L(x.n,x.es||x.n)+'</b><span class="exd">'+L(x.d,x.ds||x.d)+'</span></div>'+(x.c?'<div class="exc">'+L(x.c,x.cs||x.c)+'</div>':'')+(x.a&&typeof exAnimSvg==='function'?exAnimSvg(x.a):'')+'</div>';}
 function exUrl(k,lg){return (typeof iqBase==='function'?iqBase():'https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/')+'exercises.html?r='+k+'&l='+lg;}
 let exLang=null;
 function exQrBox(k){const lg=exLang||(LANG==='es'?'es':'en'),u=exUrl(k,lg);let qr='';try{const q=qrcode(0,'M');q.addData(u);q.make();qr=q.createSvgTag({cellSize:4,margin:2,scalable:true});}catch(e){}
