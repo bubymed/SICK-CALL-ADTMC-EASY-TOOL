@@ -1083,7 +1083,7 @@ function updPeek(){
 function renderMore(){
   const row=(ic,txt,on)=>'<div class="prow" onclick="'+on+'"><span class="ptit">'+ic+' '+txt+'</span><span class="dim">›</span></div>';
   let h='<h2 class="tpl">'+L('More','Más')+'</h2><p class="tpl-sub">'+L('Reference, saved notes and settings.','Referencias, notas guardadas y ajustes.')+'</p><div class="plist">';
-  h+=row('📘',L('Operator\'s manual — how to use the app','Manual del operador — cómo usar la app'),"goRef('manual')")+row('⏱',L('Sick call times (this phone)','Tiempos de sick call (este teléfono)'),"goRef('times')")+row('🆕',L('What\'s new','Novedades'),'wnShow(true)')+row('🏥',L('Mendoza Clinic — sick call rules','Clínica Mendoza — reglas de sick call'),"goRef('clinic')")+row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
+  h+=row('📘',L('Operator\'s manual — how to use the app','Manual del operador — cómo usar la app'),"goRef('manual')")+row('🏋️',L('Home exercises (FM 7-22 + by body area)','Ejercicios en casa (FM 7-22 + por zona)'),"exOpen('')")+row('⏱',L('Sick call times (this phone)','Tiempos de sick call (este teléfono)'),"goRef('times')")+row('🆕',L('What\'s new','Novedades'),'wnShow(true)')+row('🏥',L('Mendoza Clinic — sick call rules','Clínica Mendoza — reglas de sick call'),"goRef('clinic')")+row('🔐',L('Access','Acceso')+(typeof acRole!=='undefined'&&acRole?' ✓':''),"goRef('access')")+row('💬',L('Feedback — 2-min survey','Opinión — encuesta de 2 min'),'svOpen()')+row('📷',L('Scan patient QR','Escanear QR del paciente'),'iqScan()')+row('📋',L('Triage list','Lista de triaje')+(iqList.length?' ('+iqList.filter(e=>!e.seen).length+')':''),"goRef('queue')")+row('🖨',L('Clinic QR poster (print)','Póster QR de la clínica (imprimir)'),"window.open('poster.html','_blank')")+row('▶',L('QR check-in demo (1 min)','Demo del registro QR (1 min)'),"window.open('demo.html','_blank')");
   h+='</div><div class="plist" style="margin-top:14px">';
   h+=row('❓','OPQRST/SAMPLE Questions',"goRef('preguntas')")+row('🧪','Assessments / Tests',"goRef('assess')")+row('🪖','Profiles / Wording',"goRef('perfiles')")+row('⚙️','Settings / Privacy',"goRef('ajustes')");
   h+='</div><div class="field" style="margin-top:14px"><div class="lab"><span class="tag">Aa</span><span class="name">'+L('Text size','Tamaño de letra')+'</span><span class="ask">'+fsBase+' px</span></div><div class="algo-actions" style="margin-top:0"><button class="ghost" onclick="setFs(-1);renderMain()">A−</button><button class="ghost" onclick="setFs(1);renderMain()">A+</button></div></div>';
@@ -1129,6 +1129,7 @@ function renderMain(){
   if(isGuest()&&!GUEST_OK.includes(view)){m.innerHTML=guestLocked();return;}
   if(view==='clinic'){m.innerHTML=renderClinic();return;}
   if(view==='times'){m.innerHTML=renderTimes();return;}
+  if(view==='exercises'){m.innerHTML=renderExercises();return;}
   if(view==='manual'){m.innerHTML=renderManual();return;}
   if(view==='adtmc'){m.innerHTML=renderAD();return;}
   if(view==='admeds'){m.innerHTML=renderADMeds();return;}
@@ -2750,13 +2751,33 @@ function adDecisionHtml(p,R){
   h+='<div class="finbar"><button class="finmain" onclick="finishPatient(this)">✅ '+L('Finish — copy + save','Terminar — copiar + guardar')+'</button><div class="finlinks"><a onclick="adCommit()">＋ '+L('Another complaint','Otra queja')+'</a><a onclick="gOpenNote()">'+L('View note','Ver nota')+'</a><a onclick="adBack()">'+L('Cancel','Cancelar')+'</a></div></div>';
   return h;
 }
-function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined'&&refIsClinic(R.final))?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>'+refBox():'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fFold():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined'&&refIsClinic(R.final))?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>'+refBox():'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?exRow(p.id)+h2fFold():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
 /* Mendoza Clinic sick call & appointment guidelines (CLINIC in data/intake.js). / Guía de la clínica Mendoza. */
 function clinicLine(){if(typeof CLINIC==='undefined')return '';const mod=(CLINIC.mod||[]).join(' & ');return L('Clinic sick call '+CLINIC.sc+' · MOD '+mod+' (Mon–Fri). Needs a <b>DD 689 signed by a BAS medic</b> + referral note in <b>SOAP</b> format (reason for referral and care already done) — <a href="#" onclick="event.preventDefault();clinicSoap()">use SOAP-D</a>. Tell the Soldier why and which service. Appointments ','Sick call de la clínica '+CLINIC.sc+' · MOD '+mod+' (lun–vie). Requiere <b>DD 689 firmado por un médico del BAS</b> + nota de referido en formato <b>SOAP</b> (razón del referido y lo que ya se hizo) — <a href="#" onclick="event.preventDefault();clinicSoap()">usar SOAP-D</a>. Explícale al soldado por qué y a qué servicio. Citas ')+CLINIC.phones.join(' / ');}
 function clinicSoap(){try{ad.noAutoSoap=false;if(!soapOn())toggleFmt();syncFmtBtn();renderNote();if(typeof sheetTog==='function')sheetTog(true);}catch(e){}}
 /* ===== Operator's manual (data/manual.js) — open the PDF in the reader's language, jump to a chapter, and suggest the chapter for the screen you came from.
    Manual del operador — abre el PDF en tu idioma, salta a un capítulo y sugiere el capítulo de la pantalla de donde vienes. */
 let manFrom=null,manLang=null;
+/* ===== Home exercise cards (v43) — what "stretching + core strengthening home regimen during PT" actually means.
+   FM 7-22 drills (4C, HSD, RD) + a few evidence-based exercises per body area + QR to the AAOS program for the Soldier's phone.
+   Tarjetas de ejercicios — lo que significa en la práctica "estiramiento + core en casa / durante el PT". */
+let exReg='',exFrom=null;
+function exOpen(k){exReg=k||exReg||'knee';if(view!=='exercises')exFrom=view;goRef('exercises');}
+function exBack(){goRef(exFrom&&exFrom!=='exercises'?exFrom:'adtmc');}
+function exRow(id){if(typeof EX_REG==='undefined')return '';const k=exRegFor(id);if(!k)return '';const r=EX_REG[k];
+  return '<div class="exrow" role="button" onclick="exOpen(\''+k+'\')"><span>🏋️</span><b>'+L('Home exercises','Ejercicios en casa')+' — '+L(r.t[0],r.t[1])+'</b><span class="fsum">'+r.drills.join(' + ')+' · '+L('show the Soldier','enséñaselos al soldado')+'</span><span class="chev">›</span></div>';}
+function exItem(x,num){return '<div class="exi"><div class="exn"><span class="exnum">'+num+'</span><b>'+L(x.n,x.es||x.n)+'</b><span class="exd">'+L(x.d,x.ds||x.d)+'</span></div>'+(x.c?'<div class="exc">'+L(x.c,x.cs||x.c)+'</div>':'')+'</div>';}
+function renderExercises(){if(typeof EX_REG==='undefined')return '';const k=EX_REG[exReg]?exReg:'knee',r=EX_REG[k];
+  let h='<h2 class="tpl ptitle"><button class="backb" onclick="exBack()" aria-label="Back">‹</button>🏋️ '+L('Home exercises','Ejercicios en casa')+'</h2>';
+  h+='<div class="chips exreg">'+Object.keys(EX_REG).map(x=>'<span class="chip '+(x===k?'on':'')+'" onclick="exReg=\''+x+'\';renderMain()">'+EX_REG[x].ic+' '+L(EX_REG[x].t[0],EX_REG[x].t[1])+'</span>').join('')+'</div>';
+  h+='<div class="note-hint exwhy">'+L(r.why[0],r.why[1])+'</div>';
+  h+='<div class="field exrules"><div class="lab"><span class="tag">⚠️</span><span class="name">'+L('Rules','Reglas')+'</span></div>'+L(EX_RULES.en,EX_RULES.es).map(x=>'• '+x).join('<br>')+'</div>';
+  r.drills.forEach(d=>{const D=EX_DRILLS[d];h+='<div class="field"><div class="lab"><span class="tag">🪖</span><span class="name">'+L(D.n,D.es)+'</span><span class="ask">'+L(D.when[0],D.when[1])+'</span></div>'+D.ex.map((x,i)=>exItem(x,i+1)).join('')+'</div>';});
+  h+='<div class="field"><div class="lab"><span class="tag">'+r.ic+'</span><span class="name">'+L(r.t[0]+' exercises','Ejercicios de '+r.t[1].toLowerCase())+'</span><span class="ask">'+L('1×/day at home','1 vez al día en casa')+'</span></div>'+r.ex.map((x,i)=>exItem(x,i+1)).join('')+'</div>';
+  if(r.url){let qr='';try{const q=qrcode(0,'M');q.addData(r.url);q.make();qr=q.createSvgTag({cellSize:3,margin:1,scalable:true});}catch(e){}
+    h+='<div class="field exqr"><div class="lab"><span class="tag">📱</span><span class="name">'+L('Soldier\'s copy — scan with their phone','Copia del soldado — que lo escanee con su teléfono')+'</span></div><div class="exqrw"><div class="exqrc">'+qr+'</div><div>'+L('Full illustrated program (AAOS OrthoInfo, free):','Programa completo con fotos (AAOS OrthoInfo, gratis):')+'<br><a href="'+r.url+'" target="_blank" rel="noopener">'+r.src.replace(/^.*?(AAOS[^;]*)$/,'$1')+'</a></div></div></div>';}
+  h+='<div class="dim" style="font-size:.84em;margin:8px 2px 20px">'+L('Sources: FM 7-22 (4C, HSD, RD); ','Fuentes: FM 7-22 (4C, HSD, RD); ')+r.src+'. '+L('General guidance for minor-care complaints — have your PA approve it for your unit.','Guía general para molestias de minor care — que tu PA la apruebe para tu unidad.')+'</div><div class="exend"></div>';
+  return h;}
 function manUrl(lg,pg){return MANUAL.pdf[lg]+(pg?'#page='+pg:'');}
 function manOpen(pg){const lg=manLang||(LANG==='es'?'es':'en');window.open(manUrl(lg,pg),'_blank','noopener');}
 function manSetLang(l){manLang=l;renderMain();}
