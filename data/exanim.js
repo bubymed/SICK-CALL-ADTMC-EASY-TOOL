@@ -62,10 +62,12 @@ const EX_ANIM={
          {h:[34,74],s:[54,82],eb:[44,99],wb:[24,99],et:[80,74],wt:[104,80],p:[112,88],kb:[150,98],fb:[116,100],kt:[146,64],ft:[114,68]}],
       mv:['kt','ft'],fc:[[116,80,10]],ar:[[168,90,160,58,-6]]},
  sltuck:{k:[_x(XA_SIDE,{th:-9,sh:-9,ft:-89}),_x(XA_SIDE,{L:{th:26},th:-150,sh:8,ft:-82})],mv:['k','a','t'],fo:[[['p'],10,4,-4]],ar:[[176,82,96,70,-14]]},
- slover:{raw:1,nf:1,poly:[['sT','sB','hB','hT']],face:['h','n',1],hr:11,seg:[['n','h',9],['sT','eT',8],['eT','wT',7],['sB','eB',8],['eB','wB',7],['hB','kB',10],['kB','aB',9],['hT','kT',10],['kT','aT',9]],
-      k:[{h:[30,62],n:[46,62],sT:[54,48],sB:[54,76],hT:[104,54],hB:[104,70],eT:[54,26],wT:[54,4],eB:[54,98],wB:[54,120],kB:[142,70],aB:[180,70],kT:[142,54],aT:[180,54]},
-         {h:[30,62],n:[46,62],sT:[54,48],sB:[54,76],hT:[104,54],hB:[104,70],eT:[54,26],wT:[54,4],eB:[80,104],wB:[118,100],kB:[142,70],aB:[180,70],kT:[124,96],aT:[158,104]}],
-      mv:['kT','aT','eB','wB'],fc:[[100,62,11]],ar:[[150,46,138,92,-14]]},
+ slover:{raw:1,nf:1,R:1.45,poly:[['sT','sB','hB','hT']],face:['h','n',1],hr:12,seg:[['n','h',9],['sT','eT',8],['eT','wT',7],['hB','kB',11,'far'],['kB','aB',10,'far'],['sB','eB',8,'near'],['eB','wB',7,'near'],['hT','kT',11,'near'],['kT','aT',10,'near']],
+      k:[{h:[30,62],n:[46,62],sT:[54,46],sB:[54,78],hT:[106,54],hB:[106,70],eT:[54,24],wT:[54,4],eB:[54,100],wB:[54,120],kB:[144,70],aB:[182,70],kT:[144,54],aT:[182,54]},
+         {h:[30,62],n:[46,62],sT:[54,46],sB:[54,78],hT:[106,54],hB:[106,70],eT:[54,24],wT:[54,4],eB:[54,100],wB:[54,120],kB:[144,70],aB:[182,70],kT:[118,50],aT:[154,50]},
+         {h:[30,62],n:[46,62],sT:[54,46],sB:[54,78],hT:[106,57],hB:[106,72],eT:[54,24],wT:[54,4],eB:[84,106],wB:[118,100],kB:[144,70],aB:[182,70],kT:[126,100],aT:[162,104]}],seq:[0,1,2,1],
+      draw:(P,X)=>{let o='';[['aB',0],['aT',1]].forEach(([j,hot])=>{const a=P[j];o+='<ellipse cx="'+xf(a[0]+5)+'" cy="'+xf(a[1])+'" rx="6" ry="4.5" class="'+(hot?'xa-kneehot':'xa-knee')+'"/>';});const k=P.kT;o+='<circle cx="'+xf(k[0])+'" cy="'+xf(k[1])+'" r="6.5" class="xa-kneehot"/>';return o;},
+      mv:['kT','aT'],fc:[[100,63,11]],ar:[[150,40,138,100,-16]]},
  ohpull:{R:1.15,raw:1,poly:[['sL','sR','hR','hL']],face:['h','n',1],seg:[['n','h',9],['sL','sR',12],['sL','eL',8],['eL','wL',7],['sR','eR',8],['eR','wR',7],['hL','kL',10],['kL','aL',9],['hR','kR',10],['kR','aR',9],['aL','tL',6],['aR','tR',6]],
       k:[{h:[100,14],n:[100,30],sL:[84,34],sR:[116,34],eL:[72,48],wL:[88,60],eR:[128,48],wR:[112,60],hL:[90,64],hR:[110,64],kL:[85,84],kR:[115,84],aL:[81,103],aR:[119,103],tL:[73,104],tR:[127,104]},
          {h:[110,16],n:[106,31],sL:[91,33],sR:[121,38],eL:[96,4],wL:[112,12],eR:[124,14],wR:[100,6],hL:[90,64],hR:[110,64],kL:[85,84],kR:[115,84],aL:[81,103],aR:[119,103],tL:[73,104],tR:[127,104]}],
@@ -91,11 +93,14 @@ const EX_ANIM={
  bridge:{k:[XA_HOOK,_x(XA_HOOK,{p:[96,74],tor:152,th:-15,sh:70,th2:-15,sh2:70})],mv:['p'],fo:[[['p'],11,0,-2]],ar:[[92,100,92,62,0]]},
  hipflexor:{R:1.15,k:[{p:[88,76],sc:.68,tor:-90,nk:-90,ua:115,fa:25,ua2:115,fa2:25,th:97,sh:180,ft:90,th2:13.5,sh2:80,ft2:0},{p:[96,77],sc:.68,tor:-92,nk:-90,ua:115,fa:25,ua2:115,fa2:25,th:114.6,sh:180,ft:90,th2:11.8,sh2:85,ft2:0}],
       mv:['p'],fo:[[['p','k'],8,-2,0]],ar:[[80,48,100,48,0]]},
- fig4:{raw:1,R:1.15,face:['h','n',1],hr:10,pr:'<rect x="70" y="72" width="60" height="6" rx="2" class="xa-propf"/><line x1="74" y1="78" x2="74" y2="104" class="xa-prop" stroke-width="3"/><line x1="126" y1="78" x2="126" y2="104" class="xa-prop" stroke-width="3"/>',
-      poly:[['sL','sR','hR','hL']],seg:[['n','h',9],['sL','sR',12],['sL','eL',8],['eL','wL',7],['sR','eR',8],['eR','wR',7],['hL','kL',11],['kL','aL',10],['aL','tL',6],['hR','kR',11],['kR','aR',10]],
-      k:[{h:[100,14],n:[100,28],sL:[84,32],sR:[116,32],hL:[90,68],hR:[110,68],kL:[88,74],aL:[88,103],tL:[80,104],kR:[146,66],aR:[92,72],eL:[74,52],wL:[88,70],eR:[128,52],wR:[138,64]},
-         {h:[100,36],n:[100,48],sL:[82,50],sR:[118,50],hL:[90,68],hR:[110,68],kL:[88,74],aL:[88,103],tL:[80,104],kR:[146,66],aR:[92,72],eL:[76,64],wL:[92,72],eR:[130,62],wR:[142,64]}],
-      mv:[],fc:[[116,66,10]],ar:[[150,18,150,44,0]]},
+ fig4:{raw:1,R:1.15,face:['h','n',1],hr:10,pr:'<rect x="64" y="72" width="72" height="6" rx="2" class="xa-propf"/><line x1="68" y1="78" x2="68" y2="104" class="xa-prop" stroke-width="3"/><line x1="132" y1="78" x2="132" y2="104" class="xa-prop" stroke-width="3"/>',
+      poly:[['sL','sR','hR','hL']],seg:[['n','h',9],['sL','sR',12],['hL','kL',12,'far'],['kL','aL',11,'far'],['hR','kR',12,'near'],['kR','aR',11,'near'],['sL','eL',8,'near'],['eL','wL',7,'near'],['sR','eR',8,'near'],['eR','wR',7,'near']],
+      k:[{h:[100,14],n:[100,28],sL:[84,32],sR:[116,32],hL:[90,68],hR:[110,68],kL:[86,78],aL:[86,102],kR:[150,84],aR:[96,72],eL:[74,54],wL:[94,70],eR:[136,52],wR:[146,78]},
+         {h:[100,34],n:[100,46],sL:[83,49],sR:[117,49],hL:[90,68],hR:[110,68],kL:[86,78],aL:[86,102],kR:[150,84],aR:[96,72],eL:[76,62],wL:[96,70],eR:[138,64],wR:[148,80]}],
+      draw:(P)=>'<circle cx="'+xf(P.kL[0])+'" cy="'+xf(P.kL[1])+'" r="7.5" class="xa-knee"/><ellipse cx="86" cy="104" rx="8" ry="4" class="xa-knee"/>'
+        +'<line x1="'+xf(P.kR[0])+'" y1="'+xf(P.kR[1])+'" x2="'+xf(P.aR[0])+'" y2="'+xf(P.aR[1])+'" stroke-width="14" class="xa-ol"/><line x1="'+xf(P.kR[0])+'" y1="'+xf(P.kR[1])+'" x2="'+xf(P.aR[0])+'" y2="'+xf(P.aR[1])+'" stroke-width="11" class="xa-hot"/>'
+        +'<ellipse cx="'+xf(P.aR[0]-11)+'" cy="'+xf(P.aR[1]-1)+'" rx="9" ry="4.5" class="xa-kneehot"/><line x1="'+xf(P.eL[0])+'" y1="'+xf(P.eL[1])+'" x2="'+xf(P.wL[0])+'" y2="'+xf(P.wL[1])+'" stroke-width="7" class="xa-body"/><circle cx="'+xf(P.wL[0])+'" cy="'+xf(P.wL[1])+'" r="4" class="xa-knee"/><circle cx="'+xf(P.wR[0])+'" cy="'+xf(P.wR[1])+'" r="4" class="xa-knee"/>',
+      mv:['kR','aR'],fc:[[120,70,10]],ar:[[160,16,160,44,0]]},
  curlup:{k:[_x(XA_SUP,{ua:8,fa:-3,th2:-40,sh2:52,ft2:0}),_x(XA_SUP,{ua:8,fa:-3,th2:-40,sh2:52,ft2:0,tor:191,nk:212})],mv:['s'],fo:[[['s','p'],12]],ar:[[34,78,40,64,6]]},
  catcamel:{k:[_x(XA_QUAD,{tb:-16,nk:30}),_x(XA_QUAD,{tb:12,nk:-35})],mv:['m','s'],fo:[[['s','p'],12]],ar:[[108,36,108,52,0,1]]},
  walk:{R:1.15,k:[_x(XA_STAND,{th:65,sh:85,ft:-5,th2:115,sh2:110,ft2:20,ua:110,fa:95,ua2:70,fa2:55}),_x(XA_STAND,{th:115,sh:110,ft:20,th2:65,sh2:85,ft2:-5,ua:70,fa:55,ua2:110,fa2:95})],
@@ -151,7 +156,7 @@ const EX_ANIM={
  bottle:{k:[{p:[66,75.5],sc:.68,tor:-92,nk:-88,ua:75,fa:10,ua2:75,fa2:10,th:-36.3,sh:62.9,ft:0,th2:1.8,sh2:99,ft2:0},{p:[66,75.5],sc:.68,tor:-92,nk:-88,ua:75,fa:10,ua2:75,fa2:10,th:-18.7,sh:37.1,ft:0,th2:1.8,sh2:99,ft2:0}],
       mv:['k','a','t'],fo:[[['a','t'],7,0,4]],pr:XA_CHAIR,ar:[[96,64,124,64,0,1]],bb:[[40,34],[124,104]],d:.9,hold:.15,under:1,
       draw:(P)=>{const r=9.5,cx=107,cy=94.5,ang=(P.a?(P.a[0]-98)/r:0);const d=xaDir(ang*57.3);return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" class="xa-bottle"/><line x1="'+xf(cx-d[0]*r)+'" y1="'+xf(cy-d[1]*r)+'" x2="'+xf(cx+d[0]*r)+'" y2="'+xf(cy+d[1]*r)+'" class="xa-mark"/>';}},
- calfraise:{R:1.15,k:[XA_STAND,_x(XA_STAND,{p:[100,47.6],ft:-58,ft2:-58})],mv:['a','t'],fo:[[['k','a'],7,-3,0]],ar:[[82,100,82,80,0]]},
+ calfraise:{R:1.15,k:[XA_STAND,_x(XA_STAND,{p:[100,47.6],ft:62,ft2:62})],mv:['a','t'],fo:[[['k','a'],7,-3,0]],ar:[[82,100,82,80,0]]},
  balance:{R:1.15,k:[_x(XA_STAND,{th:45,sh:110,ft:20,ua:55,fa:40,ua2:125,fa2:140}),_x(XA_STAND,{p:[102,54],tor:-87,th:45,sh:110,ft:20,ua:60,fa:45,ua2:120,fa2:135})],mv:[],fo:[[['a2'],8,0,-4]],d:1,hold:.3},
  calfstretch:{R:1.15,k:[_x(XA_STAND,{p:[100,56],tor:-70,nk:-60,ua:-12,fa:-6,ua2:-12,fa2:-6,th:114.6,sh:114.6,ft:0,th2:55,sh2:105}),_x(XA_STAND,{p:[106,58],tor:-62,nk:-55,ua:-6,fa:-2,ua2:-6,fa2:-2,th:121.3,sh:121.3,ft:0,th2:45,sh2:110})],
       mv:['p'],fo:[[['k','a'],7,-3,0]],ar:[[96,40,114,46,0]],pr:'<line x1="154" y1="-10" x2="154" y2="104" class="xa-prop" stroke-width="5"/>',bb:[[154,-8]]}
@@ -183,13 +188,16 @@ function exAnimFrame(id,t){const A=EX_ANIM[id];if(!A)return '';const ph=xaPhase(
   if(A.custom)return A.custom(X,t)+arrows()+focus();
   const mv=new Set(A.mv||[]),hide=new Set(A.hide||[]),sc=A.raw?1:(P._sc||1),W=w=>Math.max(3,w*(sc<1?.85:1)),far=j=>/2$/.test(j);
   const line=(u,v,w,cls)=>'<line x1="'+xf(P[u][0])+'" y1="'+xf(P[u][1])+'" x2="'+xf(P[v][0])+'" y2="'+xf(P[v][1])+'" stroke-width="'+xf(w)+'" class="'+cls+'"/>';
-  let back='',front='',ex='',polys='';
-  (A.poly||[]).forEach(js=>{if(js.every(j=>P[j]))polys+='<polygon points="'+js.map(j=>xf(P[j][0])+','+xf(P[j][1])).join(' ')+'" class="xa-fill"/>';});
+  let back='',front='',ex='',polys='';const LY=[[],[],[]];
+  (A.poly||[]).forEach(js=>{if(js.every(j=>P[j]))polys+='<polygon points="'+js.map(j=>xf(P[j][0])+','+xf(P[j][1])).join(' ')+'" class="xa-fill xa-polyol"/>';});
   const segs=A.raw?A.seg:XA_SEG;
   segs.forEach(sg=>{const [u,v,w,grp]=sg;if(!P[u]||!P[v])return;if(grp&&hide.has(grp))return;if(!A.raw&&u==='s'&&v==='p'&&P.m)return;
     const isFar=A.raw?grp==='far':far(v);const torso=!A.raw&&(v==='p'||v==='m'||(u==='s'&&(v==='m'||v==='p')))&&!mv.has('s')&&!mv.has('m');
     const hot=!torso&&(mv.has(v)||(A.raw&&mv.has(u)&&!['s','n','nb','lo','sL','sR','p'].includes(u)));
-    const ln=line(u,v,W(w),hot?(isFar?'xa-hot xa-hotfar':'xa-hot'):isFar?'xa-far':'xa-body');if(isFar)back+=ln;else front+=ln;});
+    const ly=isFar?0:(A.raw?(grp==='near'?2:1):(/^(e|w|k|a|t)$/.test(v)?2:1));
+    LY[ly].push([u,v,W(w),hot?(isFar?'xa-hot xa-hotfar':'xa-hot'):isFar?'xa-far':'xa-body']);});
+  const layer=(arr)=>arr.map(([u,v,w])=>line(u,v,w+3.2,'xa-ol')).join('')+arr.map(([u,v,w,c])=>line(u,v,w,c)).join('');
+  back=layer(LY[0]);const mid=layer(LY[1]);front=layer(LY[2]);
   (A.ln||[]).forEach(([u,v])=>{if(P[u]&&P[v])ex+=line(u,v,2.6,'xa-band');});
   [A.dot].concat(A.dots||[]).forEach(d=>{if(d&&P[d])ex+='<circle cx="'+xf(P[d][0])+'" cy="'+xf(P[d][1])+'" r="'+(A.dot===d?6.5:5.5)+'" class="'+(A.dot===d?'xa-propf':'xa-fill')+'"/>';});
   if(!A.raw)['w','w2'].forEach(j=>{if(!P[j]||hide.has(j==='w'?'arm':'arm2'))return;const c='<circle cx="'+xf(P[j][0])+'" cy="'+xf(P[j][1])+'" r="'+xf(3.8*sc)+'" class="';if(far(j))back+=c+(mv.has(j)?'xa-hotdot xa-hotfar':'xa-fardot')+'"/>';else front+=c+(mv.has(j)?'xa-hotdot':'xa-dot')+'"/>';});
@@ -197,7 +205,7 @@ function exAnimFrame(id,t){const A=EX_ANIM[id];if(!A)return '';const ph=xaPhase(
   if(A.raw&&A.face){const [hj,nj,fc,kind,lk]=A.face,h=P[hj],n=P[nj];if(h&&n){const up=Math.atan2(h[1]-n[1],h[0]-n[0])*57.3;head=kind==='side'?xaFaceSide(h,A.hr||10,up,fc):xaFaceFront(h,A.hr||10,up,lk?(X[lk]||0):0);}}
   else if(!A.raw&&P.h){head=A.face===0?'<circle cx="'+xf(P.h[0])+'" cy="'+xf(P.h[1])+'" r="'+xf(9.5*sc)+'" class="xa-head"/>':xaFaceSide(P.h,9.5*sc,P._nk,1);}
   const extra=A.draw?A.draw(P,X,t):'';
-  return (A.under?extra:'')+polys+back+ex+front+head+(A.under?'':extra)+arrows()+focus();}
+  return (A.under?extra:'')+back+polys+mid+ex+head+front+(A.under?'':extra)+arrows()+focus();}
 /* auto-crop: bounding box of every joint over the loop + props, padded, fixed 16:10 shape */
 const _xaVB={};
 function xaVB(id){if(_xaVB[id])return _xaVB[id];const A=EX_ANIM[id];if(A.vb)return _xaVB[id]=A.vb;let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;const add=(x,y)=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);};
@@ -216,7 +224,7 @@ function exAnimStart(){let reduce=false;try{reduce=window.matchMedia&&matchMedia
   if(!_xaRaf)_xaRaf=requestAnimationFrame(exAnimTick);}
 /* shared look for the medic app and the Soldier page */
 const XA_CSS='.xa line{stroke-linecap:round}.xa-body{stroke:var(--xa-b,#fff)}.xa-fill{fill:var(--xa-b,#fff)}.xa-fillhot{fill:var(--xa-h,#FF9F0A)}.xa-far{stroke:var(--xa-f,#8E8E93)}.xa-hot{stroke:var(--xa-h,#FF9F0A)}.xa-hotfar{opacity:.7}.xa-dot{fill:var(--xa-b,#fff)}.xa-fardot{fill:var(--xa-f,#8E8E93)}.xa-hotdot{fill:var(--xa-h,#FF9F0A)}'
- +'.xa-head{fill:var(--xa-b,#fff)}.xa-eye{fill:var(--xa-bg,#2C2C2E)}.xa-mouth{stroke:var(--xa-bg,#2C2C2E);stroke-width:1.6;stroke-linecap:round}.xa-floor{stroke:var(--xa-f,#8E8E93);stroke-width:2;opacity:.5}'
+ +'.xa-head{fill:var(--xa-b,#fff);stroke:var(--xa-bg,#2C2C2E);stroke-width:1.6}.xa-ol{stroke:var(--xa-bg,#2C2C2E)}.xa-polyol{stroke:var(--xa-bg,#2C2C2E);stroke-width:1.6}.xa-knee{fill:var(--xa-b,#fff);stroke:var(--xa-bg,#2C2C2E);stroke-width:1.6}.xa-kneehot{fill:var(--xa-h,#FF9F0A);stroke:var(--xa-bg,#2C2C2E);stroke-width:1.6}.xa-eye{fill:var(--xa-bg,#2C2C2E)}.xa-mouth{stroke:var(--xa-bg,#2C2C2E);stroke-width:1.6;stroke-linecap:round}.xa-floor{stroke:var(--xa-f,#8E8E93);stroke-width:2;opacity:.5}'
  +'.xa-fo{fill:rgba(255,59,48,.22);stroke:#FF3B30;stroke-width:2.2}.xa-prop{stroke:var(--xa-p,#636366)}.xa-propf{fill:var(--xa-p,#636366)}.xa-band{stroke:#30D158;stroke-linecap:round}.xa-ar{fill:none;stroke:var(--xa-a,#64D2FF);stroke-width:2.2;stroke-dasharray:4 3}.xa-arh{fill:var(--xa-a,#64D2FF)}'
  +'.xa-guide{fill:none;stroke:var(--xa-f,#8E8E93);stroke-width:1.5;stroke-dasharray:3 3;opacity:.8}.xa-ball{fill:#FF6B6B}.xa-bottle{fill:#64D2FF;opacity:.85}.xa-mark{stroke:var(--xa-bg,#2C2C2E);stroke-width:2.2;stroke-linecap:round}.xa-mark2{stroke:var(--xa-a,#64D2FF);stroke-width:2.2;stroke-linecap:round}.xa-towel{fill:none;stroke:#BF5AF2;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.xa-txt{fill:var(--xa-f,#8E8E93);font:bold 13px sans-serif}';
 (function(){try{if(typeof document!=='undefined'&&document.head&&!document.getElementById('xa-css')){const s=document.createElement('style');s.id='xa-css';s.textContent=XA_CSS;document.head.appendChild(s);}}catch(e){}})();
