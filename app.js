@@ -2059,7 +2059,7 @@ const LV={
 const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · GU',f:'F · Neuro/BH',g:'G · General',h:'H · Eyes',i:'I · Women',j:'J · Skin',k:'K · Environment',l:'L · Misc',m:'M · Return'};
 const gFlags={sex:'',female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
 let ad={pfb:'',pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{},ref:{dd:false,told:false},noAutoSoap:false};
-function adResetProto(){ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
+function adResetProto(){ad.dpOpen={};ad.planEdit=false;ad.dutyEdit=false;ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
 function adResetAll(){adResetProto();ad.ou={on:false,unit:''};ad.ref={dd:false,told:false};ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.sex='';gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 /* Screening answers -> history / exam wording (data/notetags.js) */
@@ -2335,7 +2335,7 @@ function adListItems(){
   return out||'<p class="dim">No results.</p>';
 }
 function renderAD(){
-  let h='<h2 class="tpl">🧭 Sick call — pick the complaint</h2><p class="tpl-sub">Organized by ADTMC letter (MEDCOM Pam 40-7-21). Each complaint opens one page: red-flag screening, OPQRST/AMPLE interview, plan and disposition.</p>';
+  let h='<h2 class="tpl idxh">🧭 '+L('Pick the complaint','Elige la queja')+'</h2><p class="tpl-sub idxsub">Organized by ADTMC letter (MEDCOM Pam 40-7-21). Each complaint opens one page: red-flag screening, OPQRST/AMPLE interview, plan and disposition.</p>';
   h+=prevHtml();
   if(ad.log.length)h+='<div class="note-hint">In the note: '+ad.log.map(e=>e.id+' '+q$(e.title)).join(' · ')+'</div>';
   h+='<div class="field"><input type="text" placeholder="Search: knee, sore throat, rash, fever, A-1…" value="'+q$(ad.q)+'" oninput="adSearch(this.value)" style="margin-top:0"></div>'+iqIndexRow()+'<div id="adlist" class="plist">'+adListItems()+'</div>';
@@ -2387,13 +2387,13 @@ function adRfAll(){rfList(getP(ad.pid)).forEach(f=>{if(ad.rf[f]!=='pos')ad.rf[f]
   if(advOn()&&!rfList(getP(ad.pid)).some(f=>ad.rf[f]==='pos')){if(histComplete()){renderMain();renderNote();advScroll('.dpq:not(.clear):not(.fired)');return;}if(foldOn())foldCur.hist=true;renderMain();renderNote();advScroll('#fld_'+((state[cur]&&state[cur].focus)||(visFields(TPLS.find(x=>x.id===cur))[0]||{}).id)||'.hwrap');return;}
   renderMain();renderNote();}
 function adDPTog(i,j){const a=ad.dp[i]||(ad.dp[i]=[]);const k=a.indexOf(j);k<0?a.push(j):a.splice(k,1);ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();}
-function adDPNone(i){ad.dp[i]=[];ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();dpAdv();}
+function adDPNone(i){if(ad.dpOpen)delete ad.dpOpen[i];ad.dp[i]=[];ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();dpAdv();}
 function dpAdv(){if(!advOn()||!ad.pid)return;const R=adEval(getP(ad.pid));if(R.final)advScroll('.resbox');else advScroll('.dpq:not(.clear):not(.fired)');}
 function adOut(i,o){ad.out[i]=o;renderMain();renderNote();}
+function adDPOpen(i){ad.dpOpen=ad.dpOpen||{};ad.dpOpen[i]=!ad.dpOpen[i];renderMain();}
 function adUndo(i){delete ad.dpDone[i];delete ad.out[i];delete ad.out['x'+i];renderMain();renderNote();}
 function adHeadHtml(p){
-  let h='<div class="algo-actions" style="margin:0 0 10px"><button class="ghost" onclick="adBack()">← Index</button></div>';
-  h+='<h2 class="tpl"><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2>'+(foldOn()?'':'<p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>');
+  let h='<h2 class="tpl ptitle"><button class="backb" onclick="adBack()" aria-label="Index">‹</button><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2>'+(foldOn()?'':'<p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>');
   h+=adLiveCard(p);
   if(ad.iq)h+=iqBanner(ad.iq);
   h+=sexRow();
@@ -2565,6 +2565,9 @@ function adScreenHtml(p,R,opts){
     }
     n++;
     const sel=ad.dp[i]||[],done=!!ad.dpDone[i],min=st.min||1,fired=done&&sel.length>=min;const sug=done?[]:adDPSug(st);
+    {const y=st.yes||{};const pend=fired&&((y.out&&ad.out[i]===undefined)||y.tri);
+     if(done&&!pend&&!(ad.dpOpen&&ad.dpOpen[i])){const res=fired?('YES: '+sel.map(j=>st.items[j]).join(', ')+(y.out&&ad.out[i]!==undefined?' → '+y.out[ad.out[i]].l:(y.d?' → '+LV[y.d].s:''))):(st.none?L('None','Ninguno'):L('None','Ninguno'));
+       h+='<div class="algoq dpq dp1 '+(fired?'fired':'clear')+'" onclick="adDPOpen('+i+')"><span class="dp1n">DP '+n+'</span><span class="dp1r">'+(fired?'● ':'✓ ')+q$(res)+'</span><span class="dp1e">›</span></div>';continue;}}
     h+='<div class="algoq dpq'+(done?(fired?' fired':' clear'):'')+'"><div class="fname">Decision point '+n+(min>1?' · YES to ≥'+min+' → next action':' · any = YES')+'</div>';
     if(st.yes&&st.yes.a)h+='<div class="dpact">'+scrLink(st.yes.a)+'</div>';
     h+='<div class="chips">';
@@ -2594,7 +2597,13 @@ function adDecisionHtml(p,R){
   let h=adResultCard(p,R);
   if(R.final==='MCP'){
     const it=adPlanItems(p);
-    h+='<div class="field"><div class="lab"><span class="tag">📋</span><span class="name">Plan — suggested from your answers</span><span class="ask">green = on the note · tap to add/remove</span><span class="clr" onclick="adClrPlan()" title="Back to suggested plan">↺ reset</span></div>';
+    if(!ad.planEdit){const on=[];it.meds.filter(x=>x.on).forEach(x=>on.push('💊 '+adMedLine(x)));const adv=it.adv.filter(x=>x.on).map(x=>x.t);if(adv.length)on.push('🩹 '+adv.join('; '));
+      const act=it.act.filter(x=>x.on).map(x=>x.t);if(act.length)on.push('🏃 '+(it.dur.sel?it.dur.sel+': ':'')+act.join('; '));if(it.rtc.t&&it.rtc.on)on.push('↩ '+it.rtc.t);
+      h+='<div class="field plansum"><div class="lab"><span class="tag">📋</span><span class="name">'+L('Plan','Plan')+'</span><span class="clr" onclick="ad.planEdit=true;renderMain()">✏️ '+L('Edit','Editar')+'</span></div>'+(on.length?'<div class="pls">'+on.map(x=>'<div>'+q$(x)+'</div>').join('')+'</div>':'<div class="dim">'+L('Nothing selected — tap Edit.','Nada seleccionado — toca Editar.')+'</div>');
+      it.meds.filter(x=>x.on&&x.sf.w.length).forEach(x=>x.sf.w.forEach(w=>{h+='<div class="mw">⚠️ '+q$(x.t)+': '+q$(w)+'</div>';}));
+      h+='</div>';}
+    else{
+    h+='<div class="field"><div class="lab"><span class="tag">📋</span><span class="name">Plan — suggested from your answers</span><span class="clr" onclick="ad.planEdit=false;renderMain()">✓ '+L('Done','Listo')+'</span><span class="ask">green = on the note · tap to add/remove</span><span class="clr" onclick="adClrPlan()" title="Back to suggested plan">↺ reset</span></div>';
     const chip=(x,txt)=>'<span class="chip '+(x.on?'on':'')+'" onclick="adPlTog(\''+x.key+'\')">'+(x.on?'✓ ':'')+q$(txt)+'</span>';
     if(it.meds.length){h+='<div class="fuq">Meds (ADTMC App. C)</div><div class="chips">'+it.meds.map(x=>chip(x,adMedLine(x))).join('')+'</div>';
       it.meds.filter(x=>x.on||x.sf.w.length).forEach(x=>{x.sf.w.forEach(w=>{h+='<div class="mw">⚠️ '+q$(x.t)+': '+q$(w)+'</div>';});if(x.on&&x.m&&x.m.max)h+='<div class="mi">'+q$(x.m.n.replace(/\s+\d.*$/,''))+' max '+q$(x.m.max)+(x.m.rx?' · Rx — notify provider first':'')+'</div>';});}
@@ -2603,17 +2612,21 @@ function adDecisionHtml(p,R){
       if(it.act.some(x=>x.on)){h+='<div class="fuq">For how long? <span class="dim">(ADTMC gives no duration for most — pick the time you recommend)</span></div><div class="chips">'+DUR_OPTS.map(o=>'<span class="chip '+(it.dur.sel===o?'on':'')+'" onclick="adDurSet(\''+o+'\')">'+(it.dur.sel===o?'✓ ':'')+o+(o===it.dur.sug?' <span class="dim">· '+it.dur.src+'</span>':'')+'</span>').join('')+'</div>';}}
     if(it.rtc.t)h+='<div class="fuq">Return precaution</div><div class="chips">'+chip(it.rtc,it.rtc.t)+'</div>';
     h+='</div>';
+    }
     const t=TPLS.find(x=>x.id===cur),s=state[cur];
+    if(s.dispo&&!ad.dutyEdit){h+='<div class="field plansum" onclick="ad.dutyEdit=true;renderMain()" style="cursor:pointer"><div class="lab"><span class="tag">🪖</span><span class="name">'+L('Duty / profile','Servicio / profile')+'</span><span class="clr">✏️ '+L('Edit','Editar')+'</span></div><div class="pls">'+q$(s.dispoTxt||s.dispo)+'</div></div>';}
+    else{
     h+='<div class="field"><div class="lab"><span class="tag">🪖</span><span class="name">Duty status / profile</span><span class="ask">recommendation — pending CoC/provider</span>'+clrBtn(cur,'__dispo')+'</div><div class="chips">';
     Object.keys(t.dispo).forEach(k=>{h+='<span class="chip '+(s.dispo===k?'on':'')+'" onclick="setDispo(\''+cur+'\',\''+k+'\')">'+k+'</span>';});
     h+='</div><input type="text" placeholder="duty status text (editable)..." value="'+q$(s.dispoTxt)+'" oninput="dispoTxt(\''+cur+'\',this.value)"></div>';
+    }
   }
   const _po=isFold('prov');h+=foldRow('prov',L('Notified at clinic','Avisado en la clínica'),ad.prov&&ad.prov.trim()?q$(ad.prov.trim()):L('optional','opcional'),_po);
   if(_po)h+='<div class="field'+(foldOn()?' fbody':'')+'"><div class="lab"><span class="tag s2">☎</span><span class="name">Notified at clinic (optional)</span></div><input type="text" style="margin-top:0" value="'+q$(ad.prov)+'" placeholder="Rank Last name, if you contacted them" oninput="ad.prov=this.value;renderNote()"></div>';
-  h+='<div class="algo-actions"><button style="background:var(--green);color:var(--on-green)" onclick="finishPatient(this)">✅ '+L('Finish patient — copy + save','Terminar paciente — copiar + guardar')+'</button><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
+  h+='<div class="finbar"><button class="finmain" onclick="finishPatient(this)">✅ '+L('Finish — copy + save','Terminar — copiar + guardar')+'</button><div class="finlinks"><a onclick="adCommit()">＋ '+L('Another complaint','Otra queja')+'</a><a onclick="gOpenNote()">'+L('View note','Ver nota')+'</a><a onclick="adBack()">'+L('Cancel','Cancelar')+'</a></div></div>';
   return h;
 }
-function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined'&&refIsClinic(R.final))?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>'+refBox():'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined'&&refIsClinic(R.final))?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>'+refBox():'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fFold():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
 /* Mendoza Clinic sick call & appointment guidelines (CLINIC in data/intake.js). / Guía de la clínica Mendoza. */
 function clinicLine(){if(typeof CLINIC==='undefined')return '';const mod=(CLINIC.mod||[]).join(' & ');return L('Clinic sick call '+CLINIC.sc+' · MOD '+mod+' (Mon–Fri). Needs a <b>DD 689 signed by a BAS medic</b> + referral note in <b>SOAP</b> format (reason for referral and care already done) — <a href="#" onclick="event.preventDefault();clinicSoap()">use SOAP-D</a>. Tell the Soldier why and which service. Appointments ','Sick call de la clínica '+CLINIC.sc+' · MOD '+mod+' (lun–vie). Requiere <b>DD 689 firmado por un médico del BAS</b> + nota de referido en formato <b>SOAP</b> (razón del referido y lo que ya se hizo) — <a href="#" onclick="event.preventDefault();clinicSoap()">usar SOAP-D</a>. Explícale al soldado por qué y a qué servicio. Citas ')+CLINIC.phones.join(' / ');}
 function clinicSoap(){try{ad.noAutoSoap=false;if(!soapOn())toggleFmt();syncFmtBtn();renderNote();if(typeof sheetTog==='function')sheetTog(true);}catch(e){}}
@@ -2676,6 +2689,8 @@ function h2fText(){if(typeof H2F_CLASSES==='undefined'||!h2f.cls.size)return '';
   const c=H2F_CLASSES.filter(x=>h2f.cls.has(x[0])).map(x=>x[1]+' ('+x[2]+')').join('; ');
   const m=h2fMedic();
   return 'Referred to H2F ('+H2F_LOC+'): '+c+' — '+h2f.f+'x/week x'+h2f.w+' weeks. H2F class slip given; Soldier brings slip to the COF / schedules via Visibook QR.'+(m?' Referring source: '+m+(/\.$/.test(m)?'':'.'):'');}
+function h2fFold(){const n=(typeof h2f!=='undefined'&&h2f.cls)?h2f.cls.size:0;const o=isFold('h2f',n>0);
+  return foldRow('h2f','🏃 '+L('H2F class referral','Referido a clases de H2F'),n?'<span class="ok">'+n+' '+L('class(es)','clase(s)')+' ✓</span>':L('optional','opcional'),o,n>0)+(o?h2fCard():'');}
 function h2fCard(){if(typeof H2F_CLASSES==='undefined')return '';
   const sug=ad.pid?H2F_CLASSES.filter(x=>x[3].includes(ad.pid)).map(x=>x[0]):[];
   let h='<div class="field h2f"><div class="lab"><span class="tag">🏃</span><span class="name">'+L('H2F class referral','Referido a clases de H2F')+'</span><span class="ask">'+L('unit level — instead of PT','a nivel unidad — en vez de PT')+'</span></div><div class="dim" style="font-size:.86em;margin:-2px 0 8px">'+L('Mendoza rule: injuries older than 48 h → H2F physical therapy evaluation, not sick call.','Regla de Mendoza: lesiones de más de 48 h → evaluación de terapia física en H2F, no sick call.')+'</div>';
@@ -2969,7 +2984,7 @@ function ouSet(v){ad.ou=ad.ou||{on:true,unit:''};ad.ou.unit=v.slice(0,40);render
 function ouLine(hi){if(!ouOn())return '';const u=ouUnit();const from='Soldier from '+(u||'another unit');
   return hi==='AEM'?from+' — second look by their unit Senior Medic today recommended (ADTMC II, AEM level).':from+' — recommend follow-up / second look with their unit Senior Medic if not improving or as needed.';}
 function ouBox(R){const o=ad.ou||{},hi=R&&R.final;
-  return '<div class="field" style="margin-top:6px"><div class="chips"><span class="chip '+(o.on?'on':'')+'" onclick="ouTog()">'+(o.on?'✓ ':'')+L('Soldier from another unit → second look by their Senior Medic','Soldado de otra unidad → second look de su Senior Medic')+'</span></div>'
+  return '<div class="field oubox" style="margin-top:6px"><div class="chips"><span class="chip '+(o.on?'on':'')+'" onclick="ouTog()">'+(o.on?'✓ ':'')+L('Soldier from another unit → second look by their Senior Medic','Soldado de otra unidad → second look de su Senior Medic')+'</span></div>'
    +(o.on?'<div class="chips" style="margin-top:8px">'+ouUnits().map(u=>'<span class="chip '+(ouUnit()===u?'on':'')+'" onclick="ouPick(\''+q$(u).replace(/\\/g,'')+'\')">'+q$(u)+'</span>').join('')+'</div><input maxlength="40" autocomplete="off" placeholder="'+L('Other unit (optional)','Otra unidad (opcional)')+'" value="'+q$(o.unit||'')+'" oninput="ouSet(this.value)" style="margin-top:8px"><div class="fuq">'+(hi==='AEM'?L('AEM-level need: the note recommends a second look today by their unit Senior Medic.','Necesita nivel AEM: la nota recomienda un second look hoy con el Senior Medic de su unidad.'):L('The note adds: follow up with their unit Senior Medic if not improving or as needed.','La nota agrega: seguimiento con el Senior Medic de su unidad si no mejora o según necesidad.'))+'</div>':'')+'</div>';}
 function togAem(){settings.aemOn=!settings.aemOn;saveSettings();renderMain();renderNote();}
 function setAemName(v){settings.aemName=v.slice(0,60);saveSettings();renderNote();}

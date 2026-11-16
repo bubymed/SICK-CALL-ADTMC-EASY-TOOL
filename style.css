@@ -811,3 +811,37 @@ body.guest #aside,body.guest #mobileNoteBtn,body.guest #tabbar button[data-v="ad
 @media (max-width:560px){#slipOv .hs-mid{grid-template-columns:1fr}#slipOv .hs-pc{text-align:center}}
 #slipOv .hs-list .hs-c{display:table;margin:1px auto}
 @media print{body.slip-print #slipOv input.hs-in{border-bottom:1px solid #000!important}}
+
+/* ===== v41 compact UI ===== */
+.algoq.dp1{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;margin-bottom:8px}
+.algoq.dp1 .dp1n{font-weight:700;font-size:13px;color:var(--dim);white-space:nowrap}
+.algoq.dp1 .dp1r{flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.algoq.dp1.fired .dp1r{color:var(--orange,#ff9f0a);font-weight:600}
+.algoq.dp1 .dp1e{color:var(--dim)}
+.plansum .pls{font-size:14px;line-height:1.45}.plansum .pls div{margin:2px 0}
+.plansum .clr{cursor:pointer}
+.finbar{margin:14px 0 6px}
+.finbar .finmain{display:block;width:100%;background:var(--green);color:var(--on-green,#fff);border:none;border-radius:12px;padding:13px;font-size:16px;font-weight:700}
+.finbar .finlinks{display:flex;justify-content:center;gap:22px;margin-top:10px;font-size:14px}
+.finbar .finlinks a{color:var(--blue,#0a84ff);cursor:pointer}
+h2.tpl.ptitle{display:flex;align-items:center;gap:8px;font-size:24px}
+.backb{background:var(--panel);border:none;color:var(--blue,#0a84ff);font-size:22px;line-height:1;width:34px;height:34px;border-radius:10px;flex:0 0 auto;cursor:pointer}
+.sexrow{padding:6px 12px!important;margin-bottom:8px}
+.sexrow .chip{padding:5px 12px;font-size:14px}
+.resh{font-size:1.15em!important}
+.resbox{padding:12px 14px!important;margin:10px 0!important}
+.gstart.sm{display:inline-block;width:auto;padding:7px 14px;font-size:14px;margin:0 0 8px}
+@media(max-width:760px){
+  h2.tpl.idxh{font-size:24px}
+  p.tpl-sub.idxsub{display:none}
+  .warn{padding:6px 10px;font-size:12px;margin-bottom:8px}
+  #peek{padding:4px 14px 8px}
+  #peek .grab{margin-bottom:4px}
+  #peek .pk-t b{display:inline;font-size:15px}
+  #peek .pk-t span{display:inline;margin-left:8px}
+  #peek .pk-copy{padding:7px 14px;font-size:14px}
+  main{padding-bottom:calc(128px + env(safe-area-inset-bottom))!important}
+}
+
+.oubox{padding:8px 12px!important}.oubox .chip{font-size:13px;padding:6px 12px}
+@media(max-width:760px){#peek .pk-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#peek .pk-t b,#peek .pk-t span{white-space:nowrap}}
