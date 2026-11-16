@@ -1776,18 +1776,43 @@ function joinSel(f,s){
 function tplHasContent(t,s){
   return !!([...s.cc].length||s.ccCustom.trim()||s.plan.size||s.dispoTxt.trim()||s.sev!==null||s.duty||Object.keys(s.rf).length||t.fields.some(f=>s.fields[f.id].size||(s.custom[f.id]||'').trim()));
 }
+/* ===== History as one paragraph (v41) — faster to copy onto paper. Empty items are left out entirely.
+   Historia en un párrafo — más rápido de copiar a papel. Lo que no se llenó no aparece. */
+function paraOn(){return settings.hpiPara!==false;}
+/* Important items that were NOT done still show, in one short phrase (everything else that is empty is left out):
+   vitals (which ones were not taken), allergies when a medication is recommended, LMP for female Soldiers.
+   Lo importante que no se hizo sí aparece, en una frase corta. */
+function vsLine(vl){const taken=vl.map(x=>x.split(' ')[0]);const miss=['T','HR','BP','RR','SpO2'].filter(k=>!taken.includes(k));
+  if(!vl.length)return 'VS: not taken';return 'VS: '+vl.join(', ')+(miss.length?' ('+miss.join(', ')+' not taken)':'');}
+function medsRecommended(){try{if(noteActive().some(t=>[...state[t.id].plan].some(p=>/Mendoza Pharmacy|mg|tab/i.test(p))))return true;return adNoteParts().plan.some(p=>/^Meds:/i.test(p));}catch(e){return false;}}
+function lmpLine(){if(!gFlags.female)return '';const ld=lmpDays();
+  return (gFlags.lmp?'LMP: '+new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)':'LMP: not documented')+(gFlags.preg?' — possible pregnancy':'')+(gFlags.lact?' — lactating':'')+'.';}
+const SD_LBL={a:'Allergies',m:'Meds',phx:'PMH',l:'Last oral intake',e:'Events',seen:'Seen before',lmp:'LMP'};
+function cap1(x){return x?x.charAt(0).toUpperCase()+x.slice(1):x;}
+function fieldSentence(f,s){const v=joinSel(f,s);if(!v)return '';
+  if(f.prefix!==undefined&&f.prefix!=='')return cap1(v);           // e.g. "Started today, after a fall" / "Worse w/ ruck"
+  return (SD_LBL[f.id]||f.name)+': '+v;}                          // e.g. "Allergies: NKDA"
+function sevSentence(s){const p=[];if(s.sev!==null&&s.sev!==undefined)p.push('Pain/severity '+s.sev+'/10');
+  if(s.duty){const d=String(s.duty);p.push(/^yes$/i.test(d)?'interferes w/ duty/PT':/^no$/i.test(d)?'no duty/PT impact':'duty/PT impact: '+d);}
+  return cap1(p.join(', '));}
+const AMPLE_IDS=['a','m','phx','l','e'];
+function hpiPara(t,s,skip){const out=[];const sv=sevSentence(s);let svDone=!sv;
+  t.fields.forEach(f=>{if(skip&&skip.includes(f.id))return;if(!svDone&&AMPLE_IDS.includes(f.id)){out.push(sv);svDone=true;}let x=fieldSentence(f,s);
+    if(!x&&f.id==='a'&&medsRecommended())x='Allergies: not documented';if(!x)return;
+    if(f.id==='a'&&/^Allergies: NKDA$/i.test(x))x='NKDA';if(f.id==='m'&&/^Meds: none$/i.test(x))x='No meds';out.push(x.replace(/\.$/,''));});
+  if(!svDone)out.push(sv);return out.length?out.join('. ')+'.':'';}
 function sectionLines(t,s){
   const L=[];
   const ccParts=[...s.cc]; if(s.ccCustom.trim())ccParts.push(s.ccCustom.trim());
   if(ccParts.length)L.push(s.ccRaw&&!s.cc.size?'CC: '+ccParts.join(', ')+'.':'CC: C/o '+(t.ccPrefix||'')+ccParts.join(', ')+'.');
+  if(paraOn()){const h=hpiPara(t,s,['exam']);if(h)L.push('HPI: '+h);const ex=t.fields.find(f=>f.id==='exam');if(ex){const v=joinSel(ex,s);if(v)L.push('EX: '+v+'.');}}
+  else{
   t.fields.forEach(f=>{
     const v=joinSel(f,s);
     if(v)L.push(f.tag+': '+v+'.');
+    else if(f.id==='a'&&medsRecommended())L.push('A: not documented.');
   });
-  if(s.sev!==null||s.duty){
-    let line='S: '+(s.sev!==null?s.sev+'/10':'__/10');
-    if(s.duty)line+='. Interferes w/ duty/PT: '+s.duty;
-    L.push(line+'.');
+  {const sv=sevSentence(s);if(sv)L.push('S: '+sv+'.');}
   }
   const rfNeg=(t.redFlags||[]).filter(f=>s.rf[f]==='neg');
   const rfAllN=(t.redFlags||[]).length&&rfNeg.length===(t.redFlags||[]).length;
@@ -1802,7 +1827,7 @@ const SD_CAT={PN:'I — Provider Now',AEM:'II — AEM Now',MCP:'III — Minor Ca
 /* ===== Clinic referral documentation (2/1AD memo, 16 Oct 2026 — para 5d(5)/(6), 8):
    referral in SOAP format with the reason for referral and care already done; DD 689 signed by a BAS medic;
    Soldier understands why and to which service. Referrals switch the note to SOAP-D automatically. */
-function refIsClinic(hi){hi=hi===undefined?adHighest():hi;return !!hi&&(hi==='PN'||hi==='SP'||hi==='APPT'||(hi==='AEM'&&!settings.aemOn));}
+function refIsClinic(hi){hi=hi===undefined?adHighest():hi;return !!hi&&(hi==='PN'||hi==='SP'||hi==='APPT'||(hi==='AEM'&&!settings.aemOn&&!ouOn()));}
 function soapOn(){return settings.noteFmt==='soapd'||(refIsClinic()&&!ad.noAutoSoap);}
 function refLines(){const hi=adHighest();if(!refIsClinic(hi))return [];if(!ad.ref)ad.ref={dd:false,told:false};
   const entries=noteEntries().filter(e=>e.level&&e.level!=='MCP');
@@ -1830,51 +1855,63 @@ function soapdNote(stamp){
   const L=[];
   L.push((patient.trim()?('PT: '+patient.trim()+' — '):'')+stamp);
   L.push('');L.push('S — SUBJECTIVE');
+  if(gFlags.sex)L.push('Sex: '+gFlags.sex+'.');
   const ccAll=[];active.forEach(t=>{const s=state[t.id];const parts=[...s.cc];if(s.ccCustom.trim())parts.push(s.ccCustom.trim());if(parts.length)ccAll.push(s.ccRaw&&!s.cc.size?'CC: '+parts.join(', ')+'.':'CC: C/o '+(t.ccPrefix||'')+parts.join(', ')+'.');});
   if(ccAll.length)ccAll.forEach(x=>L.push(x));else if(entries.length)L.push('CC: '+entries.map(e=>e.title).join('; ')+'.');
   const prot=entries.map(e=>e.title+' ('+e.id+')');
-  if(prot.length)L.push('HPI — protocol: '+prot.join('; ')+'.');
+  if(prot.length&&!paraOn())L.push('HPI — protocol: '+prot.join('; ')+'.');
   const ample=[];
-  active.forEach(t=>{const s=state[t.id];t.fields.forEach(f=>{const val=joinSel(f,s);if(!val)return;
+  if(paraOn()){active.forEach(t=>{const h=hpiPara(t,state[t.id],['exam','lmp']);if(h)L.push((active.length>1?t.title.split('/')[0].trim()+' — ':'')+'HPI: '+h);});}
+  else{
+  active.forEach(t=>{const s=state[t.id];t.fields.forEach(f=>{const val=joinSel(f,s);if(!val){if(f.id==='a'&&medsRecommended())ample.push('Allergies: not documented.');return;}
     if(SD_HPI.includes(f.id))L.push((prot.length?'':'HPI ')+f.tag+': '+val+'.');
     else if(SD_AMPLE[f.id])ample.push(SD_AMPLE[f.id]+': '+val+'.');
     else if(f.id==='lmp'||f.id==='exam'){/* handled below */}
     else L.push(f.tag+': '+val+'.');});
-    if(s.sev!==null||s.duty){let line='Severity: '+(s.sev!==null?s.sev+'/10':'__/10');if(s.duty)line+='. Interferes w/ duty/PT: '+s.duty;L.push(line+'.');}});
+    {const sv=sevSentence(s);if(sv)L.push(sv+'.');}});
   ample.forEach(x=>L.push(x));
-  if(gFlags.female){const ld=lmpDays();L.push('LMP: '+(gFlags.lmp?(new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)'):'not documented')+(gFlags.preg?' — possible pregnancy':'')+(gFlags.lact?' — lactating':'')+'.');}
+  }
+  {const x=lmpLine();if(x)L.push(x);}
   active.forEach(t=>{const f=t.fields.find(x=>x.id==='lmp');if(f&&!gFlags.female){const val=joinSel(f,state[t.id]);if(val)L.push('LMP: '+val+'.');}});
-  L.push('MRC status / delinquent readiness: '+(gFlags.mrc.trim()||'not documented')+'.');
+  if(gFlags.mrc.trim())L.push('MRC status / delinquent readiness: '+gFlags.mrc.trim()+'.');
   if(gFlags.aviation)L.push('Flight/dive status.');
-  entries.forEach(e=>{if(e.hpi)L.push('Screening ('+e.id+'): '+e.hpi);});
-  L.push('');L.push('O — OBJECTIVE');
-  const vl=[['T',v.temp],['HR',v.hr],['BP',v.bp],['RR',v.rr],['SpO2',v.spo2],['Pain',v.pain]].map(x=>x[0]+' '+(String(x[1]).trim()||'__'));
-  L.push('VS: '+vl.join(', ')+'.');
-  active.forEach(t=>{const s=state[t.id];t.fields.filter(f=>f.id==='exam').forEach(f=>{const val=joinSel(f,s);if(val)L.push('EX: '+val+'.');});});
-  entries.forEach(e=>{if(e.pe)L.push('PE ('+e.id+'): '+e.pe);});
-  L.push('');L.push('A — ASSESSMENT');
+  {const hi=L.findIndex(x=>x.startsWith('HPI: '));const hp=entries.filter(e=>e.hpi).map(e=>e.hpi.trim());
+   if(paraOn()&&active.length===1&&hi>=0&&hp.length)L[hi]+=' '+hp.join(' ');else entries.forEach(e=>{if(e.hpi)L.push('Screening ('+e.id+'): '+e.hpi);});}
+  const OL=[];
+  const vl=[['T',v.temp],['HR',v.hr],['BP',v.bp],['RR',v.rr],['SpO2',v.spo2],['Pain',v.pain]].filter(x=>String(x[1]).trim()).map(x=>x[0]+' '+String(x[1]).trim());
+  OL.push(vsLine(vl)+'.');
+  active.forEach(t=>{const s=state[t.id];t.fields.filter(f=>f.id==='exam').forEach(f=>{const val=joinSel(f,s);if(val)OL.push('EX: '+val+'.');});});
+  entries.forEach(e=>{if(e.pe)OL.push('PE ('+e.id+'): '+e.pe);});
+  if(OL.length){L.push('');L.push('O — OBJECTIVE');OL.forEach(x=>L.push(x));}
+  const aStart=L.length;L.push('');L.push('A — ASSESSMENT');
   if(entries.length){L.push('Algorithm / code: '+entries.map(e=>e.title+' ('+e.id+')').join('; ')+'.');
     L.push('Protocol summary:');
-    entries.forEach(e=>{if(entries.length>1)L.push(' '+e.title+' ('+e.id+'):');(e.lines||[]).forEach(x=>L.push('  '+x));});
+    entries.forEach(e=>{if(entries.length>1)L.push(' '+e.title+' ('+e.id+'):');
+      const ls=(e.lines||[]).map(x=>x.replace(/^\d+\.\s*/,''));const neg=ls.filter(x=>/^Negative:/.test(x));const rest=ls.filter(x=>!/^Negative:/.test(x));
+      const outL=(neg.length&&!ls.some(x=>/Positive:/.test(x)))?rest.concat(['No ADTMC decision criteria met.']):ls;
+      outL.forEach((x,i)=>L.push('  '+(i+1)+'. '+x));});
     const pos=[];entries.forEach(e=>(e.pos||[]).forEach(x=>{if(!pos.includes(x))pos.push(x);}));
     if(pos.length)L.push('*** RED FLAG: '+pos.join('; ')+' ***');
-  }else L.push('No ADTMC protocol screened.');
+  }
   active.forEach(t=>{const rn=(t.redFlags||[]).filter(f=>state[t.id].rf[f]==='pos');if(rn.length)L.push('*** RED FLAG PRESENT: '+rn.join('; ')+' — ESCALATED to provider/ER. ***');});
-  L.push('');L.push('P — PLAN');
+  if(L.length===aStart+2)L.splice(aStart,2);
+  const PL=[];
   const plans=[];active.forEach(t=>[...state[t.id].plan].forEach(p=>{if(!plans.includes(p))plans.push(p);}));
   const A=adNoteParts();
-  plans.forEach(p=>L.push('- Recommend '+p+'.'));A.plan.forEach(p=>L.push('- '+p));
-  if(plans.some(p=>p.includes('— Mendoza Pharmacy')))L.push('Meds are recommendations; pick up at Mendoza Pharmacy (not a prescription).');
-  if(!plans.length&&!A.plan.length)L.push('- Per protocol endpoint / provider direction.');
-  L.push('');L.push('D — DISPOSITION');
+  plans.forEach(p=>PL.push('- Recommend '+p+'.'));A.plan.forEach(p=>PL.push('- '+p));
+  if(plans.some(p=>p.includes('— Mendoza Pharmacy')))PL.push('Meds are recommendations; pick up at Mendoza Pharmacy (not a prescription).');
+  if(PL.length){L.push('');L.push('P — PLAN');PL.forEach(x=>L.push(x));}
+  const dStart=L.length;L.push('');L.push('D — DISPOSITION');
   const hi=adHighest();
-  L.push('Care category: '+(hi?SD_CAT[hi]||LV[hi].s:'not yet determined')+(entries.length>1&&hi?' (higher of the protocols screened)':'')+'.');
-  if(hi==='AEM')L.push(settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' for evaluation.':'No AEM available in unit — referred to supervising privileged provider (clinic).');
+  if(hi)L.push('Care category: '+(SD_CAT[hi]||LV[hi].s)+(entries.length>1?' (higher of the protocols screened)':'')+'.');
+  if(hi==='AEM')L.push(ouOn()?ouLine('AEM'):settings.aemOn?'Referred to '+aemTxt()+' (AEM level) for evaluation.':'No Senior Medic / AEM available — referred to supervising privileged provider (clinic).');
+  else if(ouOn())L.push(ouLine(hi));
   const mcp=entries.filter(e=>e.level==='MCP').map(e=>e.id);
   if(mcp.length)L.push('MCP protocol(s): '+mcp.join(', ')+'.');
   if(ad.prov.trim())L.push('Provider / AEM notified: '+ad.prov.trim()+'.');
   const dt=active.filter(t=>state[t.id].dispoTxt.trim());
   dt.forEach(t=>L.push('Disposition / counseling'+(dt.length>1?' ('+t.title.split('/')[0].trim()+')':'')+': '+state[t.id].dispoTxt.trim()));
+  if(L.length===dStart+2)L.splice(dStart,2);
   const rl=refLines();if(rl.length){L.push('');rl.forEach(x=>L.push(x));}
   return L.join('\n');
 }
@@ -1897,12 +1934,12 @@ function renderNote(){
   const now=new Date();
   const MO=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   const stamp=String(now.getDate()).padStart(2,'0')+' '+MO[now.getMonth()]+' '+String(now.getFullYear()).slice(2)+', '+String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0');
-  L.push((patient.trim()?('PT: '+patient.trim()+' — '):'')+stamp);
+  L.push((patient.trim()?('PT: '+patient.trim()+' — '):'')+stamp+(gFlags.sex?' · Sex: '+gFlags.sex:''));
   // vitals globales
   const v=gVitals, vl=[];
   if(v.bp)vl.push('BP '+v.bp); if(v.hr)vl.push('HR '+v.hr); if(v.rr)vl.push('RR '+v.rr);
   if(v.temp)vl.push('T '+v.temp); if(v.spo2)vl.push('SpO2 '+v.spo2); if(v.pain)vl.push('Pain '+v.pain);
-  if(vl.length)L.push('VS: '+vl.join(', '));
+  if(vl.length||noteActive().length||noteEntries().length)L.push(vsLine(vl));
   // active sections (any template with content)
   const active=noteActive();
   // positive red flags from ALL sections → top
@@ -1918,7 +1955,10 @@ function renderNote(){
     L.push(...sectionLines(t,state[t.id]));
     if(multi)L.push('');
   });
-  {const _sc=noteEntries().filter(e=>e.hpi||e.pe);if(_sc.length){if(L[L.length-1]!=='')L.push('');_sc.forEach(e=>{const pre=_sc.length>1?e.id+' ':'';if(e.hpi)L.push(pre+'HPI (screening): '+e.hpi);if(e.pe)L.push(pre+'PE (screening): '+e.pe);});}}
+  {const x=lmpLine();if(x){if(multi&&L[L.length-1]==='')L.splice(L.length-1,0,x);else L.push(x);}}
+  {const _sc=noteEntries().filter(e=>e.hpi||e.pe);let _merged=false;
+   if(paraOn()&&active.length===1){const hi=L.findIndex(x=>x.startsWith('HPI: '));const hp=_sc.filter(e=>e.hpi).map(e=>e.hpi.trim());if(hi>=0&&hp.length){L[hi]+=' '+hp.join(' ');_merged=true;}}
+   if(_sc.length){if(L[L.length-1]!=='')L.push('');_sc.forEach(e=>{const pre=_sc.length>1?e.id+' ':'';if(e.hpi&&!_merged)L.push(pre+'HPI (screening): '+e.hpi);if(e.pe)L.push(pre+'PE (screening): '+e.pe);});}}
   if(A.assess.length){if(L[L.length-1]!=='')L.push('');L.push('ASSESSMENT:');L.push(...A.assess);}
   // combined plan (dedupe across sections)
   const plans=[];
@@ -2017,11 +2057,11 @@ const LV={
  MCP:{n:'III — Minor-Care Protocol (MCP)',s:'Minor-Care Protocol',f:'TREAT HERE — Minor-Care Protocol (ADTMC III)',r:2,c:'mcp'}
 };
 const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · GU',f:'F · Neuro/BH',g:'G · General',h:'H · Eyes',i:'I · Women',j:'J · Skin',k:'K · Environment',l:'L · Misc',m:'M · Return'};
-const gFlags={female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
+const gFlags={sex:'',female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
 let ad={pfb:'',pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{},ref:{dd:false,told:false},noAutoSoap:false};
-function adResetProto(){ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
-function adResetAll(){adResetProto();ad.ref={dd:false,told:false};ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
-  gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
+function adResetProto(){ad.dpOpen={};ad.planEdit=false;ad.dutyEdit=false;ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
+function adResetAll(){adResetProto();ad.ou={on:false,unit:''};ad.ref={dd:false,told:false};ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
+  gFlags.sex='';gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 /* Screening answers -> history / exam wording (data/notetags.js) */
 function adTagLines(p){
   const T=(typeof NOTE_TAGS!=='undefined'&&NOTE_TAGS[p.id])||null;const out={hpi:'',pe:''};if(!T)return out;
@@ -2295,7 +2335,7 @@ function adListItems(){
   return out||'<p class="dim">No results.</p>';
 }
 function renderAD(){
-  let h='<h2 class="tpl">🧭 Sick call — pick the complaint</h2><p class="tpl-sub">Organized by ADTMC letter (MEDCOM Pam 40-7-21). Each complaint opens one page: red-flag screening, OPQRST/AMPLE interview, plan and disposition.</p>';
+  let h='<h2 class="tpl idxh">🧭 '+L('Pick the complaint','Elige la queja')+'</h2><p class="tpl-sub idxsub">Organized by ADTMC letter (MEDCOM Pam 40-7-21). Each complaint opens one page: red-flag screening, OPQRST/AMPLE interview, plan and disposition.</p>';
   h+=prevHtml();
   if(ad.log.length)h+='<div class="note-hint">In the note: '+ad.log.map(e=>e.id+' '+q$(e.title)).join(' · ')+'</div>';
   h+='<div class="field"><input type="text" placeholder="Search: knee, sore throat, rash, fever, A-1…" value="'+q$(ad.q)+'" oninput="adSearch(this.value)" style="margin-top:0"></div>'+iqIndexRow()+'<div id="adlist" class="plist">'+adListItems()+'</div>';
@@ -2316,7 +2356,14 @@ function adPatientInner(){
   if(gFlags.female&&ld!==null)h+='<div class="'+(ld>28?'warn':'note-hint')+'" style="margin-top:8px;margin-bottom:0">LMP '+ld+' days ago'+(ld>28?' — >28 days: contact provider; treat as possible pregnancy until ruled out (hCG).':'.')+'</div>';
   return h+'</div>';
 }
-function gfTog(k){gFlags[k]=!gFlags[k];if(k==='female'&&!gFlags.female){gFlags.preg=false;gFlags.lact=false;gFlags.lmp='';}renderMain();renderNote();}
+function gfTog(k){gFlags[k]=!gFlags[k];if(k==='female'){gFlags.sex=gFlags.female?'F':'';if(!gFlags.female){gFlags.preg=false;gFlags.lact=false;gFlags.lmp='';}}renderMain();renderNote();}
+/* Sex selector at the top of every protocol (v41): M / F. F opens LMP, pregnancy and lactation right there. */
+function gfSex(x){gFlags.sex=gFlags.sex===x?'':x;gFlags.female=gFlags.sex==='F';if(!gFlags.female){gFlags.preg=false;gFlags.lact=false;gFlags.lmp='';}renderMain();renderNote();}
+function sexRow(){const c=(x,t)=>'<span class="chip '+(gFlags.sex===x?'on':'')+'" onclick="gfSex(\''+x+'\')">'+t+'</span>';const ld=lmpDays();
+  let h='<div class="field sexrow" style="padding:8px 12px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="min-width:42px">'+L('Sex','Sexo')+'</b>'+c('M',L('Male','Hombre'))+c('F',L('Female','Mujer'))+(gFlags.sex?'':'<span class="dim" style="font-size:.85em">'+L('tap one','elige uno')+'</span>')+'</div>';
+  if(gFlags.female){h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px"><span class="mini" style="min-width:42px">LMP</span><input type="date" value="'+q$(gFlags.lmp)+'" onchange="gfSet(\'lmp\',this.value)" class="dateIn" style="max-width:170px"><span class="chip '+(gFlags.preg?'on':'')+'" onclick="gfTog(\'preg\')">'+L('Possible pregnancy','Posible embarazo')+'</span><span class="chip '+(gFlags.lact?'on':'')+'" onclick="gfTog(\'lact\')">'+L('Lactating','Lactando')+'</span></div>';
+    if(ld!==null)h+='<div class="'+(ld>28?'warn':'note-hint')+'" style="margin:8px 0 0">LMP '+ld+' '+L('days ago','días')+(ld>28?' — '+L('>28 days: contact provider; treat as possible pregnancy until ruled out (hCG).','>28 días: contactar al proveedor; tratar como posible embarazo hasta descartarlo (hCG).'):'.')+'</div>';}
+  return h+'</div>';}
 function gfSet(k,v,noRender){gFlags[k]=v;if(!noRender)renderMain();renderNote();}
 function adVBanner(){
   const v=adVitals();let h='<div id="vbanner">';
@@ -2340,15 +2387,16 @@ function adRfAll(){rfList(getP(ad.pid)).forEach(f=>{if(ad.rf[f]!=='pos')ad.rf[f]
   if(advOn()&&!rfList(getP(ad.pid)).some(f=>ad.rf[f]==='pos')){if(histComplete()){renderMain();renderNote();advScroll('.dpq:not(.clear):not(.fired)');return;}if(foldOn())foldCur.hist=true;renderMain();renderNote();advScroll('#fld_'+((state[cur]&&state[cur].focus)||(visFields(TPLS.find(x=>x.id===cur))[0]||{}).id)||'.hwrap');return;}
   renderMain();renderNote();}
 function adDPTog(i,j){const a=ad.dp[i]||(ad.dp[i]=[]);const k=a.indexOf(j);k<0?a.push(j):a.splice(k,1);ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();}
-function adDPNone(i){ad.dp[i]=[];ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();dpAdv();}
+function adDPNone(i){if(ad.dpOpen)delete ad.dpOpen[i];ad.dp[i]=[];ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();dpAdv();}
 function dpAdv(){if(!advOn()||!ad.pid)return;const R=adEval(getP(ad.pid));if(R.final)advScroll('.resbox');else advScroll('.dpq:not(.clear):not(.fired)');}
 function adOut(i,o){ad.out[i]=o;renderMain();renderNote();}
+function adDPOpen(i){ad.dpOpen=ad.dpOpen||{};ad.dpOpen[i]=!ad.dpOpen[i];renderMain();}
 function adUndo(i){delete ad.dpDone[i];delete ad.out[i];delete ad.out['x'+i];renderMain();renderNote();}
 function adHeadHtml(p){
-  let h='<div class="algo-actions" style="margin:0 0 10px"><button class="ghost" onclick="adBack()">← Index</button></div>';
-  h+='<h2 class="tpl"><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2>'+(foldOn()?'':'<p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>');
+  let h='<h2 class="tpl ptitle"><button class="backb" onclick="adBack()" aria-label="Index">‹</button><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2>'+(foldOn()?'':'<p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>');
   h+=adLiveCard(p);
   if(ad.iq)h+=iqBanner(ad.iq);
+  h+=sexRow();
   return h;
 }
 function adLiveCard(p){
@@ -2517,6 +2565,9 @@ function adScreenHtml(p,R,opts){
     }
     n++;
     const sel=ad.dp[i]||[],done=!!ad.dpDone[i],min=st.min||1,fired=done&&sel.length>=min;const sug=done?[]:adDPSug(st);
+    {const y=st.yes||{};const pend=fired&&((y.out&&ad.out[i]===undefined)||y.tri);
+     if(done&&!pend&&!(ad.dpOpen&&ad.dpOpen[i])){const res=fired?('YES: '+sel.map(j=>st.items[j]).join(', ')+(y.out&&ad.out[i]!==undefined?' → '+y.out[ad.out[i]].l:(y.d?' → '+LV[y.d].s:''))):(st.none?L('None','Ninguno'):L('None','Ninguno'));
+       h+='<div class="algoq dpq dp1 '+(fired?'fired':'clear')+'" onclick="adDPOpen('+i+')"><span class="dp1n">DP '+n+'</span><span class="dp1r">'+(fired?'● ':'✓ ')+q$(res)+'</span><span class="dp1e">›</span></div>';continue;}}
     h+='<div class="algoq dpq'+(done?(fired?' fired':' clear'):'')+'"><div class="fname">Decision point '+n+(min>1?' · YES to ≥'+min+' → next action':' · any = YES')+'</div>';
     if(st.yes&&st.yes.a)h+='<div class="dpact">'+scrLink(st.yes.a)+'</div>';
     h+='<div class="chips">';
@@ -2546,7 +2597,13 @@ function adDecisionHtml(p,R){
   let h=adResultCard(p,R);
   if(R.final==='MCP'){
     const it=adPlanItems(p);
-    h+='<div class="field"><div class="lab"><span class="tag">📋</span><span class="name">Plan — suggested from your answers</span><span class="ask">green = on the note · tap to add/remove</span><span class="clr" onclick="adClrPlan()" title="Back to suggested plan">↺ reset</span></div>';
+    if(!ad.planEdit){const on=[];it.meds.filter(x=>x.on).forEach(x=>on.push('💊 '+adMedLine(x)));const adv=it.adv.filter(x=>x.on).map(x=>x.t);if(adv.length)on.push('🩹 '+adv.join('; '));
+      const act=it.act.filter(x=>x.on).map(x=>x.t);if(act.length)on.push('🏃 '+(it.dur.sel?it.dur.sel+': ':'')+act.join('; '));if(it.rtc.t&&it.rtc.on)on.push('↩ '+it.rtc.t);
+      h+='<div class="field plansum"><div class="lab"><span class="tag">📋</span><span class="name">'+L('Plan','Plan')+'</span><span class="clr" onclick="ad.planEdit=true;renderMain()">✏️ '+L('Edit','Editar')+'</span></div>'+(on.length?'<div class="pls">'+on.map(x=>'<div>'+q$(x)+'</div>').join('')+'</div>':'<div class="dim">'+L('Nothing selected — tap Edit.','Nada seleccionado — toca Editar.')+'</div>');
+      it.meds.filter(x=>x.on&&x.sf.w.length).forEach(x=>x.sf.w.forEach(w=>{h+='<div class="mw">⚠️ '+q$(x.t)+': '+q$(w)+'</div>';}));
+      h+='</div>';}
+    else{
+    h+='<div class="field"><div class="lab"><span class="tag">📋</span><span class="name">Plan — suggested from your answers</span><span class="clr" onclick="ad.planEdit=false;renderMain()">✓ '+L('Done','Listo')+'</span><span class="ask">green = on the note · tap to add/remove</span><span class="clr" onclick="adClrPlan()" title="Back to suggested plan">↺ reset</span></div>';
     const chip=(x,txt)=>'<span class="chip '+(x.on?'on':'')+'" onclick="adPlTog(\''+x.key+'\')">'+(x.on?'✓ ':'')+q$(txt)+'</span>';
     if(it.meds.length){h+='<div class="fuq">Meds (ADTMC App. C)</div><div class="chips">'+it.meds.map(x=>chip(x,adMedLine(x))).join('')+'</div>';
       it.meds.filter(x=>x.on||x.sf.w.length).forEach(x=>{x.sf.w.forEach(w=>{h+='<div class="mw">⚠️ '+q$(x.t)+': '+q$(w)+'</div>';});if(x.on&&x.m&&x.m.max)h+='<div class="mi">'+q$(x.m.n.replace(/\s+\d.*$/,''))+' max '+q$(x.m.max)+(x.m.rx?' · Rx — notify provider first':'')+'</div>';});}
@@ -2555,17 +2612,21 @@ function adDecisionHtml(p,R){
       if(it.act.some(x=>x.on)){h+='<div class="fuq">For how long? <span class="dim">(ADTMC gives no duration for most — pick the time you recommend)</span></div><div class="chips">'+DUR_OPTS.map(o=>'<span class="chip '+(it.dur.sel===o?'on':'')+'" onclick="adDurSet(\''+o+'\')">'+(it.dur.sel===o?'✓ ':'')+o+(o===it.dur.sug?' <span class="dim">· '+it.dur.src+'</span>':'')+'</span>').join('')+'</div>';}}
     if(it.rtc.t)h+='<div class="fuq">Return precaution</div><div class="chips">'+chip(it.rtc,it.rtc.t)+'</div>';
     h+='</div>';
+    }
     const t=TPLS.find(x=>x.id===cur),s=state[cur];
+    if(s.dispo&&!ad.dutyEdit){h+='<div class="field plansum" onclick="ad.dutyEdit=true;renderMain()" style="cursor:pointer"><div class="lab"><span class="tag">🪖</span><span class="name">'+L('Duty / profile','Servicio / profile')+'</span><span class="clr">✏️ '+L('Edit','Editar')+'</span></div><div class="pls">'+q$(s.dispoTxt||s.dispo)+'</div></div>';}
+    else{
     h+='<div class="field"><div class="lab"><span class="tag">🪖</span><span class="name">Duty status / profile</span><span class="ask">recommendation — pending CoC/provider</span>'+clrBtn(cur,'__dispo')+'</div><div class="chips">';
     Object.keys(t.dispo).forEach(k=>{h+='<span class="chip '+(s.dispo===k?'on':'')+'" onclick="setDispo(\''+cur+'\',\''+k+'\')">'+k+'</span>';});
     h+='</div><input type="text" placeholder="duty status text (editable)..." value="'+q$(s.dispoTxt)+'" oninput="dispoTxt(\''+cur+'\',this.value)"></div>';
+    }
   }
   const _po=isFold('prov');h+=foldRow('prov',L('Notified at clinic','Avisado en la clínica'),ad.prov&&ad.prov.trim()?q$(ad.prov.trim()):L('optional','opcional'),_po);
   if(_po)h+='<div class="field'+(foldOn()?' fbody':'')+'"><div class="lab"><span class="tag s2">☎</span><span class="name">Notified at clinic (optional)</span></div><input type="text" style="margin-top:0" value="'+q$(ad.prov)+'" placeholder="Rank Last name, if you contacted them" oninput="ad.prov=this.value;renderNote()"></div>';
-  h+='<div class="algo-actions"><button style="background:var(--green);color:var(--on-green)" onclick="finishPatient(this)">✅ '+L('Finish patient — copy + save','Terminar paciente — copiar + guardar')+'</button><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
+  h+='<div class="finbar"><button class="finmain" onclick="finishPatient(this)">✅ '+L('Finish — copy + save','Terminar — copiar + guardar')+'</button><div class="finlinks"><a onclick="adCommit()">＋ '+L('Another complaint','Otra queja')+'</a><a onclick="gOpenNote()">'+L('View note','Ver nota')+'</a><a onclick="adBack()">'+L('Cancel','Cancelar')+'</a></div></div>';
   return h;
 }
-function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined')?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>'+refBox():'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined'&&refIsClinic(R.final))?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>'+refBox():'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fFold():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
 /* Mendoza Clinic sick call & appointment guidelines (CLINIC in data/intake.js). / Guía de la clínica Mendoza. */
 function clinicLine(){if(typeof CLINIC==='undefined')return '';const mod=(CLINIC.mod||[]).join(' & ');return L('Clinic sick call '+CLINIC.sc+' · MOD '+mod+' (Mon–Fri). Needs a <b>DD 689 signed by a BAS medic</b> + referral note in <b>SOAP</b> format (reason for referral and care already done) — <a href="#" onclick="event.preventDefault();clinicSoap()">use SOAP-D</a>. Tell the Soldier why and which service. Appointments ','Sick call de la clínica '+CLINIC.sc+' · MOD '+mod+' (lun–vie). Requiere <b>DD 689 firmado por un médico del BAS</b> + nota de referido en formato <b>SOAP</b> (razón del referido y lo que ya se hizo) — <a href="#" onclick="event.preventDefault();clinicSoap()">usar SOAP-D</a>. Explícale al soldado por qué y a qué servicio. Citas ')+CLINIC.phones.join(' / ');}
 function clinicSoap(){try{ad.noAutoSoap=false;if(!soapOn())toggleFmt();syncFmtBtn();renderNote();if(typeof sheetTog==='function')sheetTog(true);}catch(e){}}
@@ -2628,6 +2689,8 @@ function h2fText(){if(typeof H2F_CLASSES==='undefined'||!h2f.cls.size)return '';
   const c=H2F_CLASSES.filter(x=>h2f.cls.has(x[0])).map(x=>x[1]+' ('+x[2]+')').join('; ');
   const m=h2fMedic();
   return 'Referred to H2F ('+H2F_LOC+'): '+c+' — '+h2f.f+'x/week x'+h2f.w+' weeks. H2F class slip given; Soldier brings slip to the COF / schedules via Visibook QR.'+(m?' Referring source: '+m+(/\.$/.test(m)?'':'.'):'');}
+function h2fFold(){const n=(typeof h2f!=='undefined'&&h2f.cls)?h2f.cls.size:0;const o=isFold('h2f',n>0);
+  return foldRow('h2f','🏃 '+L('H2F class referral','Referido a clases de H2F'),n?'<span class="ok">'+n+' '+L('class(es)','clase(s)')+' ✓</span>':L('optional','opcional'),o,n>0)+(o?h2fCard():'');}
 function h2fCard(){if(typeof H2F_CLASSES==='undefined')return '';
   const sug=ad.pid?H2F_CLASSES.filter(x=>x[3].includes(ad.pid)).map(x=>x[0]):[];
   let h='<div class="field h2f"><div class="lab"><span class="tag">🏃</span><span class="name">'+L('H2F class referral','Referido a clases de H2F')+'</span><span class="ask">'+L('unit level — instead of PT','a nivel unidad — en vez de PT')+'</span></div><div class="dim" style="font-size:.86em;margin:-2px 0 8px">'+L('Mendoza rule: injuries older than 48 h → H2F physical therapy evaluation, not sick call.','Regla de Mendoza: lesiones de más de 48 h → evaluación de terapia física en H2F, no sick call.')+'</div>';
@@ -2686,16 +2749,18 @@ function adResultCard0(p,R){
   let h='';
   if(R.final){
     const lv=LV[R.final];
-    const lf=R.final==='AEM'?(settings.aemOn?'AEM NOW — see '+(aemWho()?q$(aemWho()):'your AEM')+' (ADTMC II)':'REFER TO CLINIC — AEM Now (ADTMC II) · no AEM in your unit'):lv.f;
+    const lf=R.final==='AEM'?(ouOn()?'SECOND LOOK — Soldier\'s unit Senior Medic today (ADTMC II)':settings.aemOn?aemRole().toUpperCase()+' NOW'+(aemWho()?' — see '+q$(aemWho()):'')+' (ADTMC II, AEM level)':'REFER TO CLINIC — AEM Now (ADTMC II) · no Senior Medic / AEM available'):lv.f;
     h+='<div class="resbox lv-'+lv.c+'"><div class="resk">DISPOSITION</div><div class="resh">'+lf+'</div>';
     if(R.final==='MCP')h+='<div class="resn">Minor-care protocol '+p.id+' — follow the treatment below.</div>';
     const rs=[...R.esc];if(R.level)rs.push({lv:R.level,why:'Protocol endpoint '+p.id});
     rs.filter(e=>e.lv===R.final).forEach(e=>h+='<div class="resw">• '+q$(e.why)+'</div>');
-    if(R.final==='AEM'&&settings.aemOn)h+='<div class="resn">Notify your AEM'+(aemWho()?' ('+q$(aemWho())+')':'')+'. The AEM must physically evaluate the Soldier, confirm your data and direct the plan (ADTMC p. 225). If the AEM is not available → supervising privileged provider (clinic).</div>';
+    if(R.final==='AEM'&&ouOn())h+='<div class="resn">Soldier from another unit'+(ouUnit()?' ('+q$(ouUnit())+')':'')+': tell the Soldier to see their unit Senior Medic TODAY for a second look, and give them the note. If they cannot be seen today → supervising privileged provider (clinic).</div>';
+    else if(R.final==='AEM'&&settings.aemOn)h+='<div class="resn">Notify '+q$(aemTxt())+'. The '+aemRole()+' (AEM level) must physically evaluate the Soldier, confirm your data and direct the plan (ADTMC p. 225). If not available → supervising privileged provider (clinic).</div>';
     else if(R.final==='AEM')h+='<div class="resn">No AEM available in your unit (Settings) → per ADTMC Category II the Soldier is seen by the supervising privileged provider. Document OPQRST/AMPLE and send the patient to the clinic.</div>';
     if(R.final==='PN')h+='<div class="resn">Document OPQRST/AMPLE so the clinic has the full picture, and send the patient. Equipment, meds and a provider are there.</div>';
     if(R.forced&&R.level&&R.level!=='PN')h+='<div class="resn">Note: the protocol alone would give '+LV[R.level].s+'; the global rules raise it.</div>';
     h+='</div>';
+    if(R.final!=='PN')h+=ouBox(R);
   }
   if(R.tri.length)h+='<div class="resbox lv-tri"><div class="resk">▲ SCREEN ANOTHER PROTOCOL</div><div class="resn">'+L('Tap one: this protocol is saved in the note and the next one opens.','Toca uno: este protocolo se guarda en la nota y se abre el siguiente.')+'</div><div class="chips" style="margin-top:8px">'+R.tri.map(t=>scrChip(t,'on')).join('')+'</div></div>';
   R.warn.forEach(w=>h+='<div class="warn" style="margin-top:8px">'+q$(w)+'</div>');
@@ -2721,7 +2786,7 @@ function adCommit(){
 function adProtoLines(p,R){
   const L=[];let n=0;const v=adVitals();
   const anyV=Object.values(gVitals).some(x=>String(x).trim());
-  L.push(++n+'. Vitals: '+(!anyV?'not taken (field screening)':(v.abn.length?'ABNORMAL — '+v.abn.join('; ')+(ad.vovr?' (provider reviewed, cleared to continue)':''):'within ADTMC limits'))+'.');
+  if(anyV)L.push(++n+'. Vitals: '+((v.abn.length?'ABNORMAL — '+v.abn.join('; ')+(ad.vovr?' (provider reviewed, cleared to continue)':''):'within ADTMC limits'))+'.');
   const rfs=rfList(p),neg=rfs.filter(f=>ad.rf[f]==='neg'),pos=rfs.filter(f=>ad.rf[f]==='pos');
   if(!pos.length&&neg.length&&neg.length===rfs.length)L.push(++n+'. No red flags.');
   else if(pos.length||neg.length)L.push(++n+'. Red flags: '+(pos.length?'PRESENT — '+pos.join('; ')+'. ':'')+(neg.length?'Denies '+neg.join(', ')+'.':''));
@@ -2745,7 +2810,7 @@ function adNoteParts(){
   const entries=noteEntries();
   if(!entries.length)return out;
   const ld=lmpDays();
-  if(gFlags.female){out.assess.push('LMP: '+(gFlags.lmp?(new Date(gFlags.lmp+'T00:00:00').toDateString().slice(4)+' ('+ld+' d ago)'):'not documented')+(gFlags.preg?' — possible pregnancy':'')+(gFlags.lact?' — lactating':'')+'.');}
+  /* LMP goes with the history in the note (see renderNote / soapdNote) */
   if(gFlags.mrc.trim())out.assess.push('MRC: '+gFlags.mrc.trim()+'.');
   if(gFlags.aviation)out.assess.push('Flight/dive status.');
   entries.forEach(e=>{
@@ -2756,8 +2821,9 @@ function adNoteParts(){
   if(ad.pfb&&typeof PFB!=='undefined'&&entries.some(e=>e.id==='J-3'))out.plan.push(pfbNote(ad.pfb));
   if(typeof h2fText==='function'){const ht=h2fText();if(ht&&entries.length)out.plan.push(ht);}
   const hi=adHighest();
-  const D={PN:'Sent to clinic — needs a provider now.',AEM:settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' — evaluation today.':'Sent to clinic — no AEM available; supervising provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
+  const D={PN:'Sent to clinic — needs a provider now.',AEM:ouOn()?ouLine('AEM'):settings.aemOn?'Referred to '+aemTxt()+' (AEM level) — evaluation today.':'Sent to clinic — no Senior Medic / AEM available; supervising provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
   if(hi&&hi!=='MCP')out.dispo=D[hi]||LV[hi].s;
+  if(ouOn()&&hi!=='AEM'){const x=ouLine(hi);out.dispo=out.dispo?out.dispo+' '+x:x;}
   if(ad.prov.trim())out.assess.push('Clinic notified: '+ad.prov.trim()+'.');
   return out;
 }
@@ -2901,6 +2967,25 @@ function adMedItems(){
 ========================================================= */
 const settings=(function(){let s={purge:true,pin:'',theme:'green',mode:'dark',noteFmt:'compact',aemOn:false,aemName:''};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
 function aemWho(){return settings.aemName&&settings.aemName.trim()?settings.aemName.trim():'';}
+/* AEM-level reviewer (ADTMC II): AEM includes the supervising NCO when local policy delegates it (ADTMC Category II).
+   Most units use the Senior Medic. / En la mayoría de unidades el revisor nivel AEM es el Senior Medic. */
+function aemRole(){return settings.aemRole==='aem'?'AEM':'Senior Medic';}
+function aemTxt(){return aemRole()+(aemWho()?' ('+aemWho()+')':'');}
+// Soldier from another unit: second look by their own unit's Senior Medic. / Soldado de otra unidad.
+function ouOn(){return !!(ad.ou&&ad.ou.on);}
+function ouUnit(){return ad.ou&&ad.ou.unit?String(ad.ou.unit).trim():'';}
+function ouTog(){ad.ou=ad.ou||{on:false,unit:''};ad.ou.on=!ad.ou.on;renderMain();renderNote();}
+// Units this aid station sees — quick picks, editable in Settings. / Unidades que atiende este BAS — editables en Ajustes.
+const OU_DEFAULT=['517','937','FSC','66','HHC'];
+function ouUnits(){const u=settings.ouUnits;return Array.isArray(u)&&u.length?u:OU_DEFAULT;}
+function ouPick(u){ad.ou=ad.ou||{on:true,unit:''};ad.ou.on=true;ad.ou.unit=ad.ou.unit===u?'':u;renderMain();renderNote();}
+function ouUnitsSet(v){settings.ouUnits=v.split(',').map(x=>x.trim().slice(0,20)).filter(Boolean).slice(0,12);saveSettings();}
+function ouSet(v){ad.ou=ad.ou||{on:true,unit:''};ad.ou.unit=v.slice(0,40);renderNote();}
+function ouLine(hi){if(!ouOn())return '';const u=ouUnit();const from='Soldier from '+(u||'another unit');
+  return hi==='AEM'?from+' — second look by their unit Senior Medic today recommended (ADTMC II, AEM level).':from+' — recommend follow-up / second look with their unit Senior Medic if not improving or as needed.';}
+function ouBox(R){const o=ad.ou||{},hi=R&&R.final;
+  return '<div class="field oubox" style="margin-top:6px"><div class="chips"><span class="chip '+(o.on?'on':'')+'" onclick="ouTog()">'+(o.on?'✓ ':'')+L('Soldier from another unit → second look by their Senior Medic','Soldado de otra unidad → second look de su Senior Medic')+'</span></div>'
+   +(o.on?'<div class="chips" style="margin-top:8px">'+ouUnits().map(u=>'<span class="chip '+(ouUnit()===u?'on':'')+'" onclick="ouPick(\''+q$(u).replace(/\\/g,'')+'\')">'+q$(u)+'</span>').join('')+'</div><input maxlength="40" autocomplete="off" placeholder="'+L('Other unit (optional)','Otra unidad (opcional)')+'" value="'+q$(o.unit||'')+'" oninput="ouSet(this.value)" style="margin-top:8px"><div class="fuq">'+(hi==='AEM'?L('AEM-level need: the note recommends a second look today by their unit Senior Medic.','Necesita nivel AEM: la nota recomienda un second look hoy con el Senior Medic de su unidad.'):L('The note adds: follow up with their unit Senior Medic if not improving or as needed.','La nota agrega: seguimiento con el Senior Medic de su unidad si no mejora o según necesidad.'))+'</div>':'')+'</div>';}
 function togAem(){settings.aemOn=!settings.aemOn;saveSettings();renderMain();renderNote();}
 function setAemName(v){settings.aemName=v.slice(0,60);saveSettings();renderNote();}
 function saveSettings(){try{localStorage.setItem('sc_settings',JSON.stringify(settings));}catch(e){}}
@@ -2940,7 +3025,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v40';
+const APP_VER='v41';
 function updateApp(b){
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
@@ -2996,10 +3081,12 @@ function renderSettings(){
   let h='<h2 class="tpl">⚙️ Settings / Privacy</h2><p class="tpl-sub">Everything stays on this device (localStorage). Nothing is sent to any server.</p>';
   h+='<div class="field"><div class="lab"><span class="tag">🌐</span><span class="name">Language</span></div><div class="chips"><span class="chip '+(LANG==='en'?'on':'')+'" onclick="setLang(\'en\')">English</span><span class="chip '+(LANG==='es'?'on':'')+'" onclick="setLang(\'es\')">Español</span></div><div class="fuq">Interface language. The note is always written in English.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🎨</span><span class="name">Theme</span></div><div class="chips">'+THEMES.map(x=>'<span class="chip '+(settings.theme===x[0]?'on':'')+'" onclick="setTheme(\''+x[0]+'\')">'+x[1]+'</span>').join('')+'</div><div class="chips" style="margin-top:8px"><span class="chip '+(settings.mode!=='light'?'on':'')+'" onclick="setMode(\'dark\')">Dark</span><span class="chip '+(settings.mode==='light'?'on':'')+'" onclick="setMode(\'light\')">Light</span></div><div class="fuq">Color and brightness of the interface. Saved on this device only. The note text is not affected.</div></div>';
-  h+='<div class="field"><div class="lab"><span class="tag">🩺</span><span class="name">'+L('AEM in my unit','AEM en mi unidad')+'</span><span class="ask">ADTMC II</span></div><div class="chips"><span class="chip '+(settings.aemOn?'on':'')+'" onclick="togAem()">'+(settings.aemOn?L('AEM available','AEM disponible'):L('No AEM — "AEM Now" goes to the clinic','Sin AEM — "AEM Now" va a la clínica'))+'</span></div>'+(settings.aemOn?'<input id="aemName" maxlength="60" autocomplete="off" placeholder="'+L('AEM rank / name (optional)','Rango / nombre del AEM (opcional)')+'" value="'+q$(settings.aemName||'')+'" oninput="setAemName(this.value)" style="margin-top:8px">':'')+'<div class="fuq">'+L('AEM = expeditionary combat medic, special operations medic, flight paramedic, or the supervising NCO when local policy delegates that authority. If no AEM is available, the Soldier is seen by the supervising privileged provider (ADTMC Category II).','AEM = expeditionary combat medic, special operations medic, flight paramedic, o el NCO supervisor cuando la política local le delega esa autoridad. Si no hay AEM disponible, al Soldado lo ve el proveedor privilegiado supervisor (ADTMC Categoría II).')+'</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">🩺</span><span class="name">'+L('AEM-level reviewer (Senior Medic / AEM)','Revisor nivel AEM (Senior Medic / AEM)')+'</span><span class="ask">ADTMC II</span></div><div class="chips"><span class="chip '+(settings.aemOn?'on':'')+'" onclick="togAem()">'+(settings.aemOn?L('Available','Disponible'):L('None — "AEM Now" goes to the clinic','Ninguno — "AEM Now" va a la clínica'))+'</span>'+(settings.aemOn?'<span class="chip '+(aemRole()==='Senior Medic'?'on':'')+'" onclick="settings.aemRole=\'senior\';saveSettings();renderMain();renderNote()">Senior Medic</span><span class="chip '+(aemRole()==='AEM'?'on':'')+'" onclick="settings.aemRole=\'aem\';saveSettings();renderMain();renderNote()">AEM</span>':'')+'</div>'+(settings.aemOn?'<input id="aemName" maxlength="60" autocomplete="off" placeholder="'+L('Rank / name (optional)','Rango / nombre (opcional)')+'" value="'+q$(settings.aemName||'')+'" oninput="setAemName(this.value)" style="margin-top:8px">':'')+'<div class="fuq">'+L('AEM = expeditionary combat medic, special operations medic, flight paramedic, or the supervising NCO when local policy delegates that authority. If no AEM is available, the Soldier is seen by the supervising privileged provider (ADTMC Category II).','AEM = expeditionary combat medic, special operations medic, flight paramedic, o el NCO supervisor cuando la política local le delega esa autoridad. Si no hay AEM disponible, al Soldado lo ve el proveedor privilegiado supervisor (ADTMC Categoría II).')+'</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">🏷️</span><span class="name">'+L('Units you see','Unidades que atiendes')+'</span><span class="ask">'+L('for “Soldier from another unit”','para “Soldado de otra unidad”')+'</span></div><input maxlength="200" autocomplete="off" value="'+q$(ouUnits().join(', '))+'" onchange="ouUnitsSet(this.value)" placeholder="517, 937, FSC, 66, HHC"><div class="fuq">'+L('Separate with commas. They show as quick buttons on the result card.','Sepáralas con comas. Salen como botones rápidos en la tarjeta del resultado.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">✎</span><span class="name">'+L('Note detail (screening)','Detalle de la nota (screening)')+'</span></div><div class="chips">'+[['minimal',L('Minimal — positives only','Mínimo — solo positivos')],['short',L('Short — skip red-flag negatives','Corto — sin negativos de banderas rojas')],['full',L('Full — every pertinent negative','Completo — todos los negativos')]].map(([v,l])=>'<span class="chip '+((settings.noteDetail||'short')===v?'on':'')+'" onclick="settings.noteDetail=\''+v+'\';saveSettings();renderMain();renderNote()">'+l+'</span>').join('')+'</div><div class="fuq">'+L('When all red flags are negative the note already says "No red flags." Short leaves out the long "Denies…" list of each red flag.','Si todas las banderas rojas son negativas, la nota ya dice "No red flags." Corto quita la lista larga de "Denies…" de cada bandera.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">▸</span><span class="name">'+L('Folded sections','Secciones plegadas')+'</span></div><div class="chips"><span class="chip '+(foldOn()?'on':'')+'" onclick="settings.fold=!foldOn();saveSettings();renderMain()">'+(foldOn()?L('ON — sections show as one line; tap to open','ENCENDIDO — cada sección es una línea; toca para abrir'):L('Off — everything open (classic)','Apagado — todo abierto (clásico)'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">≡</span><span class="name">'+L('Compact history','Historial compacto')+'</span></div><div class="chips"><span class="chip '+(settings.hcompact!==false?'on':'')+'" onclick="settings.hcompact=settings.hcompact===false;saveSettings();renderMain()">'+(settings.hcompact!==false?L('ON — answered letters fold up as you move on','ENCENDIDO — las letras respondidas se pliegan al avanzar'):L('Off — show every letter open','Apagado — todas las letras abiertas'))+'</span></div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">¶</span><span class="name">'+L('History in the note','Historia en la nota')+'</span></div><div class="chips"><span class="chip '+(settings.hpiPara!==false?'on':'')+'" onclick="settings.hpiPara=true;saveSettings();renderMain();renderNote()">'+L('One paragraph (faster to copy)','Un párrafo (más rápido de copiar)')+'</span><span class="chip '+(settings.hpiPara===false?'on':'')+'" onclick="settings.hpiPara=false;saveSettings();renderMain();renderNote()">'+L('One line per letter (O:, P:, Q:…)','Una línea por letra (O:, P:, Q:…)')+'</span></div><div class="dim" style="font-size:.88em;margin-top:6px">'+L('Anything you did not fill in is left out of the note — no empty “__” fields to copy.','Lo que no llenaste no aparece en la nota — no hay campos vacíos “__” que copiar.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">⏭</span><span class="name">'+L('Auto-advance','Avance automático')+'</span></div><div class="chips"><span class="chip '+(settings.autoAdv!==false?'on':'')+'" onclick="settings.autoAdv=settings.autoAdv===false;saveSettings();renderMain()">'+(settings.autoAdv!==false?L('ON — red flags done → history → decision points → result','ENCENDIDO — banderas rojas → historia → puntos de decisión → resultado'):L('Off — scroll by hand','Apagado — bajar a mano'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">⏱</span><span class="name">'+L('Sick call timer','Contador de tiempo')+'</span></div><div class="chips"><span class="chip '+(settings.timer!==false?'on':'')+'" onclick="settings.timer=settings.timer===false;saveSettings();renderMain()">'+(settings.timer!==false?L('ON — measures time per patient on this phone only','ENCENDIDO — mide el tiempo por paciente solo en este teléfono'):L('Off','Apagado'))+'</span><span class="chip" onclick="goRef(\'times\')">'+L('See times ›','Ver tiempos ›')+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🛡️</span><span class="name">Daily auto-delete</span></div><div class="chips"><span class="chip '+(settings.purge?'on':'')+'" onclick="togPurge()">'+(settings.purge?'ON — notes and data from previous days are deleted on open':'Off')+'</span></div><div class="fuq">Recommended: notes contain Soldier information (PII/PHI). Export what you need before the day ends.</div></div>';
@@ -3195,12 +3282,12 @@ function daOpen(){tmMark('finish');
 function exportBackup(){dl('sickcall_backup.json',JSON.stringify({v:1,saved:getSaved()}),'application/json');}
 function importBackup(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d&&Array.isArray(d.saved)){setSaved(d.saved.concat(getSaved()));renderNav();alert('Imported '+d.saved.length+' notes.');}}catch(e){alert('Invalid file.');}};r.readAsText(f);}
 /* follow-up: reopen a saved patient as a return visit */
-function adSnap(){const ids=ad.log.map(e=>e.id);if(ad.pid)ids.push(ad.pid);return{ids,hi:adHighest(),female:gFlags.female,lmp:gFlags.lmp};}
+function adSnap(){const ids=ad.log.map(e=>e.id);if(ad.pid)ids.push(ad.pid);return{ids,hi:adHighest(),female:gFlags.female,sex:gFlags.sex,lmp:gFlags.lmp};}
 function startFollowUp(i){
   const n=getSaved()[i];if(!n)return;
   patient=(n.name&&n.name!=='(no name)')?n.name:'';const pi=document.getElementById('ptIn');if(pi)pi.value=patient;
   adResetAll();ad.ret=true;ad.prev={t:n.t,name:n.name,ids:(n.ad&&n.ad.ids)||[],hi:n.ad&&n.ad.hi||null};
-  if(n.ad){gFlags.female=!!n.ad.female;gFlags.lmp=n.ad.lmp||'';}
+  if(n.ad){gFlags.female=!!n.ad.female;gFlags.sex=n.ad.sex||(gFlags.female?'F':'');gFlags.lmp=n.ad.lmp||'';}
   view='adtmc';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;
 }
 function prevHtml(){
