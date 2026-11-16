@@ -861,5 +861,6 @@ h2.tpl.ptitle{display:flex;align-items:center;gap:8px;font-size:24px}
 .exqrov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 .exqrbig{width:min(86vw,420px);background:#fff;padding:10px;border-radius:12px}.exqrbig svg{width:100%;height:auto;display:block}
 .exqrt{color:#fff;font-size:1.1em}
-.xa{--xa-bg:#2C2C2E;--xa-b:#fff;--xa-f:#8E8E93;--xa-h:var(--accent,#FF9F0A);display:block;width:100%;max-width:280px;height:auto;background:var(--xa-bg);border-radius:10px;margin:2px 0 8px 28px}
-:root[data-mode="light"] .xa{--xa-bg:#E5E5EA;--xa-b:#1C1C1E;--xa-f:#8E8E93}
+
+.exfig{display:block;width:calc(100% - 28px);max-width:520px;height:auto;border-radius:8px;margin:6px 0 4px 28px;background:#fff}
+details.exmod{margin:4px 0 2px 28px}details.exmod summary{color:var(--accent);font-weight:600;font-size:.92em;cursor:pointer}details.exmod .exfig{margin-left:0;width:100%}details.exmod .exc{margin-left:0}

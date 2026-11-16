@@ -49,13 +49,15 @@ p.sub{color:var(--dim);margin:0 0 14px}
 .foot{color:var(--dim);font-size:13px;margin-top:16px;line-height:1.45}
 .pick{display:flex;flex-wrap:wrap;gap:8px}
 .xa{--xa-bg:var(--card2);--xa-b:var(--txt);--xa-f:var(--dim);--xa-h:var(--acc);display:block;width:100%;max-width:300px;height:auto;background:var(--xa-bg);border-radius:10px;margin:0 0 8px}
+.fig{display:block;width:100%;height:auto;border-radius:8px;margin:8px 0 2px;background:#fff}
+.pg{color:var(--dim);font-size:13px}
+details.mod{margin-top:6px}details.mod summary{color:var(--acc);font-weight:600;font-size:15px;cursor:pointer}
 .pick a{background:var(--card);color:var(--txt);text-decoration:none;padding:12px 16px;border-radius:22px}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
 <script src="data/exercises.js"></script>
-<script src="data/exanim.js"></script>
 <script>
 (function(){
 var qs=new URLSearchParams(location.search);
@@ -72,31 +74,28 @@ function doneSet(){return st.days[today()]||[];}
 var timer=null;
 
 function items(r){var out=[];
-  r.ex.forEach(function(x,i){out.push({k:'r'+i,x:x,g:'home'});});
-  r.drills.forEach(function(d){EX_DRILLS[d].ex.forEach(function(x,i){out.push({k:d+i,x:x,g:d});});});
+  r.drills.forEach(function(d){EX_DRILLS[d].ex.forEach(function(x){out.push({k:x.id,x:x,g:d});});});
   return out;}
-function secs(d){var m=String(d).match(/(\d+)\s*s\b/g);if(!m)return 0;var n=m[m.length-1].match(/\d+/)[0];var all=String(d).match(/(\d+)\s*[–-]\s*(\d+)\s*s\b/);return all?+all[2]:+n;}
+function secs(d){if(/\b1 minute\b/.test(d))return 60;var m=String(d).match(/(\d+)\s*s\b/g);if(!m)return 0;var n=m[m.length-1].match(/\d+/)[0];var all=String(d).match(/(\d+)\s*[–-]\s*(\d+)\s*s\b/);return all?+all[2]:+n;}
 
 function render(){
   var app=document.getElementById('app');
-  var top='<div class="top"><b>🏋️ '+L('Sick Call · Home exercises','Sick Call · Ejercicios en casa')+'</b><div class="lang"><button class="'+(lang==='en'?'on':'')+'" data-l="en">EN</button><button class="'+(lang==='es'?'on':'')+'" data-l="es">ES</button></div></div>';
+  var top='<div class="top"><b>🏋️ '+L('Sick Call · Reconditioning (FM 7-22)','Sick Call · Reacondicionamiento (FM 7-22)')+'</b><div class="lang"><button class="'+(lang==='en'?'on':'')+'" data-l="en">EN</button><button class="'+(lang==='es'?'on':'')+'" data-l="es">ES</button></div></div>';
   if(typeof EX_REG==='undefined'||!EX_REG[reg]){
     app.innerHTML=top+'<h1>'+L('Pick your area','Escoge tu zona')+'</h1><div class="pick">'+Object.keys(EX_REG||{}).map(function(k){var r=EX_REG[k];return '<a href="?r='+k+'&l='+lang+'">'+r.ic+' '+esc(L(r.t[0],r.t[1]))+'</a>';}).join('')+'</div>';
     bindLang();return;}
   var r=EX_REG[reg],all=items(r),ds=doneSet(),n=all.filter(function(i){return ds.indexOf(i.k)>=0;}).length;
   var nd=Object.keys(st.days).filter(function(k){return (st.days[k]||[]).length;}).length;
-  var h=top+'<h1>'+r.ic+' '+esc(L(r.t[0],r.t[1]))+'</h1><p class="sub">'+L('Do the home exercises once a day. Do the FM 7-22 drills during PT — your PT leader knows them. Tap the circle when you finish one.','Haz los ejercicios de casa una vez al día. Los drills del FM 7-22 se hacen durante el PT — tu líder de PT los conoce. Toca el círculo cuando termines uno.')+'</p>';
+  var h=top+'<h1>'+r.ic+' '+esc(L(r.t[0],r.t[1]))+'</h1><p class="sub">'+L('These are the Army reconditioning drills from FM 7-22 — the same ones your PT leader uses. Do them every day within your profile. Tap the circle when you finish one.','Estos son los drills de reacondicionamiento del Army del FM 7-22 — los mismos que usa tu líder de PT. Hazlos todos los días dentro de tu profile. Toca el círculo cuando termines uno.')+'</p>';
   h+='<div class="prog"><div class="row"><span>'+L('Today','Hoy')+'</span><span>'+n+' / '+all.length+'</span></div><div class="bar"><i style="width:'+(all.length?Math.round(100*n/all.length):0)+'%"></i></div><div class="days">'+L('Days with exercises done: ','Días con ejercicios hechos: ')+nd+'</div></div>';
   h+='<div class="why">'+esc(L(r.why[0],r.why[1]))+'</div>';
-  h+='<div class="rules"><b>⚠️ '+L('Rules','Reglas')+'</b><ul>'+EX_RULES[lang].map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'<li>'+L('Not better in 1 week, or worse → back to sick call.','¿No mejoras en 1 semana o empeoras? → regresa a sick call.')+'</li></ul></div>';
+  h+='<div class="rules"><b>⚠️ '+L('Rules','Reglas')+'</b><ul>'+EX_RULES[lang].map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div>';
   function sec(title,when,list){if(!list.length)return '';
     return '<div class="grp"><span>'+esc(title).replace('FM 7-22','FM\u00a07\u201122')+'</span><span>'+esc(when)+'</span></div><div class="list">'+list.map(function(it){var x=it.x,dn=ds.indexOf(it.k)>=0,d=L(x.d,x.ds||x.d),s=secs(x.d);
-      return '<div class="ex'+(dn?' done':'')+'"><button class="ck" data-k="'+it.k+'" aria-label="done">✓</button><div class="bd">'+(x.a&&typeof exAnimSvg==='function'?exAnimSvg(x.a):'')+'<div class="nm">'+esc(L(x.n,x.es||x.n))+'</div><div class="ds">'+esc(d)+'</div>'+(x.c?'<div class="cue">'+esc(L(x.c,x.cs||x.c))+'</div>':'')+(s?'<button class="tm" data-s="'+s+'">⏱ '+s+' s</button>':'')+'</div></div>';}).join('')+'</div>';}
-  h+=sec(L(r.t[0]+' — at home','Casa — '+r.t[1].toLowerCase()),L('1×/day','1 vez al día'),all.filter(function(i){return i.g==='home';}));
+      return '<div class="ex'+(dn?' done':'')+'"><button class="ck" data-k="'+it.k+'" aria-label="done">✓</button><div class="bd">'+'<div class="nm">'+esc(L(x.n,x.es||x.n))+'</div><div class="ds">'+esc(d)+'</div><img class="fig" src="'+EX_IMG+x.img+'.jpg" alt="'+esc(x.n)+'" loading="lazy"><div class="cue">'+esc(L(x.c,x.cs))+' <span class="pg">(FM 7-22, p. '+x.pg+')</span></div>'+(x.mod?'<details class="mod"'+((r.mods||[]).indexOf(x.id)>=0?' open':'')+'><summary>'+((r.mods||[]).indexOf(x.id)>=0?'★ ':'')+L('Modified version','Versión modificada')+'</summary>'+(x.mn?'<div class="cue">'+esc(L(x.mn,x.ms))+'</div>':'')+'<img class="fig" src="'+EX_IMG+x.mod+'.jpg" alt="modified" loading="lazy"></details>':'')+(s?'<button class="tm" data-s="'+s+'">⏱ '+s+' s</button>':'')+'</div></div>';}).join('')+'</div>';}
   r.drills.forEach(function(d){var D=EX_DRILLS[d];h+=sec(L(D.n,D.es)+' · FM 7-22',L(D.when[0],D.when[1]),all.filter(function(i){return i.g===d;}));});
-  if(r.url)h+='<a class="more" href="'+r.url+'" target="_blank" rel="noopener">📖 '+L('Full program with photos (AAOS) ›','Programa completo con fotos (AAOS, en inglés) ›')+'</a>';
-  h+='<div class="foot">'+L('From your unit sick call. General exercises for a minor injury — not a substitute for medical care. Stay inside your profile. Sources: FM 7-22; ','De tu sick call de la unidad. Ejercicios generales para una lesión menor — no reemplazan la atención médica. Respeta tu profile. Fuentes: FM 7-22; ')+esc(r.src)+'. '+L('Your check marks stay only on this phone.','Tus marcas se guardan solo en este teléfono.')+'</div>';
-  app.innerHTML=h;bindLang();try{exAnimStart();}catch(e){}
+  h+='<div class="foot">'+L('From your unit sick call. Not a substitute for medical care — your profile always comes first. Source: ','De tu sick call de la unidad. No reemplaza la atención médica — tu profile siempre va primero. Fuente: ')+esc(EX_SRC)+'. '+L('Your check marks stay only on this phone.','Tus marcas se guardan solo en este teléfono.')+'</div>';
+  app.innerHTML=h;bindLang();
   Array.prototype.forEach.call(document.querySelectorAll('.ck'),function(b){b.onclick=function(){var k=b.getAttribute('data-k'),t=today(),a=st.days[t]||[];var i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k);st.days[t]=a;save(st);render();};});
   Array.prototype.forEach.call(document.querySelectorAll('.tm'),function(b){b.onclick=function(){var s=+b.getAttribute('data-s');if(timer){clearInterval(timer.id);if(timer.b===b){timer.b.textContent='⏱ '+s+' s';timer.b.classList.remove('run');timer=null;return;}timer.b.classList.remove('run');timer.b.textContent='⏱ '+timer.s+' s';}
     var left=s;b.classList.add('run');b.textContent='⏱ '+left;timer={b:b,s:s,id:setInterval(function(){left--;if(left<=0){clearInterval(timer.id);b.classList.remove('run');b.textContent='✅ '+L('Done','Listo');try{navigator.vibrate&&navigator.vibrate(300);}catch(e){}timer=null;return;}b.textContent='⏱ '+left;},1000)};};});
