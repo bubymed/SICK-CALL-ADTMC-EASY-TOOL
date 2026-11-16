@@ -1827,7 +1827,7 @@ const SD_CAT={PN:'I — Provider Now',AEM:'II — AEM Now',MCP:'III — Minor Ca
 /* ===== Clinic referral documentation (2/1AD memo, 16 Oct 2026 — para 5d(5)/(6), 8):
    referral in SOAP format with the reason for referral and care already done; DD 689 signed by a BAS medic;
    Soldier understands why and to which service. Referrals switch the note to SOAP-D automatically. */
-function refIsClinic(hi){hi=hi===undefined?adHighest():hi;return !!hi&&(hi==='PN'||hi==='SP'||hi==='APPT'||(hi==='AEM'&&!settings.aemOn));}
+function refIsClinic(hi){hi=hi===undefined?adHighest():hi;return !!hi&&(hi==='PN'||hi==='SP'||hi==='APPT'||(hi==='AEM'&&!settings.aemOn&&!ouOn()));}
 function soapOn(){return settings.noteFmt==='soapd'||(refIsClinic()&&!ad.noAutoSoap);}
 function refLines(){const hi=adHighest();if(!refIsClinic(hi))return [];if(!ad.ref)ad.ref={dd:false,told:false};
   const entries=noteEntries().filter(e=>e.level&&e.level!=='MCP');
@@ -1904,7 +1904,8 @@ function soapdNote(stamp){
   const dStart=L.length;L.push('');L.push('D — DISPOSITION');
   const hi=adHighest();
   if(hi)L.push('Care category: '+(SD_CAT[hi]||LV[hi].s)+(entries.length>1?' (higher of the protocols screened)':'')+'.');
-  if(hi==='AEM')L.push(settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' for evaluation.':'No AEM available in unit — referred to supervising privileged provider (clinic).');
+  if(hi==='AEM')L.push(ouOn()?ouLine('AEM'):settings.aemOn?'Referred to '+aemTxt()+' (AEM level) for evaluation.':'No Senior Medic / AEM available — referred to supervising privileged provider (clinic).');
+  else if(ouOn())L.push(ouLine(hi));
   const mcp=entries.filter(e=>e.level==='MCP').map(e=>e.id);
   if(mcp.length)L.push('MCP protocol(s): '+mcp.join(', ')+'.');
   if(ad.prov.trim())L.push('Provider / AEM notified: '+ad.prov.trim()+'.');
@@ -2059,7 +2060,7 @@ const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · G
 const gFlags={sex:'',female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
 let ad={pfb:'',pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{},ref:{dd:false,told:false},noAutoSoap:false};
 function adResetProto(){ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
-function adResetAll(){adResetProto();ad.ref={dd:false,told:false};ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
+function adResetAll(){adResetProto();ad.ou={on:false,unit:''};ad.ref={dd:false,told:false};ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.sex='';gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 /* Screening answers -> history / exam wording (data/notetags.js) */
 function adTagLines(p){
@@ -2612,7 +2613,7 @@ function adDecisionHtml(p,R){
   h+='<div class="algo-actions"><button style="background:var(--green);color:var(--on-green)" onclick="finishPatient(this)">✅ '+L('Finish patient — copy + save','Terminar paciente — copiar + guardar')+'</button><button onclick="adCommit()">✓ Done — add to note, next complaint</button><button class="ghost" onclick="gOpenNote()">View note</button><button class="ghost" onclick="adBack()">Cancel</button></div>';
   return h;
 }
-function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined')?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>'+refBox():'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
+function adResultCard(p,R){return adResultCard0(p,R)+((R.final&&R.final!=='MCP'&&typeof CLINIC!=='undefined'&&refIsClinic(R.final))?'<div class="note-hint" style="margin-top:6px">🏥 '+clinicLine()+'</div>'+refBox():'')+(p.id==='J-3'?pfbCard():'')+(/^B-/.test(p.id)?h2fCard():'')+'<div class="medic-only">⚕️ '+L('Medic use only — suggestion for the medic and provider, not a self-diagnosis.','Solo para uso del médico — sugerencia para el médico y el proveedor, no es un autodiagnóstico.')+'</div>';}
 /* Mendoza Clinic sick call & appointment guidelines (CLINIC in data/intake.js). / Guía de la clínica Mendoza. */
 function clinicLine(){if(typeof CLINIC==='undefined')return '';const mod=(CLINIC.mod||[]).join(' & ');return L('Clinic sick call '+CLINIC.sc+' · MOD '+mod+' (Mon–Fri). Needs a <b>DD 689 signed by a BAS medic</b> + referral note in <b>SOAP</b> format (reason for referral and care already done) — <a href="#" onclick="event.preventDefault();clinicSoap()">use SOAP-D</a>. Tell the Soldier why and which service. Appointments ','Sick call de la clínica '+CLINIC.sc+' · MOD '+mod+' (lun–vie). Requiere <b>DD 689 firmado por un médico del BAS</b> + nota de referido en formato <b>SOAP</b> (razón del referido y lo que ya se hizo) — <a href="#" onclick="event.preventDefault();clinicSoap()">usar SOAP-D</a>. Explícale al soldado por qué y a qué servicio. Citas ')+CLINIC.phones.join(' / ');}
 function clinicSoap(){try{ad.noAutoSoap=false;if(!soapOn())toggleFmt();syncFmtBtn();renderNote();if(typeof sheetTog==='function')sheetTog(true);}catch(e){}}
@@ -2733,16 +2734,18 @@ function adResultCard0(p,R){
   let h='';
   if(R.final){
     const lv=LV[R.final];
-    const lf=R.final==='AEM'?(settings.aemOn?'AEM NOW — see '+(aemWho()?q$(aemWho()):'your AEM')+' (ADTMC II)':'REFER TO CLINIC — AEM Now (ADTMC II) · no AEM in your unit'):lv.f;
+    const lf=R.final==='AEM'?(ouOn()?'SECOND LOOK — Soldier\'s unit Senior Medic today (ADTMC II)':settings.aemOn?aemRole().toUpperCase()+' NOW'+(aemWho()?' — see '+q$(aemWho()):'')+' (ADTMC II, AEM level)':'REFER TO CLINIC — AEM Now (ADTMC II) · no Senior Medic / AEM available'):lv.f;
     h+='<div class="resbox lv-'+lv.c+'"><div class="resk">DISPOSITION</div><div class="resh">'+lf+'</div>';
     if(R.final==='MCP')h+='<div class="resn">Minor-care protocol '+p.id+' — follow the treatment below.</div>';
     const rs=[...R.esc];if(R.level)rs.push({lv:R.level,why:'Protocol endpoint '+p.id});
     rs.filter(e=>e.lv===R.final).forEach(e=>h+='<div class="resw">• '+q$(e.why)+'</div>');
-    if(R.final==='AEM'&&settings.aemOn)h+='<div class="resn">Notify your AEM'+(aemWho()?' ('+q$(aemWho())+')':'')+'. The AEM must physically evaluate the Soldier, confirm your data and direct the plan (ADTMC p. 225). If the AEM is not available → supervising privileged provider (clinic).</div>';
+    if(R.final==='AEM'&&ouOn())h+='<div class="resn">Soldier from another unit'+(ouUnit()?' ('+q$(ouUnit())+')':'')+': tell the Soldier to see their unit Senior Medic TODAY for a second look, and give them the note. If they cannot be seen today → supervising privileged provider (clinic).</div>';
+    else if(R.final==='AEM'&&settings.aemOn)h+='<div class="resn">Notify '+q$(aemTxt())+'. The '+aemRole()+' (AEM level) must physically evaluate the Soldier, confirm your data and direct the plan (ADTMC p. 225). If not available → supervising privileged provider (clinic).</div>';
     else if(R.final==='AEM')h+='<div class="resn">No AEM available in your unit (Settings) → per ADTMC Category II the Soldier is seen by the supervising privileged provider. Document OPQRST/AMPLE and send the patient to the clinic.</div>';
     if(R.final==='PN')h+='<div class="resn">Document OPQRST/AMPLE so the clinic has the full picture, and send the patient. Equipment, meds and a provider are there.</div>';
     if(R.forced&&R.level&&R.level!=='PN')h+='<div class="resn">Note: the protocol alone would give '+LV[R.level].s+'; the global rules raise it.</div>';
     h+='</div>';
+    if(R.final!=='PN')h+=ouBox(R);
   }
   if(R.tri.length)h+='<div class="resbox lv-tri"><div class="resk">▲ SCREEN ANOTHER PROTOCOL</div><div class="resn">'+L('Tap one: this protocol is saved in the note and the next one opens.','Toca uno: este protocolo se guarda en la nota y se abre el siguiente.')+'</div><div class="chips" style="margin-top:8px">'+R.tri.map(t=>scrChip(t,'on')).join('')+'</div></div>';
   R.warn.forEach(w=>h+='<div class="warn" style="margin-top:8px">'+q$(w)+'</div>');
@@ -2803,8 +2806,9 @@ function adNoteParts(){
   if(ad.pfb&&typeof PFB!=='undefined'&&entries.some(e=>e.id==='J-3'))out.plan.push(pfbNote(ad.pfb));
   if(typeof h2fText==='function'){const ht=h2fText();if(ht&&entries.length)out.plan.push(ht);}
   const hi=adHighest();
-  const D={PN:'Sent to clinic — needs a provider now.',AEM:settings.aemOn?'Referred to AEM'+(aemWho()?' ('+aemWho()+')':'')+' — evaluation today.':'Sent to clinic — no AEM available; supervising provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
+  const D={PN:'Sent to clinic — needs a provider now.',AEM:ouOn()?ouLine('AEM'):settings.aemOn?'Referred to '+aemTxt()+' (AEM level) — evaluation today.':'Sent to clinic — no Senior Medic / AEM available; supervising provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
   if(hi&&hi!=='MCP')out.dispo=D[hi]||LV[hi].s;
+  if(ouOn()&&hi!=='AEM'){const x=ouLine(hi);out.dispo=out.dispo?out.dispo+' '+x:x;}
   if(ad.prov.trim())out.assess.push('Clinic notified: '+ad.prov.trim()+'.');
   return out;
 }
@@ -2948,6 +2952,20 @@ function adMedItems(){
 ========================================================= */
 const settings=(function(){let s={purge:true,pin:'',theme:'green',mode:'dark',noteFmt:'compact',aemOn:false,aemName:''};try{Object.assign(s,JSON.parse(localStorage.getItem('sc_settings')||'{}'));}catch(e){}return s;})();
 function aemWho(){return settings.aemName&&settings.aemName.trim()?settings.aemName.trim():'';}
+/* AEM-level reviewer (ADTMC II): AEM includes the supervising NCO when local policy delegates it (ADTMC Category II).
+   Most units use the Senior Medic. / En la mayoría de unidades el revisor nivel AEM es el Senior Medic. */
+function aemRole(){return settings.aemRole==='aem'?'AEM':'Senior Medic';}
+function aemTxt(){return aemRole()+(aemWho()?' ('+aemWho()+')':'');}
+// Soldier from another unit: second look by their own unit's Senior Medic. / Soldado de otra unidad.
+function ouOn(){return !!(ad.ou&&ad.ou.on);}
+function ouUnit(){return ad.ou&&ad.ou.unit?String(ad.ou.unit).trim():'';}
+function ouTog(){ad.ou=ad.ou||{on:false,unit:''};ad.ou.on=!ad.ou.on;renderMain();renderNote();}
+function ouSet(v){ad.ou=ad.ou||{on:true,unit:''};ad.ou.unit=v.slice(0,40);renderNote();}
+function ouLine(hi){if(!ouOn())return '';const u=ouUnit();const from='Soldier from '+(u||'another unit');
+  return hi==='AEM'?from+' — second look by their unit Senior Medic today recommended (ADTMC II, AEM level).':from+' — recommend follow-up / second look with their unit Senior Medic if not improving or as needed.';}
+function ouBox(R){const o=ad.ou||{},hi=R&&R.final;
+  return '<div class="field" style="margin-top:6px"><div class="chips"><span class="chip '+(o.on?'on':'')+'" onclick="ouTog()">'+(o.on?'✓ ':'')+L('Soldier from another unit → second look by their Senior Medic','Soldado de otra unidad → second look de su Senior Medic')+'</span></div>'
+   +(o.on?'<input maxlength="40" autocomplete="off" placeholder="'+L('Unit (optional, e.g. 517th)','Unidad (opcional, ej. 517th)')+'" value="'+q$(o.unit||'')+'" oninput="ouSet(this.value)" style="margin-top:8px"><div class="fuq">'+(hi==='AEM'?L('AEM-level need: the note recommends a second look today by their unit Senior Medic.','Necesita nivel AEM: la nota recomienda un second look hoy con el Senior Medic de su unidad.'):L('The note adds: follow up with their unit Senior Medic if not improving or as needed.','La nota agrega: seguimiento con el Senior Medic de su unidad si no mejora o según necesidad.'))+'</div>':'')+'</div>';}
 function togAem(){settings.aemOn=!settings.aemOn;saveSettings();renderMain();renderNote();}
 function setAemName(v){settings.aemName=v.slice(0,60);saveSettings();renderNote();}
 function saveSettings(){try{localStorage.setItem('sc_settings',JSON.stringify(settings));}catch(e){}}
@@ -3043,7 +3061,7 @@ function renderSettings(){
   let h='<h2 class="tpl">⚙️ Settings / Privacy</h2><p class="tpl-sub">Everything stays on this device (localStorage). Nothing is sent to any server.</p>';
   h+='<div class="field"><div class="lab"><span class="tag">🌐</span><span class="name">Language</span></div><div class="chips"><span class="chip '+(LANG==='en'?'on':'')+'" onclick="setLang(\'en\')">English</span><span class="chip '+(LANG==='es'?'on':'')+'" onclick="setLang(\'es\')">Español</span></div><div class="fuq">Interface language. The note is always written in English.</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🎨</span><span class="name">Theme</span></div><div class="chips">'+THEMES.map(x=>'<span class="chip '+(settings.theme===x[0]?'on':'')+'" onclick="setTheme(\''+x[0]+'\')">'+x[1]+'</span>').join('')+'</div><div class="chips" style="margin-top:8px"><span class="chip '+(settings.mode!=='light'?'on':'')+'" onclick="setMode(\'dark\')">Dark</span><span class="chip '+(settings.mode==='light'?'on':'')+'" onclick="setMode(\'light\')">Light</span></div><div class="fuq">Color and brightness of the interface. Saved on this device only. The note text is not affected.</div></div>';
-  h+='<div class="field"><div class="lab"><span class="tag">🩺</span><span class="name">'+L('AEM in my unit','AEM en mi unidad')+'</span><span class="ask">ADTMC II</span></div><div class="chips"><span class="chip '+(settings.aemOn?'on':'')+'" onclick="togAem()">'+(settings.aemOn?L('AEM available','AEM disponible'):L('No AEM — "AEM Now" goes to the clinic','Sin AEM — "AEM Now" va a la clínica'))+'</span></div>'+(settings.aemOn?'<input id="aemName" maxlength="60" autocomplete="off" placeholder="'+L('AEM rank / name (optional)','Rango / nombre del AEM (opcional)')+'" value="'+q$(settings.aemName||'')+'" oninput="setAemName(this.value)" style="margin-top:8px">':'')+'<div class="fuq">'+L('AEM = expeditionary combat medic, special operations medic, flight paramedic, or the supervising NCO when local policy delegates that authority. If no AEM is available, the Soldier is seen by the supervising privileged provider (ADTMC Category II).','AEM = expeditionary combat medic, special operations medic, flight paramedic, o el NCO supervisor cuando la política local le delega esa autoridad. Si no hay AEM disponible, al Soldado lo ve el proveedor privilegiado supervisor (ADTMC Categoría II).')+'</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">🩺</span><span class="name">'+L('AEM-level reviewer (Senior Medic / AEM)','Revisor nivel AEM (Senior Medic / AEM)')+'</span><span class="ask">ADTMC II</span></div><div class="chips"><span class="chip '+(settings.aemOn?'on':'')+'" onclick="togAem()">'+(settings.aemOn?L('Available','Disponible'):L('None — "AEM Now" goes to the clinic','Ninguno — "AEM Now" va a la clínica'))+'</span>'+(settings.aemOn?'<span class="chip '+(aemRole()==='Senior Medic'?'on':'')+'" onclick="settings.aemRole=\'senior\';saveSettings();renderMain();renderNote()">Senior Medic</span><span class="chip '+(aemRole()==='AEM'?'on':'')+'" onclick="settings.aemRole=\'aem\';saveSettings();renderMain();renderNote()">AEM</span>':'')+'</div>'+(settings.aemOn?'<input id="aemName" maxlength="60" autocomplete="off" placeholder="'+L('Rank / name (optional)','Rango / nombre (opcional)')+'" value="'+q$(settings.aemName||'')+'" oninput="setAemName(this.value)" style="margin-top:8px">':'')+'<div class="fuq">'+L('AEM = expeditionary combat medic, special operations medic, flight paramedic, or the supervising NCO when local policy delegates that authority. If no AEM is available, the Soldier is seen by the supervising privileged provider (ADTMC Category II).','AEM = expeditionary combat medic, special operations medic, flight paramedic, o el NCO supervisor cuando la política local le delega esa autoridad. Si no hay AEM disponible, al Soldado lo ve el proveedor privilegiado supervisor (ADTMC Categoría II).')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">✎</span><span class="name">'+L('Note detail (screening)','Detalle de la nota (screening)')+'</span></div><div class="chips">'+[['minimal',L('Minimal — positives only','Mínimo — solo positivos')],['short',L('Short — skip red-flag negatives','Corto — sin negativos de banderas rojas')],['full',L('Full — every pertinent negative','Completo — todos los negativos')]].map(([v,l])=>'<span class="chip '+((settings.noteDetail||'short')===v?'on':'')+'" onclick="settings.noteDetail=\''+v+'\';saveSettings();renderMain();renderNote()">'+l+'</span>').join('')+'</div><div class="fuq">'+L('When all red flags are negative the note already says "No red flags." Short leaves out the long "Denies…" list of each red flag.','Si todas las banderas rojas son negativas, la nota ya dice "No red flags." Corto quita la lista larga de "Denies…" de cada bandera.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">▸</span><span class="name">'+L('Folded sections','Secciones plegadas')+'</span></div><div class="chips"><span class="chip '+(foldOn()?'on':'')+'" onclick="settings.fold=!foldOn();saveSettings();renderMain()">'+(foldOn()?L('ON — sections show as one line; tap to open','ENCENDIDO — cada sección es una línea; toca para abrir'):L('Off — everything open (classic)','Apagado — todo abierto (clásico)'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">≡</span><span class="name">'+L('Compact history','Historial compacto')+'</span></div><div class="chips"><span class="chip '+(settings.hcompact!==false?'on':'')+'" onclick="settings.hcompact=settings.hcompact===false;saveSettings();renderMain()">'+(settings.hcompact!==false?L('ON — answered letters fold up as you move on','ENCENDIDO — las letras respondidas se pliegan al avanzar'):L('Off — show every letter open','Apagado — todas las letras abiertas'))+'</span></div></div>';
