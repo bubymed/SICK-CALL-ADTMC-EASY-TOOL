@@ -1855,6 +1855,7 @@ function soapdNote(stamp){
   const L=[];
   L.push((patient.trim()?('PT: '+patient.trim()+' — '):'')+stamp);
   L.push('');L.push('S — SUBJECTIVE');
+  if(gFlags.sex)L.push('Sex: '+gFlags.sex+'.');
   const ccAll=[];active.forEach(t=>{const s=state[t.id];const parts=[...s.cc];if(s.ccCustom.trim())parts.push(s.ccCustom.trim());if(parts.length)ccAll.push(s.ccRaw&&!s.cc.size?'CC: '+parts.join(', ')+'.':'CC: C/o '+(t.ccPrefix||'')+parts.join(', ')+'.');});
   if(ccAll.length)ccAll.forEach(x=>L.push(x));else if(entries.length)L.push('CC: '+entries.map(e=>e.title).join('; ')+'.');
   const prot=entries.map(e=>e.title+' ('+e.id+')');
@@ -1929,7 +1930,7 @@ function renderNote(){
   const now=new Date();
   const MO=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   const stamp=String(now.getDate()).padStart(2,'0')+' '+MO[now.getMonth()]+' '+String(now.getFullYear()).slice(2)+', '+String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0');
-  L.push((patient.trim()?('PT: '+patient.trim()+' — '):'')+stamp);
+  L.push((patient.trim()?('PT: '+patient.trim()+' — '):'')+stamp+(gFlags.sex?' · Sex: '+gFlags.sex:''));
   // vitals globales
   const v=gVitals, vl=[];
   if(v.bp)vl.push('BP '+v.bp); if(v.hr)vl.push('HR '+v.hr); if(v.rr)vl.push('RR '+v.rr);
@@ -2051,11 +2052,11 @@ const LV={
  MCP:{n:'III — Minor-Care Protocol (MCP)',s:'Minor-Care Protocol',f:'TREAT HERE — Minor-Care Protocol (ADTMC III)',r:2,c:'mcp'}
 };
 const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · GU',f:'F · Neuro/BH',g:'G · General',h:'H · Eyes',i:'I · Women',j:'J · Skin',k:'K · Environment',l:'L · Misc',m:'M · Return'};
-const gFlags={female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
+const gFlags={sex:'',female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
 let ad={pfb:'',pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{},ref:{dd:false,told:false},noAutoSoap:false};
 function adResetProto(){ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
 function adResetAll(){adResetProto();ad.ref={dd:false,told:false};ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
-  gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
+  gFlags.sex='';gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 /* Screening answers -> history / exam wording (data/notetags.js) */
 function adTagLines(p){
   const T=(typeof NOTE_TAGS!=='undefined'&&NOTE_TAGS[p.id])||null;const out={hpi:'',pe:''};if(!T)return out;
@@ -2350,7 +2351,14 @@ function adPatientInner(){
   if(gFlags.female&&ld!==null)h+='<div class="'+(ld>28?'warn':'note-hint')+'" style="margin-top:8px;margin-bottom:0">LMP '+ld+' days ago'+(ld>28?' — >28 days: contact provider; treat as possible pregnancy until ruled out (hCG).':'.')+'</div>';
   return h+'</div>';
 }
-function gfTog(k){gFlags[k]=!gFlags[k];if(k==='female'&&!gFlags.female){gFlags.preg=false;gFlags.lact=false;gFlags.lmp='';}renderMain();renderNote();}
+function gfTog(k){gFlags[k]=!gFlags[k];if(k==='female'){gFlags.sex=gFlags.female?'F':'';if(!gFlags.female){gFlags.preg=false;gFlags.lact=false;gFlags.lmp='';}}renderMain();renderNote();}
+/* Sex selector at the top of every protocol (v41): M / F. F opens LMP, pregnancy and lactation right there. */
+function gfSex(x){gFlags.sex=gFlags.sex===x?'':x;gFlags.female=gFlags.sex==='F';if(!gFlags.female){gFlags.preg=false;gFlags.lact=false;gFlags.lmp='';}renderMain();renderNote();}
+function sexRow(){const c=(x,t)=>'<span class="chip '+(gFlags.sex===x?'on':'')+'" onclick="gfSex(\''+x+'\')">'+t+'</span>';const ld=lmpDays();
+  let h='<div class="field sexrow" style="padding:8px 12px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="min-width:42px">'+L('Sex','Sexo')+'</b>'+c('M',L('Male','Hombre'))+c('F',L('Female','Mujer'))+(gFlags.sex?'':'<span class="dim" style="font-size:.85em">'+L('tap one','elige uno')+'</span>')+'</div>';
+  if(gFlags.female){h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px"><span class="mini" style="min-width:42px">LMP</span><input type="date" value="'+q$(gFlags.lmp)+'" onchange="gfSet(\'lmp\',this.value)" class="dateIn" style="max-width:170px"><span class="chip '+(gFlags.preg?'on':'')+'" onclick="gfTog(\'preg\')">'+L('Possible pregnancy','Posible embarazo')+'</span><span class="chip '+(gFlags.lact?'on':'')+'" onclick="gfTog(\'lact\')">'+L('Lactating','Lactando')+'</span></div>';
+    if(ld!==null)h+='<div class="'+(ld>28?'warn':'note-hint')+'" style="margin:8px 0 0">LMP '+ld+' '+L('days ago','días')+(ld>28?' — '+L('>28 days: contact provider; treat as possible pregnancy until ruled out (hCG).','>28 días: contactar al proveedor; tratar como posible embarazo hasta descartarlo (hCG).'):'.')+'</div>';}
+  return h+'</div>';}
 function gfSet(k,v,noRender){gFlags[k]=v;if(!noRender)renderMain();renderNote();}
 function adVBanner(){
   const v=adVitals();let h='<div id="vbanner">';
@@ -2383,6 +2391,7 @@ function adHeadHtml(p){
   h+='<h2 class="tpl"><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2>'+(foldOn()?'':'<p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>');
   h+=adLiveCard(p);
   if(ad.iq)h+=iqBanner(ad.iq);
+  h+=sexRow();
   return h;
 }
 function adLiveCard(p){
@@ -3230,12 +3239,12 @@ function daOpen(){tmMark('finish');
 function exportBackup(){dl('sickcall_backup.json',JSON.stringify({v:1,saved:getSaved()}),'application/json');}
 function importBackup(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d&&Array.isArray(d.saved)){setSaved(d.saved.concat(getSaved()));renderNav();alert('Imported '+d.saved.length+' notes.');}}catch(e){alert('Invalid file.');}};r.readAsText(f);}
 /* follow-up: reopen a saved patient as a return visit */
-function adSnap(){const ids=ad.log.map(e=>e.id);if(ad.pid)ids.push(ad.pid);return{ids,hi:adHighest(),female:gFlags.female,lmp:gFlags.lmp};}
+function adSnap(){const ids=ad.log.map(e=>e.id);if(ad.pid)ids.push(ad.pid);return{ids,hi:adHighest(),female:gFlags.female,sex:gFlags.sex,lmp:gFlags.lmp};}
 function startFollowUp(i){
   const n=getSaved()[i];if(!n)return;
   patient=(n.name&&n.name!=='(no name)')?n.name:'';const pi=document.getElementById('ptIn');if(pi)pi.value=patient;
   adResetAll();ad.ret=true;ad.prev={t:n.t,name:n.name,ids:(n.ad&&n.ad.ids)||[],hi:n.ad&&n.ad.hi||null};
-  if(n.ad){gFlags.female=!!n.ad.female;gFlags.lmp=n.ad.lmp||'';}
+  if(n.ad){gFlags.female=!!n.ad.female;gFlags.sex=n.ad.sex||(gFlags.female?'F':'');gFlags.lmp=n.ad.lmp||'';}
   view='adtmc';renderNav();renderMain();renderNote();document.getElementById('main').scrollTop=0;
 }
 function prevHtml(){
