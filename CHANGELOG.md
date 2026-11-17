@@ -4,6 +4,8 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **Home exercise program removed (v45):** the FM 7-22 cards, staged programs, Soldier QR page (exercises.html), in-person check and FM plan lines are gone. FM 7-22 Ch. 6 is a return-to-PRT program, not rehabilitation, so it did not fit sick call. B-protocol plans now say "Refer to H2F / PT for reconditioning"; the H2F slip is unchanged. The patient QR questionnaire (intake) is not affected.
+  **Se quitó el programa de ejercicios en casa (v45):** tarjetas del FM 7-22, programas por etapa, página QR del soldado, chequeo en persona y líneas del plan. El FM 7-22 cap. 6 es para volver al PRT, no de rehabilitación. Los planes B ahora dicen "Refer to H2F / PT for reconditioning"; la hoja de H2F no cambia. El cuestionario QR del paciente no se afecta.
 - **Safety & reliability review (v44):**
   - **Fixes**
     - C-7 "not classic heartburn" no longer blanks the app; it now links D-2, C-3, C-1, C-6.
