@@ -1913,7 +1913,7 @@ function humanNote(stamp,soap){
   const posAll=[];active.forEach(t=>(t.redFlags||[]).forEach(f=>{if(state[t.id].rf[f]==='pos')posAll.push(f);}));
   if(posAll.length)L.push('*** RED FLAG: '+posAll.join('; ')+' — sent to provider/ER ***');
   if(A.rfpos.length)L.push('*** RED FLAG: '+A.rfpos.join('; ')+' ***');
-  if(adHighest()==='PN')L.push('*** SEND TO CLINIC — PROVIDER NOW ***');
+  if(adHighest()==='PN'&&!(ad.ref&&ad.ref.bn))L.push('*** SEND TO CLINIC — PROVIDER NOW ***');
   L.push('');
   // S
   const multi=active.length>1,hp=entries.filter(e=>e.hpi).map(e=>e.hpi.trim());let who=hWho(),first=true;
@@ -2051,7 +2051,7 @@ function renderNote(){
   active.forEach(t=>{(t.redFlags||[]).forEach(f=>{if(state[t.id].rf[f]==='pos')posAll.push(f);});});
   if(posAll.length)L.push('*** RED FLAG PRESENT: '+posAll.join('; ')+' — ESCALATED to provider/ER. ***');
   if(A.rfpos.length)L.push('*** RED FLAG: '+A.rfpos.join('; ')+' ***');
-  if(adHighest()==='PN')L.push('*** SEND TO CLINIC — PROVIDER NOW ***');
+  if(adHighest()==='PN'&&!(ad.ref&&ad.ref.bn))L.push('*** SEND TO CLINIC — PROVIDER NOW ***');
   L.push('');
   const multi=active.length>1;
   active.forEach(t=>{
