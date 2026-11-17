@@ -845,3 +845,5 @@ h2.tpl.ptitle{display:flex;align-items:center;gap:8px;font-size:24px}
 
 .lv-rfp{background:var(--warn-bg);border:2px solid #e0922f!important;color:var(--warn-txt)}.lv-rfp .resk{color:var(--orange);font-weight:700}
 .bnbox{margin-top:8px}.bnbox input[type=text]{width:100%;margin-top:6px}
+
+.rfgate{margin:14px 0;padding:16px;border-radius:14px;border:2px dashed #e0922f;background:var(--warn-bg);text-align:center}.rfg-t{font-weight:700;font-size:1.05em;margin-bottom:6px}.rfg-s{font-size:.92em;opacity:.9;margin-bottom:12px;line-height:1.45}.rfg-b{width:100%;padding:14px;border:0;border-radius:12px;background:var(--accent);color:var(--acc-t,#fff);font:700 16px inherit;font-family:inherit}

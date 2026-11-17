@@ -3,6 +3,9 @@
    Add a new entry at the TOP for every feature release (same value as APP_VER). Keep it short: 1–3 items.
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
+ {v:'v46',items:[
+   {i:'🔒',en:'<b>Red flags first.</b> In each protocol the history and decision points stay locked until you answer the red flags: switch on any that are present (Provider Now) or tap "None of them — continue". One tap, and nobody skips the safety screen.',es:'<b>Primero las banderas rojas.</b> En cada protocolo la historia y los puntos de decisión no se abren hasta contestar las banderas rojas: enciende las que estén presentes (Provider Now) o toca "Ninguna — continuar". Un toque, y nadie se salta el tamizaje de seguridad.'}
+ ]},
  {v:'v45',items:[
    {i:'🧹',en:'<b>Home exercise program removed.</b> It was built only on FM 7-22 (a return-to-PRT program, not rehab) and did not work well for Soldiers. The plan for B protocols now says "Refer to H2F / PT for reconditioning" and the H2F slip is still there.',es:'<b>Se quitó el programa de ejercicios en casa.</b> Estaba basado solo en el FM 7-22 (un programa para volver al PRT, no de rehabilitación) y no funcionaba bien para los soldados. El plan de los protocolos B ahora dice "Refer to H2F / PT for reconditioning" y la hoja de H2F sigue ahí.'}
  ]},

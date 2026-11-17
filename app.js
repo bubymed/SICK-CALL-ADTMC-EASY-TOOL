@@ -1182,6 +1182,15 @@ function renderMain(){
   if(ad.pid&&getP(ad.pid)){const _pp=getP(ad.pid);if(rfList(_pp).length){h+=(_fo?_sec('🚩 '+L('Red flags — screen first','Banderas rojas — primero')):'<div class="secbar">🚩 '+L('Red flags — screen first','Banderas rojas — primero')+'</div>')+adRfBlock(_pp);
     if(rfList(_pp).some(f=>ad.rf[f]==='pos'))h+='<div class="rfbanner">🚩 '+L('Red flag present → Provider Now. You can skip the rest of the history: ','Bandera roja → Provider Now. Puedes saltarte el resto de la historia: ')+'<span class="scr-link" onclick="var e=document.querySelector(\'.resbox\');if(e)e.scrollIntoView({behavior:\'smooth\',block:\'center\'})">'+L('go to decision','ir a la decisión')+' ›</span></div>';
     if(!_fo)h+='<div class="secbar">'+_hlab+'</div>';}}
+  /* Red-flag gate: history, vitals and decision points stay locked until every red flag is answered (or one is marked present).
+     Bloqueo de banderas rojas: la historia, los vitales y los puntos de decisión no se abren hasta contestar todas (o marcar una presente). */
+  if(ad.pid&&rfGateLocked()){
+    const n=rfList(getP(ad.pid)).length;
+    h+='<div class="rfgate"><div class="rfg-t">🔒 '+L('Answer the red flags first','Primero contesta las banderas rojas')+'</div>'
+      +'<div class="rfg-s">'+L('Do you see ANY of the '+n+' red flags above? If yes, switch it on (Provider Now). If none, tap the button — the rest opens.','¿Ves ALGUNA de las '+n+' banderas rojas de arriba? Si sí, enciéndela (Provider Now). Si ninguna, toca el botón y se abre lo demás.')+'</div>'
+      +'<button class="rfg-b" onclick="adRfAll()">✓ '+L('None of them — continue','Ninguna — continuar')+'</button></div>';
+    m.innerHTML=h;return;
+  }
 
   // fields — answered letters collapse into a one-line summary as you move on (compact history)
   const vf=visFields(t),hasC=f=>s.fields[f.id].size>0||!!(s.custom[f.id]||'').trim();
@@ -2724,6 +2733,7 @@ function htOpen(k){const c=HOWTO[k];if(!c)return;let o=document.getElementById('
    +'<p class="ht-src">'+L('Source','Fuente')+': '+q$(c.src)+(c.url?' · <a href="'+q$(c.url)+'" target="_blank" rel="noopener">'+L('More on Physiopedia ↗','Más en Physiopedia ↗')+'</a>':'')+'</p></div>';
   o.onclick=e=>{if(e.target===o)htClose();};document.body.appendChild(o);}
 function htClose(){const o=document.getElementById('htOv');if(o)o.remove();}
+function rfGateLocked(){try{const p=ad.pid&&getP(ad.pid);if(!p)return false;const rfs=rfList(p);if(!rfs.length)return false;if(rfs.some(f=>ad.rf[f]==='pos'))return false;return rfs.some(f=>!ad.rf[f]);}catch(e){return false;}}
 function adRfBlock(p){
   let h='';
   const rfs=rfList(p);
@@ -3227,7 +3237,7 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v45';
+const APP_VER='v46';
 function updateApp(b){
   /* Only wipe the offline copy if the server answers — tapping this with no signal used to leave the app dead.
      Solo borra la copia offline si el servidor responde. */
