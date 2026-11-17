@@ -2769,30 +2769,40 @@ let manFrom=null,manLang=null;
 /* ===== Reconditioning exercise cards (v43) — based only on FM 7-22 Chapter 6 (4C, HSD, SSD, Recovery Drill + modified versions),
    with the FM figures, by body area, and a QR so the Soldier gets the same program on their phone.
    Tarjetas de reacondicionamiento — basadas solo en el FM 7-22 cap. 6, con las figuras del FM, por zona, y QR para el soldado. */
-let exReg='',exFrom=null;
+let exReg='',exFrom=null,exLvl=1;
 function exOpen(k){exReg=k||exReg||'knee';if(view!=='exercises')exFrom=view;goRef('exercises');}
 function exBack(){goRef(exFrom&&exFrom!=='exercises'?exFrom:'adtmc');}
 function exRow(id){if(typeof EX_REG==='undefined')return '';const k=exRegFor(id);if(!k)return '';const r=EX_REG[k];
   return '<div class="exrow" role="button" onclick="exOpen(\''+k+'\')"><span>🏋️</span><b>'+L('Reconditioning (FM 7-22)','Reacondicionamiento (FM 7-22)')+' — '+L(r.t[0],r.t[1])+'</b><span class="fsum">'+r.drills.join(' + ')+' · '+L('QR for the Soldier','QR para el soldado')+'</span><span class="chev">›</span></div>';}
 function exFig(f,alt){return '<img class="exfig" src="'+EX_IMG+f+'.jpg" alt="'+q$(alt||'')+'" loading="lazy">';}
-function exItem(x,num,rec){return '<div class="exi"><div class="exn"><span class="exnum">'+num+'</span><b>'+L(x.n,x.es||x.n)+'</b><span class="exd">'+L(x.d,x.ds||x.d)+'</span></div>'+exFig(x.img,x.n)
+function exItem(x,num,rec){return '<div class="exi"><div class="exn"><span class="exnum">'+num+'</span><b>'+L(x.n,x.es||x.n)+'</b><span class="exd">'+L(x.d,x.ds||x.d)+'</span></div>'+(x.img?exFig(x.img,x.n):'')
    +'<div class="exc">'+L(x.c,x.cs)+' <span class="dim">(FM 7-22, p. '+x.pg+')</span></div>'
    +(x.mod?'<details class="exmod"'+(rec?' open':'')+'><summary>'+(rec?'★ ':'')+L('Modified version','Versión modificada')+(rec?L(' — suggested for this area',' — sugerida para esta zona'):'')+'</summary>'+(x.mn?'<div class="exc">'+L(x.mn,x.ms)+'</div>':'')+exFig(x.mod,'modified')+'</details>':'')+'</div>';}
-function exUrl(k,lg){return (typeof iqBase==='function'?iqBase():'https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/')+'exercises.html?r='+k+'&l='+lg;}
+function exUrl(k,lg){return (typeof iqBase==='function'?iqBase():'https://bubymed.github.io/SICK-CALL-ADTMC-EASY-TOOL/')+'exercises.html?r='+k+'&s='+exLvl+'&l='+lg;}
 let exLang=null;
 function exQrBox(k){const lg=exLang||(LANG==='es'?'es':'en'),u=exUrl(k,lg);let qr='';try{const q=qrcode(0,'M');q.addData(u);q.make();qr=q.createSvgTag({cellSize:4,margin:2,scalable:true});}catch(e){}
   return '<div class="field exqr"><div class="lab"><span class="tag">📱</span><span class="name">'+L('Soldier scans this — the program opens on their phone','El soldado escanea esto — el programa se abre en su teléfono')+'</span></div>'
    +'<div class="exqrw"><div class="exqrc" onclick="exQrBig()">'+qr+'</div><div><div class="mini">'+L('Language on their phone','Idioma en su teléfono')+'</div><div class="chips">'+['en','es'].map(x=>'<span class="chip '+(lg===x?'on':'')+'" onclick="exLang=\''+x+'\';renderMain()">'+(x==='en'?'English':'Español')+'</span>').join('')+'</div>'
    +'<div class="dim" style="font-size:.85em;margin-top:6px">'+L('Checklist + hold timers; no patient info. Tap the QR to enlarge.','Lista para marcar + cronómetro; sin datos del paciente. Toca el QR para agrandarlo.')+'</div></div></div></div>';}
 function exQrBig(){const c=document.querySelector('.exqrc');if(!c)return;const o=document.createElement('div');o.className='exqrov';o.innerHTML='<div class="exqrbig">'+c.innerHTML+'</div><div class="exqrt">'+L('Scan with your camera','Escanea con tu cámara')+'</div>';o.onclick=()=>o.remove();document.body.appendChild(o);}
-function renderExercises(){if(typeof EX_REG==='undefined')return '';const k=EX_REG[exReg]?exReg:'knee',r=EX_REG[k];
+function exSched(k,lvl){const td=new Date().getDay();
+  return '<div class="exsched">'+[1,2,3,4,5].map(d=>'<div class="exday'+(d===td?' today':'')+'"><b>'+L(EX_DAYS[d][0],EX_DAYS[d][1])+'</b>'+exTokens(k,lvl,d).map(t=>{const D=EX_DRILLS[t];if(D)return '<span>'+t+'</span>';const a=exActById(t);return '<span>'+L(a.sh[0],a.sh[1])+'</span>';}).join('')+'</div>').join('')+'</div>'
+   +'<div class="dim" style="font-size:.82em;margin-top:4px">PD = Preparation Drill · HSD = Hip Stability Drill · 4C = 4 for the Core'+(EX_REG[k].drills.includes('SSD')?' · SSD = Shoulder Stability Drill':'')+' · RD = Recovery Drill</div>';}
+function exW2R(){return '<table class="exw2r"><tr><th>'+L('Week','Semana')+'</th><th>'+L('Walk','Caminar')+'</th><th>'+L('Jog','Trotar')+'</th><th>×</th></tr>'+EX_W2R.map((w,i)=>'<tr><td>'+(i+1)+'</td><td>'+w[0]+' min</td><td>'+w[1]+' min</td><td>'+w[2]+'</td></tr>').join('')+'<tr><td>5</td><td colspan="3">'+L('Run every other day, 15 → 30 min','Correr día por medio, 15 → 30 min')+'</td></tr></table><div class="dim" style="font-size:.85em;margin-top:4px">'+L(EX_W2R_NOTE[0],EX_W2R_NOTE[1])+'</div>';}
+function renderExercises(){if(typeof EX_REG==='undefined')return '';const k=EX_REG[exReg]?exReg:'knee',r=EX_REG[k],S=EX_STAGES[exLvl]||EX_STAGES[1];
   let h='<h2 class="tpl ptitle"><button class="backb" onclick="exBack()" aria-label="Back">‹</button>🏋️ '+L('Reconditioning · FM 7-22','Reacondicionamiento · FM 7-22')+'</h2>';
   h+='<div class="chips exreg">'+Object.keys(EX_REG).map(x=>'<span class="chip '+(x===k?'on':'')+'" onclick="exReg=\''+x+'\';renderMain()">'+EX_REG[x].ic+' '+L(EX_REG[x].t[0],EX_REG[x].t[1])+'</span>').join('')+'</div>';
-  h+='<div class="note-hint exwhy">'+L(r.why[0],r.why[1])+'</div>';
+  h+='<div class="chips exlvl">'+[1,2].map(n=>'<span class="chip '+(n===exLvl?'on':'')+'" onclick="exLvl='+n+';renderMain()">'+L(EX_STAGES[n].t[0],EX_STAGES[n].t[1])+'</span>').join('')+'</div>';
+  h+=exQrBox(k);
+  h+='<div class="note-hint exwhy"><b>'+L(S.t[0],S.t[1])+'</b> — '+L(S.who[0],S.who[1])+'<br><br>'+(exLvl===2&&r.l2?L(r.l2[0],r.l2[1]):L(r.why[0],r.why[1]))+'</div>';
+  h+='<div class="field"><div class="lab"><span class="tag">📅</span><span class="name">'+L('Weekly schedule','Horario semanal')+'</span><span class="ask">FM 7-22 '+(exLvl===1?L('Table 6-1','Tabla 6-1'):L('Table 6-3','Tabla 6-3'))+'</span></div>'+exSched(k,exLvl)+'</div>';
+  if(exLvl===2)h+='<div class="field"><div class="lab"><span class="tag">🏃</span><span class="name">'+L('Walk-to-run','Caminar a correr')+'</span><span class="ask">'+L('Table 6-4','Tabla 6-4')+'</span></div>'+exW2R()+'</div>';
+  h+='<div class="field"><div class="lab"><span class="tag">🎯</span><span class="name">'+L(S.next.t[0],S.next.t[1])+'</span></div>'+S.next.c.map(c=>'• <b>'+L(c[0],c[1])+':</b> '+L(c[2],c[3])).join('<br>')+'<div class="dim" style="font-size:.85em;margin-top:4px">'+L(S.next.f[0],S.next.f[1])+'</div></div>';
   h+='<div class="field exrules"><div class="lab"><span class="tag">⚠️</span><span class="name">'+L('Rules','Reglas')+'</span></div>'+L(EX_RULES.en,EX_RULES.es).map(x=>'• '+x).join('<br>')+'</div>';
-  r.drills.forEach(d=>{const D=EX_DRILLS[d];h+='<div class="field"><div class="lab"><span class="tag">🪖</span><span class="name">'+L(D.n,D.es)+'</span><span class="ask">'+L(D.when[0],D.when[1])+'</span></div>'+D.ex.map((x,i)=>exItem(x,i+1,(r.mods||[]).includes(x.id))).join('')+'</div>';});
-  h=h.replace('<div class="note-hint exwhy">',exQrBox(k)+'<div class="note-hint exwhy">');
-  h+='<div class="dim" style="font-size:.84em;margin:8px 2px 20px">'+L('Source: ','Fuente: ')+EX_SRC+'. '+L('Figures and standards from the FM. The profile always takes priority.','Figuras y estándares del FM. El profile siempre tiene prioridad.')+'</div><div class="exend"></div>';
+  exLevelTokens(k,exLvl).forEach(t=>{const D=EX_DRILLS[t];if(D)h+='<div class="field"><div class="lab"><span class="tag">🪖</span><span class="name">'+L(D.n,D.es)+'</span><span class="ask">'+L(D.when[0],D.when[1])+'</span></div>'+D.ex.map((x,i)=>exItem(x,i+1,(r.mods||[]).includes(x.id)||(exLvl===1&&t==='PD'))).join('')+'</div>';});
+  const acts=exLevelTokens(k,exLvl).filter(t=>!EX_DRILLS[t]).map(exActById);
+  if(acts.length)h+='<div class="field"><div class="lab"><span class="tag">🚴</span><span class="name">'+L('Cardio & other drills','Cardio y otros drills')+'</span></div>'+acts.map((x,i)=>'<div class="exi"><div class="exn"><span class="exnum">'+(i+1)+'</span><b>'+L(x.n,x.es)+'</b><span class="exd">'+L(x.d,x.ds)+'</span></div><div class="exc">'+L(x.c,x.cs)+' <span class="dim">(FM 7-22, p. '+x.pg+')</span></div></div>').join('')+'</div>';
+  h+='<div class="dim" style="font-size:.84em;margin:8px 2px 20px">'+L('Source: ','Fuente: ')+EX_SRC+'. '+L('The RPL/ARPL (medical platoon leader / sergeant) places the Soldier in a level; the profile always takes priority (6-22, 6-33).','El RPL/ARPL (medical platoon leader / sergeant) asigna el nivel; el profile siempre tiene prioridad (6-22, 6-33).')+'</div><div class="exend"></div>';
   return h;}
 function manUrl(lg,pg){return MANUAL.pdf[lg]+(pg?'#page='+pg:'');}
 function manOpen(pg){const lg=manLang||(LANG==='es'?'es':'en');window.open(manUrl(lg,pg),'_blank','noopener');}

@@ -864,3 +864,6 @@ h2.tpl.ptitle{display:flex;align-items:center;gap:8px;font-size:24px}
 
 .exfig{display:block;width:calc(100% - 28px);max-width:520px;height:auto;border-radius:8px;margin:6px 0 4px 28px;background:#fff}
 details.exmod{margin:4px 0 2px 28px}details.exmod summary{color:var(--accent);font-weight:600;font-size:.92em;cursor:pointer}details.exmod .exfig{margin-left:0;width:100%}details.exmod .exc{margin-left:0}
+.exlvl{margin:0 0 10px}
+.exsched{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.exday{background:rgba(127,127,127,.12);border-radius:8px;padding:6px 4px;font-size:.78em;display:flex;flex-direction:column;gap:3px;text-align:center}.exday b{font-size:1.05em}.exday.today{outline:2px solid var(--accent)}.exday span{background:rgba(127,127,127,.18);border-radius:5px;padding:2px 1px;line-height:1.2;overflow-wrap:anywhere}
+.exw2r{width:100%;border-collapse:collapse;font-size:.92em}.exw2r th,.exw2r td{border-bottom:1px solid rgba(127,127,127,.25);padding:5px 4px;text-align:left}
