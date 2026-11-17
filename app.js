@@ -29,7 +29,7 @@ const TPLS = [
   ]}),
   F('phx','P','Past hx','"Have you had this before? Any old injuries?"',['no relevant hx','similar episode before'],{groups:[
    {g:'🦴 Prior injuries',opts:['prior fracture','prior sprain (same joint)','prior dislocation','surgery (same area)','stress fracture hx','prior profile (same issue)']},
-   {g:'📋 Conditions',opts:['hx back pain','hx sciatica','hx migraines','hx arthritis','hx TBI/concussion','hx shoulder issues','hx knee/ankle injury']}
+   {g:'📋 Conditions',opts:['hx back pain','hx sciatica','hx migraines','hx arthritis','hx TBI/concussion','hx shoulder issues','hx knee/ankle injury','hx ulcers / GI bleed']}
   ]}),
   F('l','L','Last intake','"Last time you ate or drank? Tolerated it?"',['ate chow, tolerating PO','normal PO intake','↓ PO intake','fluids only'],{multi:false}),
   F('e','E','Events','"What were you doing before?"',['after PT','after ruck','lifting','sports','duty shift','field training','at rest']),
@@ -115,7 +115,7 @@ const TPLS = [
   ]}),
   F('phx','P','Past hx','"Do you get headaches often? Ever hit your head hard?"',['no hx','similar HAs before'],{groups:[
    {g:'🤕 Prior HA',opts:['hx migraines','hx tension HA','dx by provider before','prior migraine med']},
-   {g:'📋 Related',opts:['hx concussion/TBI','hx sinus infections','needs vision check / wears glasses','high caffeine intake','recently cut caffeine']}
+   {g:'📋 Related',opts:['hx concussion/TBI','hx sinus infections','needs vision check / wears glasses','high caffeine intake','recently cut caffeine','hx ulcers / GI bleed']}
   ]}),
   F('l','L','Last intake','"When did you last eat and drink? Caffeine today?"',['ate chow, hydrated','↓ fluid intake today','skipped meals','usual caffeine user — none today','energy drinks today'],{prefix:''}),
   F('e','E','Events','"What was happening before it started?"',['after PT in heat','after field','poor sleep / CQ','long screen time','stress','hit head / fall','ruck w/ kevlar','no clear trigger']),
@@ -638,7 +638,7 @@ function otcCI(){
   });
   const bp=parseBP(); if(bp&&(bp.s>=140||bp.d>=90))ci.bpHigh=true;
   if(adPreg())ci.preg=true;
-  if(state.ill&&state.ill.fields.phx&&state.ill.fields.phx.has('hx ulcers'))ci.ulcer=true;
+  TPLS.forEach(tp=>{const st=state[tp.id];if(!st)return;const f=st.fields.phx;if((f&&[...f].some(x=>/ulcer|gi bleed/i.test(x)))||/ulcer|gi bleed|melena/i.test((st.custom&&st.custom.phx)||''))ci.ulcer=true;});
   return ci;
 }
 function itemConflict(item,ci){
@@ -1150,7 +1150,7 @@ function renderMain(){
   if(ad.pid&&foldPid!==ad.pid){foldPid=ad.pid;delete foldCur.cc;}
   let h=ad.pid?(adHeadHtml(getP(ad.pid))+(_fo?_sec(L('Complaint','Motivo de consulta')):'<div class="secbar">1 · '+(_rfTop?L('Chief complaint & red flags','Motivo de consulta y banderas rojas'):_hlab)+'</div>')):`<h2 class="tpl">${t.icon} ${t.title}</h2><p class="tpl-sub">Select the CC first — <span style="color:var(--chipx-txt)">green problem-specific options</span> will appear in each field. Dashed = "denies". The note builds on the right.</p>`;
   if(hmode()!=='quick')h+=_fo?'<button class="gstart sm" onclick="startGuided()">▶ '+L('Guided interview','Entrevista guiada')+'</button>':`<button class="gstart" onclick="startGuided()">▶ Guided interview — one question at a time</button>`;
-  if(hmode()!=='quick')h+=`<div class="warn">${t.er}</div>`;
+  if(hmode()!=='quick')h+=`<div class="warn">${erText(t)}</div>`;
   if(hmode()!=='full')h+=`<div class="note-hint">${hmode()==='quick'?'This visit does not need a full history.':'Focused history for this complaint.'} <span class="chip" onclick="adFullHist()">+ Add full OPQRST / AMPLE</span></div>`;
   if(!ad.pid)h+=adPatientCard()+adVBanner();
 
@@ -1700,6 +1700,7 @@ function resetAll(){
   view='adtmc';renderNav();renderMain();
   renderNote();persist();adPersist();
   const m=document.getElementById('main');if(m)m.scrollTop=0;
+  if(window._updPend)setTimeout(autoUpd,400);
 }
 
 /* ---- editar nota a mano ---- */
@@ -1883,9 +1884,14 @@ const SD_CAT={PN:'I — Provider Now',AEM:'II — AEM Now',MCP:'III — Minor Ca
 function refIsClinic(hi){hi=hi===undefined?adHighest():hi;return !!hi&&(hi==='PN'||hi==='SP'||hi==='APPT'||(hi==='AEM'&&!settings.aemOn&&!ouOn()));}
 /* v43: compact note for sick call; SOAP-D only when the case goes to the clinic (automatic), or when tapped for this one patient.
    "Treated here" (ad.ref.bn): the screening said clinic, but after seeing the Soldier in person the case was handled at BN. */
-function soapOn(){if(ad.fmt)return ad.fmt==='soapd';return refIsClinic()&&!(ad.ref&&ad.ref.bn);}
+/* bnOK: "treated here" only counts when someone is named as the decider and a reason is given;
+   with a positive red flag or abnormal vitals, only a provider can make that call.
+   bnOK: "tratado aquí" solo cuenta con nombre de quien decidió y motivo; con bandera roja o vitales anormales solo un proveedor puede decidirlo. */
+function bnHard(){try{const p=ad.pid&&getP(ad.pid),R=p?adEval(p):null;const pos=(ad.log||[]).some(e=>e.pos&&e.pos.length)||(p?rfList(p).some(f=>ad.rf[f]==='pos'):false);return pos||!!(R&&R.esc.some(e=>e.lv==='PN'&&/vitals|Red flag/.test(e.why)));}catch(e){return false;}}
+function bnOK(){const r=ad.ref||{};if(!r.bn)return false;if(!(r.who||'').trim()||!(r.why||'').trim()||!r.role)return false;if(bnHard()&&r.role!=='prov')return false;return true;}
+function soapOn(){if(ad.fmt)return ad.fmt==='soapd';return refIsClinic()&&!bnOK();}
 function refLines(){const hi=adHighest();if(!refIsClinic(hi))return [];if(!ad.ref)ad.ref={dd:false,told:false};
-  if(ad.ref.bn)return [];
+  if(bnOK())return [];
   const entries=noteEntries().filter(e=>e.level&&e.level!=='MCP');
   const reason=paraOn()?entries.map(e=>(e.sumH||e.sum).replace(/\.$/,'')).join('; '):entries.map(e=>(e.sum||(e.title+' ('+e.id+')')).replace(/\.$/,'')+' ['+(SD_CAT[e.level]||e.level)+']'+((e.pos&&e.pos.length)?' — red flag: '+e.pos.join('; '):'')).join('; ');
   const plans=[];noteActive().forEach(t=>[...state[t.id].plan].forEach(p=>{if(!plans.includes(p))plans.push(p);}));
@@ -1902,7 +1908,15 @@ function refTog(k){if(!ad.ref)ad.ref={dd:false,told:false};ad.ref[k]=!ad.ref[k];
 function refBox(){if(!refIsClinic())return '';const r=ad.ref||{},c=(k,t)=>'<span class="chip '+(r[k]?'on':'')+'" onclick="refTog(\''+k+'\')">'+(r[k]?'✓ ':'')+t+'</span>';
   return '<div class="field" style="margin-top:6px"><div class="lab"><span class="tag">📝</span><span class="name">'+L('Clinic referral — note in SOAP format','Referido a la clínica — nota en formato SOAP')+'</span></div>'
    +'<div class="dim" style="font-size:.9em;margin-bottom:6px">'+L('The note switched to <b>SOAP-D</b> and added a REFERRAL block (reason, care already done, where to). Tick when done:','La nota cambió a <b>SOAP-D</b> y agregó un bloque REFERRAL (razón, lo que ya se hizo, a dónde). Marca cuando esté hecho:')+'</div>'
-   +'<div class="chips">'+c('dd',L('DD 689 signed by BAS medic','DD 689 firmado por médico del BAS'))+c('told',L('Soldier told why & which service','Soldado sabe por qué y a qué servicio'))+'</div>'+'<div class="chips" style="margin-top:6px">'+c('bn',L('Seen in person — treated here, not sent to clinic','Visto en persona — tratado aquí, no se envía a la clínica'))+'</div>'+(r.bn?'<div class="dim" style="font-size:.88em;margin-top:4px">'+L('Compact note; the disposition records the ADTMC result and that the case was handled at BN after in-person evaluation.','Nota compacta; la disposición registra el resultado del ADTMC y que el caso se manejó en el BN después de evaluarlo en persona.')+'</div>':'')+'</div>';}
+   +'<div class="chips">'+c('dd',L('DD 689 signed by BAS medic','DD 689 firmado por médico del BAS'))+c('told',L('Soldier told why & which service','Soldado sabe por qué y a qué servicio'))+'</div>'+'<div class="chips" style="margin-top:6px">'+c('bn',L('Seen in person — treated here, not sent to clinic','Visto en persona — tratado aquí, no se envía a la clínica'))+'</div>'+(r.bn?bnFields(r):'')+'</div>';}
+function bnFields(r){const hard=bnHard(),rc=(k,t)=>'<span class="chip '+(r.role===k?'on':'')+'" onclick="ad.ref.role=\''+k+'\';renderMain();renderNote()">'+t+'</span>';
+  let h='<div class="bnbox"><div class="mini">'+L('Who decided to treat here?','¿Quién decidió tratarlo aquí?')+'</div><div class="chips">'+rc('prov',L('Provider (in person / phone)','Proveedor (en persona / teléfono)'))+(hard?'':rc('aem',L('Senior Medic / AEM','Senior Medic / AEM')))+'</div>'
+   +'<input type="text" placeholder="'+L('Rank / name','Rango / nombre')+'" value="'+q$(r.who||'')+'" oninput="ad.ref.who=this.value;renderNote()" onchange="renderMain()">'
+   +'<input type="text" style="margin-top:6px" placeholder="'+L('Reason (e.g. symptoms resolved on exam, provider phone consult)','Motivo (ej. síntomas resueltos al examinar, consulta por teléfono con proveedor)')+'" value="'+q$(r.why||'')+'" oninput="ad.ref.why=this.value;renderNote()" onchange="renderMain()">';
+  if(hard)h+='<div class="rfbanner" style="margin-top:8px">🚩 '+L('Red flag or abnormal vitals: only a provider can decide to treat here. Name the provider.','Bandera roja o vitales anormales: solo un proveedor puede decidir tratarlo aquí. Escribe el nombre del proveedor.')+'</div>';
+  if(!bnOK())h+='<div class="warn" style="margin-top:8px">'+L('Not applied yet — the note still says SEND TO CLINIC until who decided, their name and the reason are filled in.','Todavía no aplica — la nota sigue diciendo SEND TO CLINIC hasta llenar quién decidió, su nombre y el motivo.')+'</div>';
+  else h+='<div class="dim" style="font-size:.88em;margin-top:6px">'+L('Compact note; the disposition records the ADTMC result, who decided and why. Plan editor is open below.','Nota compacta; la disposición registra el resultado del ADTMC, quién decidió y por qué. El editor de plan está abajo.')+'</div>';
+  return h+'</div>';}
 /* ===== Natural note (paragraph setting, default): S / O / A / P (/ D) written in plain sentences.
    Nota natural: S / O / A / P (/ D) en oraciones simples, como la escribiría un medic. */
 function humanNote(stamp,soap){
@@ -1913,7 +1927,7 @@ function humanNote(stamp,soap){
   const posAll=[];active.forEach(t=>(t.redFlags||[]).forEach(f=>{if(state[t.id].rf[f]==='pos')posAll.push(f);}));
   if(posAll.length)L.push('*** RED FLAG: '+posAll.join('; ')+' — sent to provider/ER ***');
   if(A.rfpos.length)L.push('*** RED FLAG: '+A.rfpos.join('; ')+' ***');
-  if(adHighest()==='PN'&&!(ad.ref&&ad.ref.bn))L.push('*** SEND TO CLINIC — PROVIDER NOW ***');
+  if(adHighest()==='PN'&&!bnOK())L.push('*** SEND TO CLINIC — PROVIDER NOW ***');
   L.push('');
   // S
   const multi=active.length>1,hp=entries.filter(e=>e.hpi).map(e=>e.hpi.trim());let who=hWho(),first=true;
@@ -2051,7 +2065,7 @@ function renderNote(){
   active.forEach(t=>{(t.redFlags||[]).forEach(f=>{if(state[t.id].rf[f]==='pos')posAll.push(f);});});
   if(posAll.length)L.push('*** RED FLAG PRESENT: '+posAll.join('; ')+' — ESCALATED to provider/ER. ***');
   if(A.rfpos.length)L.push('*** RED FLAG: '+A.rfpos.join('; ')+' ***');
-  if(adHighest()==='PN'&&!(ad.ref&&ad.ref.bn))L.push('*** SEND TO CLINIC — PROVIDER NOW ***');
+  if(adHighest()==='PN'&&!bnOK())L.push('*** SEND TO CLINIC — PROVIDER NOW ***');
   L.push('');
   const multi=active.length>1;
   active.forEach(t=>{
@@ -2163,8 +2177,8 @@ const LV={
 const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · GU',f:'F · Neuro/BH',g:'G · General',h:'H · Eyes',i:'I · Women',j:'J · Skin',k:'K · Environment',l:'L · Misc',m:'M · Return'};
 const gFlags={sex:'',female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
 let ad={pfb:'',pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{},ref:{dd:false,told:false},noAutoSoap:false};
-function adResetProto(){ad.dpOpen={};ad.planEdit=false;ad.dutyEdit=false;ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
-function adResetAll(){adResetProto();ad.ou={on:false,unit:''};ad.ref={dd:false,told:false,bn:false};ad.fmt=null;ad.exChk=null;ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
+function adResetProto(){ad.dpOpen={};ad.planEdit=false;ad.dutyEdit=false;ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;ad.peOk={};}
+function adResetAll(){adResetProto();ad.ou={on:false,unit:''};ad.ref={dd:false,told:false,bn:false,role:'',who:'',why:''};ad.exShown=false;ad.fmt=null;ad.exChk=null;ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.sex='';gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 /* Screening answers -> history / exam wording (data/notetags.js) */
 function adTagLines(p){
@@ -2174,12 +2188,14 @@ function adTagLines(p){
   const yes=[],no=[],pe=[];
   const put=(item,isYes,isRf)=>{const t=T[item];if(!t)return;
     const neg=t.inv?isYes:!isYes;
+    if(!isYes&&!isRf&&t.k==='pe'&&!peOk)return; // exam negatives only when the medic said the exam was done
     if(neg&&(detail==='minimal'||(detail==='short'&&isRf)))return;
-    if(t.inv){(isYes?no:yes).push(t.inv);return;}
+    if(t.inv){if(isYes)no.push(t.inv);return;} // "No cough" marked → denies cough; unmarked → say nothing
     const txt=isYes?t.y:t.n;if(!txt)return;
     if(t.k==='pe')pe.push(txt);else (isYes?yes:no).push(txt);};
   rfList(p).forEach(f=>{if(ad.rf[f]==='pos')put(f,true,true);else if(ad.rf[f]==='neg')put(f,false,true);});
-  p.flow.forEach((st,i)=>{if(!st.items||!ad.dpDone[i])return;const a=ad.dp[i]||[];st.items.forEach((it,j)=>put(it,a.includes(j),false));});
+  let peOk=false;
+  p.flow.forEach((st,i)=>{if(!st.items||!ad.dpDone[i])return;const a=ad.dp[i]||[];peOk=!!(ad.peOk&&ad.peOk[i]);st.items.forEach((it,j)=>put(it,a.includes(j),false));});
   const uniq=a=>a.filter((x,i)=>a.indexOf(x)===i);
   const y=uniq(yes),n=uniq(no).filter(x=>!y.includes(x));
   out.hpi=[y.length?'Reports '+y.join(', ')+'.':'',n.length?'Denies '+n.join(', ')+'.':''].filter(Boolean).join(' ');
@@ -2208,23 +2224,36 @@ function updMulti(){
   const incl=a=>a.filter(x=>!ex.has(x.k)).length;
   const pk=document.getElementById('pkS');if(pk&&h&&(incl(prot)>1||incl(secs)>1))pk.innerHTML='<b style="color:var(--orange)">⚠️ '+L('More than one complaint — review','Más de una queja — revisar')+'</b>';
 }
-function adPersist(){try{localStorage.setItem('sc_ad',JSON.stringify({ad,gFlags,day:new Date().toDateString()}));}catch(e){}}
+/* Saves the case in progress, including MACE 2, PRA, profile builder, H2F and a hand-edited note, so a reload or iOS closing the app loses nothing.
+   Guarda el caso en curso (MACE 2, PRA, profile, H2F y nota editada a mano) para que una recarga no lo pierda. */
+function adPersist(){try{
+  const x={ad,gFlags,day:new Date().toDateString()};
+  try{x.mace=mace;x.pra=pra;x.pb=pb?Object.assign({},pb,{r:[...(pb.r||[])],f:[...(pb.f||[])]}):null;x.h2f=(typeof h2f!=='undefined')?{cls:[...h2f.cls],f:h2f.f,w:h2f.w}:null;}catch(e){}
+  try{if(editMode||manualNote){const el=document.getElementById('note');const t=el?el.innerText:'';if(t&&!(typeof piiFind==='function'&&piiFind(t).length))x.mnote=t;}}catch(e){}
+  localStorage.setItem('sc_ad',JSON.stringify(x));}catch(e){}}
 function adRestore(){try{const d=JSON.parse(localStorage.getItem('sc_ad')||'null');if(!d)return;
   if(settings.purge&&d.day!==new Date().toDateString())return;
-  Object.assign(ad,d.ad||{});Object.assign(gFlags,d.gFlags||{});}catch(e){}}
+  Object.assign(ad,d.ad||{});Object.assign(gFlags,d.gFlags||{});
+  try{if(d.mace)mace=d.mace;if(d.pra)pra=d.pra;if(d.pb){pb=Object.assign({},d.pb,{r:new Set(d.pb.r||[]),f:new Set(d.pb.f||[])});}if(d.h2f&&typeof h2f!=='undefined'){h2f.cls=new Set(d.h2f.cls||[]);if(d.h2f.f)h2f.f=d.h2f.f;if(d.h2f.w)h2f.w=d.h2f.w;}if(d.mnote)window._mnote=d.mnote;}catch(e){}
+  }catch(e){}}
 const q$=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const getP=id=>PR.find(p=>p.id===id);
+/* Data guard: 'tri' must be an array of protocol IDs (a string here once blanked the app). */
+PR.forEach(p=>(p.flow||[]).forEach(st=>{const y=st.yes;if(y&&y.tri!==undefined&&!Array.isArray(y.tri))y.tri=[y.tri];(st.out||[]).forEach(o=>{if(o&&o.tri!==undefined&&!Array.isArray(o.tri))o.tri=[o.tri];});}));
 const rfList=p=>(p.rf||[]).filter(x=>!/^none/i.test(x));
 
 /* ---- global ADTMC rules: vitals ---- */
 function numOf(s){const m=String(s||'').match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null;}
 function lmpDays(){if(!gFlags.lmp)return null;const d=new Date(gFlags.lmp+'T00:00:00');if(isNaN(d))return null;return Math.floor((Date.now()-d.getTime())/864e5);}
+/* Global vital-sign limits: ADTMC (MEDCOM Pam 40-7-21) Appendix B, Additional Soldier Care Notes, note 2 (p. 13):
+   T ≥100.4 or ≤97.0 °F · HR <60 or >90 or +20 standing · RR ≤8 or >20 · SpO2 <93% · BP ≥130/80, ≤100/60 with symptoms, or orthostatic drop 20/10.
+   Note 10 (p. 14): any abnormal vital sign → Provider Now. Protocol-specific numbers (e.g. L-11 HR >100) are extra decision points, not a replacement. */
 function adVitals(){
   const v=gVitals,abn=[],warn=[];
   let t=numOf(v.temp);
-  if(t!==null){if(/c/i.test(v.temp)&&t<50)t=t*9/5+32; if(t>=100.4)abn.push('Temp '+v.temp+' (≥100.4°F)'); else if(t<=97.0)abn.push('Temp '+v.temp+' (≤97.0°F)');}
-  const hr=numOf(v.hr); if(hr!==null&&(hr<60||hr>90))abn.push('HR '+v.hr+' (<60 o >90)');
-  const rr=numOf(v.rr); if(rr!==null&&(rr<=8||rr>20))abn.push('RR '+v.rr+' (≤8 o >20)');
+  if(t!==null){let tl=v.temp;if(t<50){t=t*9/5+32;tl=v.temp+(/c/i.test(v.temp)?'':' °C')+' = '+t.toFixed(1)+'°F';} /* a number under 50 can only be °C / menos de 50 solo puede ser °C */ if(t>=100.4)abn.push('Temp '+tl+' (≥100.4°F)'); else if(t<=97.0)abn.push('Temp '+tl+' (≤97.0°F)');}
+  const hr=numOf(v.hr); if(hr!==null&&(hr<60||hr>90))abn.push('HR '+v.hr+' (<60 or >90)');
+  const rr=numOf(v.rr); if(rr!==null&&(rr<=8||rr>20))abn.push('RR '+v.rr+' (≤8 or >20)');
   const sp=numOf(v.spo2); if(sp!==null&&sp<93)abn.push('SpO2 '+v.spo2+' (<93%)');
   const bp=parseBP();
   if(bp){
@@ -2241,10 +2270,15 @@ function adVitals(){
 function adEval(p){
   const R={esc:[],warn:[],level:null,final:null,cur:-1,end:p.flow.length-1,tri:[],sum:[],done:false};
   const vit=adVitals();
-  if(vit.abn.length){ if(ad.vovr)R.warn.push('Abnormal vitals reviewed and accepted by provider: '+vit.abn.join('; ')); else R.esc.push({lv:'PN',why:'Abnormal vitals (ADTMC global rule): '+vit.abn.join('; ')}); }
+  if(vit.abn.length){ if(ad.vovr)R.warn.push('Abnormal vitals reviewed and accepted by provider: '+vit.abn.join('; ')); else R.esc.push({lv:'PN',why:'Abnormal vitals (ADTMC App. B note 2, p. 13): '+vit.abn.join('; ')}); }
   vit.warn.forEach(w=>R.warn.push(w));
-  if(vit.pain!==null){ if(vit.pain>=7)R.esc.push({lv:'PN',why:'Pain '+vit.pain+'/10 (7–10 → Provider)'}); else if(vit.pain>=5)R.esc.push({lv:'AEM',why:'Pain '+vit.pain+'/10 (5–6 → at least AEM)'}); }
+  /* Pain rule (ADTMC App. B note 2.h): use the higher of the vitals PAIN box and the history severity slider.
+     Regla de dolor: usa el mayor entre la casilla PAIN de vitales y la severidad de la historia. */
+  {let hs=null;try{const tid=protoTpl(p.id).tid,st0=state[tid];if(st0&&st0.sev!==null&&st0.sev!==undefined&&st0.sev!=='')hs=+st0.sev;}catch(e){}
+   const pn=[vit.pain,hs].filter(x=>x!==null&&!isNaN(x)),pv=pn.length?Math.max(...pn):null,src=(hs!==null&&(vit.pain===null||hs>vit.pain))?' (history)':'';
+   if(pv!==null){ if(pv>=7)R.esc.push({lv:'PN',why:'Pain '+pv+'/10'+src+' (7–10 → Provider)'}); else if(pv>=5)R.esc.push({lv:'AEM',why:'Pain '+pv+'/10'+src+' (5–6 → at least AEM)'}); }}
   const rfs=rfList(p), rfPos=rfs.filter(f=>ad.rf[f]==='pos');
+  R.rfN=rfs.length;R.rfPend=rfs.filter(f=>!ad.rf[f]).length;
   if(rfPos.length)R.esc.push({lv:'PN',why:'Red flag present: '+rfPos.join('; ')});
   if(ad.worse)R.esc.push({lv:'PN',why:'Worsening on treatment / already seen by provider or AEM (M-1 → clinic)'});
   else if(ad.ret)R.esc.push({lv:'AEM',why:'Return for the same complaint → never below AEM (M-1)'});
@@ -2287,9 +2321,14 @@ function adForcesPN(){ // used to block RTD/Light duty chips
 function hasPosRF(){return TPLS.some(t=>(t.redFlags||[]).some(f=>state[t.id].rf[f]==='pos'));}
 
 /* ---- med lookup + safety review ---- */
-const MEDRE=[[/ibuprofen|motrin/i,'ibuprofen'],[/acetaminophen|tylenol/i,'acetaminophen'],[/naproxen/i,'naproxen'],[/ketorolac|toradol/i,'ketorolac'],[/analgesic balm|menthol/i,'menthol'],[/lidocaine/i,'lidocaine'],[/phenazopyridine/i,'phenazopyridine'],[/bacitracin|antibiotic ointment|antibacterial ointment/i,'bacitracin'],[/terbinafine|antifungal/i,'terbinafine'],[/azithromycin/i,'azithromycin'],[/ceftriaxone/i,'ceftriaxone'],[/doxycycline/i,'doxycycline'],[/fluconazole/i,'fluconazole'],[/metronidazole/i,'metronidazole'],[/nitrofurantoin/i,'nitrofurantoin'],[/permethrin 5/i,'permethrin5'],[/permethrin/i,'permethrin1'],[/tmp|sulfamethoxazole|bactrim/i,'tmpsmx'],[/valacyclovir/i,'valacyclovir'],[/diphenhydramine|benadryl/i,'diphenhydramine'],[/loratadine|claritin/i,'loratadine'],[/ranitidine|h2/i,'ranitidine'],[/benzocaine|cepacol|lozenge/i,'benzocaine'],[/oxymetazoline|afrin/i,'oxymetazoline'],[/pseudoephedrine|sudafed/i,'pseudoephedrine'],[/guaifenesin/i,'guaifenesin'],[/polyethylene|miralax/i,'peg'],[/docusate|stool softener/i,'docusate'],[/loperamide/i,'loperamide'],[/bisacodyl/i,'bisacodyl'],[/bismuth|pepto/i,'bismuth'],[/albuterol/i,'albuterol'],[/aspirin/i,'aspirin'],[/epinephrine|epi ?pen/i,'epinephrine'],[/glucagon/i,'glucagon'],[/calamine/i,'calamine'],[/burow|aluminum acetate/i,'burow'],[/propylene|artificial tears/i,'tears'],[/hydrocortisone 2\.5/i,'analpram'],[/acetic acid/i,'acetasol'],[/hydrocortisone/i,'hc1'],[/adapalene|retinoid/i,'adapalene'],[/benzoyl/i,'benzoyl'],[/povidone|betadine/i,'povidone']];
+const MEDRE=[[/ibuprofen|motrin/i,'ibuprofen'],[/acetaminophen|tylenol/i,'acetaminophen'],[/naproxen/i,'naproxen'],[/ketorolac|toradol/i,'ketorolac'],[/benzocaine|cepacol|lozenge/i,'benzocaine'],[/analgesic balm|menthol|methyl salicylate/i,'menthol'],[/lidocaine/i,'lidocaine'],[/phenazopyridine/i,'phenazopyridine'],[/bacitracin|antibiotic ointment|antibacterial ointment/i,'bacitracin'],[/terbinafine|antifungal/i,'terbinafine'],[/azithromycin/i,'azithromycin'],[/ceftriaxone/i,'ceftriaxone'],[/doxycycline/i,'doxycycline'],[/fluconazole/i,'fluconazole'],[/metronidazole/i,'metronidazole'],[/nitrofurantoin/i,'nitrofurantoin'],[/permethrin 5/i,'permethrin5'],[/permethrin/i,'permethrin1'],[/tmp|sulfamethoxazole|bactrim/i,'tmpsmx'],[/valacyclovir/i,'valacyclovir'],[/diphenhydramine|benadryl/i,'diphenhydramine'],[/loratadine|claritin/i,'loratadine'],[/ranitidine|famotidine|pepcid|h2/i,'ranitidine'],[/oxymetazoline|afrin/i,'oxymetazoline'],[/pseudoephedrine|sudafed/i,'pseudoephedrine'],[/guaifenesin/i,'guaifenesin'],[/polyethylene|miralax/i,'peg'],[/docusate|stool softener/i,'docusate'],[/loperamide/i,'loperamide'],[/bisacodyl/i,'bisacodyl'],[/bismuth|pepto/i,'bismuth'],[/albuterol/i,'albuterol'],[/aspirin/i,'aspirin'],[/epinephrine|epi ?pen/i,'epinephrine'],[/glucagon/i,'glucagon'],[/calamine/i,'calamine'],[/burow|aluminum acetate/i,'burow'],[/propylene|artificial tears/i,'tears'],[/hydrocortisone 2\.5|pramoxine|analpram/i,'analpram'],[/acetic acid/i,'acetasol'],[/hydrocortisone/i,'hc1'],[/adapalene|retinoid/i,'adapalene'],[/benzoyl/i,'benzoyl'],[/povidone|betadine/i,'povidone']];
 function medLookup(name){for(const [re,k] of MEDRE)if(re.test(name))return ADMEDS.find(m=>m.k===k);return null;}
-function patientAllergies(){const s=new Set();TPLS.forEach(t=>{const f=state[t.id].fields.a;if(f)f.forEach(x=>s.add(x));});return s;}
+function allergyText(){return TPLS.map(t=>{const st=state[t.id];return st&&st.custom?(st.custom.a||''):'';}).join(' ');}
+/* Allergies: chips plus anything typed by hand ("ibuprofen", "PCN"...). / Alergias: chips y lo escrito a mano. */
+function patientAllergies(){const s=new Set();TPLS.forEach(t=>{const f=state[t.id].fields.a;if(f)f.forEach(x=>s.add(x));});
+  const tx=allergyText();
+  [[/nsaid|ibuprofen|motrin|advil|aspirin|asa\b|naproxen|aleve|toradol|ketorolac/i,'NSAIDs (Motrin/Aspirin)'],[/pcn|penicillin|amoxicillin|amox|augmentin/i,'penicillin'],[/ceph|keflex|rocephin|ceftriaxone/i,'cephalosporins'],[/sulfa|bactrim|septra|tmp/i,'sulfa'],[/tetracycline|doxy/i,'tetracycline'],[/lidocaine|\bcaine/i,'lidocaine']].forEach(([re,k])=>{if(re.test(tx))s.add(k);});
+  return s;}
 function adPreg(){
   const ld=lmpDays();
   return gFlags.preg||(gFlags.female&&ld!==null&&ld>35)||(state.gyn&&(state.gyn.cc.has('possible pregnancy')||state.gyn.cc.has('missed period')))||(state.gyn&&/late|missed|retras|no period|no menstr/i.test(state.gyn.custom.lmp||''));
@@ -2303,9 +2342,11 @@ function medSafety(m){
   if(m.k==='tmpsmx'&&al.has('sulfa'))w.push('Sulfa allergy');
   if(m.k==='doxycycline'&&al.has('tetracycline'))w.push('Tetracycline allergy');
   if(m.k==='lidocaine'&&al.has('lidocaine'))w.push('Lidocaine allergy');
+  {const tx=allergyText().toLowerCase(),nm=[m.k,m.n.split(/\s/)[0]].concat(String(m.t||'').split(/,\s*/)).map(x=>String(x).toLowerCase()).filter(x=>x.length>3);if(tx&&nm.some(x=>tx.includes(x))&&!w.some(x=>/allergy/i.test(x)))w.push('Allergy listed: '+allergyText().trim());}
   if(m.nsaid&&ci.ulcer)w.push('Hx ulcers / GI bleeding');
   if(m.decong&&(ci.htn||ci.bpHigh))w.push('HTN / elevated BP');
   if(adPreg()){ if(/unsafe|class d|avoid|not in 1st|do not use/i.test(m.preg))w.push('Possible pregnancy: '+m.preg); else if(/class c|unknown/i.test(m.preg))i.push('Pregnancy: '+m.preg+' — confirm with provider'); }
+  else if(gFlags.female&&!gFlags.lmp&&/unsafe|class d|class x|avoid/i.test(m.preg))w.push('Female, LMP not documented — '+m.preg);
   if(gFlags.lact&&/unsafe|not recommended|avoid|not preferred/i.test(m.lac))w.push('Lactation: '+m.lac);
   if(gFlags.aviation)i.push('Flight status: confirm aeromedical class (a combination with a prohibited component is prohibited).');
   if(m.rx)i.push('Prescription required: notify the provider before dispensing (Appendix C).');
@@ -2340,9 +2381,18 @@ function hmode(){if(!ad.pid||ad.hfull)return 'full';return HQUICK.includes(ad.pi
 function visFields(t){const m=hmode();return m==='full'?t.fields:t.fields.filter(f=>HFIELDS[m].includes(f.id));}
 function adFullHist(){ad.hfull=true;ccRawOff();guided=null;renderMain();renderNote();}
 function ccRawOff(){const s=state[cur];if(s&&s.ccRaw){if(s.ccCustom===s.ccRawTxt)s.ccCustom='';s.ccRaw=false;s.ccRawTxt='';}}
+/* ER line that matches the complaint (the ENT/Dental/Eye template shares one sheet). / Línea ER según la queja. */
+function erText(t){const p=ad.pid&&getP(ad.pid);if(t.id==='ent'&&p){
+  if(p.cat==='a')return 'ER if: stridor, drooling or cannot swallow, airway swelling, stiff neck + fever, nosebleed >20 min uncontrolled, facial swelling + fever.';
+  if(p.cat==='h')return 'ER if: sudden or severe vision loss, orbital trauma, chemical in the eye, penetrating injury, severe eye pain.';
+  if(/^L-[23]$/.test(p.id))return 'ER if: facial swelling + fever, trouble swallowing or breathing, uncontrolled bleeding after dental trauma.';}
+  return t.er;}
 function protoTpl(id){
-  const p=getP(id),pref=(p&&CATTPL[p.cat])||'ill';
+  const p=getP(id);let pref=(p&&CATTPL[p.cat])||'ill';
   const find=tid=>{const mp=CCMAP[tid]||{};const ccs=[];let hit=false;Object.keys(mp).forEach(cc=>{if(mp[cc].includes(id)){hit=true;if(cc!=='*')ccs.push(cc);}});return hit?{tid,ccs}:null;};
+  /* GU (E-1..E-4): GYN template only for female Soldiers; otherwise General illness (no LMP / pad-count warnings for a male).
+     GU: plantilla GYN solo para mujeres; si no, Enfermedad general. */
+  if(p&&p.cat==='e'&&!gFlags.female)return find('ill')||{tid:'ill',ccs:[]};
   return find(pref)||Object.keys(CCMAP).map(find).find(Boolean)||{tid:pref,ccs:[]};
 }
 function adOpen(id){
@@ -2371,11 +2421,16 @@ function adPlanItems(p){
   else{adv=(p.tx||[]).slice(0,3).map(t=>({t:adCut(t.replace(/^(MCP [^:]*|Medication|OTC medication):\s*/i,''),60),def:true}));meds=(p.meds||[]).map(m=>({t:m,def:false}));act=(p.act&&p.act!=='None')?[{t:adCut(p.act,70),def:true}]:[];rtc=adCut(p.rtc,75);}
   const fin=(arr,k)=>arr.map((x,i)=>{const key=k+i;x.key=key;x.on=ov[key]!==undefined?ov[key]:x.def;return x;});
   meds=fin(meds,'m');
-  meds.forEach(x=>{const m=medLookup(x.t);x.m=m;x.sf=m?medSafety(m):{w:[],i:[]};if(x.sf.w.length&&ov[x.key]===undefined)x.on=false;});
+  meds.forEach(x=>{const m=medLookup(x.t);x.m=m;x.sf=m?medSafety(m):{w:[],i:[]};if((x.sf.w.length||(m&&m.rx))&&ov[x.key]===undefined)x.on=false;});
+  adv.forEach(x=>{if(/^FM 7-22/.test(x.t))x.def=!!ad.exShown;});
   const sg=adDurSug(p);return{adv:fin(adv,'a'),meds,act:fin(act,'c'),rtc:{t:rtc,key:'r',on:ov.r!==undefined?ov.r:!!rtc},dur:{sel:ad.dur||sg.v,sug:sg.v,src:sg.src}};
 }
 function adPlTog(k){tmMark('plan');const p=getP(ad.pid);const it=adPlanItems(p);const all=[...it.adv,...it.meds,...it.act,it.rtc].find(x=>x.key===k);ad.pl[k]=!(all&&all.on);renderMain();renderNote();}
-function adMedLine(x){const m=x.m;if(!m)return x.t;return m.n.replace(/\s+\d.*$/,'')+' '+m.dose.charAt(0).toLowerCase()+m.dose.slice(1);}
+/* Meds on but allergies never asked → one-tap NKDA. / Meds marcados sin alergias → NKDA de un toque. */
+function allergyDoc(){return TPLS.some(t=>{const st=state[t.id];return st&&((st.fields.a&&st.fields.a.size)||((st.custom&&st.custom.a)||'').trim());});}
+function nkdaRow(it){if(!it.meds.some(x=>x.on)||allergyDoc())return '';return '<div class="mw">⚠️ '+L('Allergies not documented — ask before giving meds.','Alergias sin documentar — pregunta antes de dar medicamentos.')+' <span class="chip" onclick="nkdaSet()">NKDA</span></div>';}
+function nkdaSet(){try{const tid=protoTpl(ad.pid).tid,st=state[tid];if(st&&st.fields.a){st.fields.a.add('NKDA');}}catch(e){}persist&&persist();renderMain();renderNote();}
+function adMedLine(x){const m=x.m;if(!m)return x.t;return m.n.replace(/\s+\d.*$/,'').replace(/\s*\(.*\)$/,'')+' '+m.dose.charAt(0).toLowerCase()+m.dose.slice(1)+(m.rx?' (Rx — provider order)':'');}
 function pShort(x){return x
   .replace(/FM 7-22 reconditioning shown \(QR given\): Shoulder Stability Drill per profile, 4C \+ HSD daily, Recovery Drill 20-30 s holds \(modified as needed\)/,'FM 7-22 home exercises (QR given): shoulder, core & hip drills daily; stretch after PT')
   .replace(/FM 7-22 reconditioning shown \(QR given\): 4C \+ HSD daily, Recovery Drill 20-30 s holds \(modified as needed\), within profile/,'FM 7-22 home exercises (QR given): core & hip drills daily; stretch after PT')
@@ -2451,12 +2506,23 @@ function sqScore(e,qn,toks){if(qn===e.id)return 1000;let sc=0,hit=0;
   if(e.title.includes(qn))sc+=120;if(e.terms.some(t=>t===qn))sc+=110;else if(e.terms.some(t=>t.includes(qn)))sc+=80;
   toks.forEach(t=>{let h=0;if(sqHit(e.title,t)){sc+=25;h=1;}if(e.terms.some(x=>sqHit(x,t))){sc+=15;h=1;}if(sqHit(e.ddx,t)){sc+=6;h=1;}hit+=h;});
   if(toks.length&&hit<toks.length)sc=hit?sc*hit/toks.length/2:0;return sc;}
-function sqSearch(q){const qn=sqNorm(q);if(!qn)return [];const toks=qn.split(' ').filter(t=>t&&!SQ_STOP.has(t));const tk=toks.length?toks:qn.split(' ');
+function sqSearch0(q){const qn=sqNorm(q);if(!qn)return [];const toks=qn.split(' ').filter(t=>t&&!SQ_STOP.has(t));const tk=toks.length?toks:qn.split(' ');
   return sqIndex().map(e=>({p:e.p,s:sqScore(e,qn,tk)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);}
+/* Typo tolerance: if nothing matches, swap each word for the closest known word (1 typo for short words, 2 for long) and search again.
+   Tolera errores: si no hay resultados, cambia cada palabra por la conocida más parecida ("diarhea" → "diarrhea"). */
+let _sqVoc=null;
+function sqVocab(){if(_sqVoc)return _sqVoc;const v=new Set();sqIndex().forEach(e=>[e.title,e.ddx].concat(e.terms).join(' ').split(' ').forEach(w=>{if(w.length>=4)v.add(w);}));return _sqVoc=[...v];}
+function sqDist(a,b,max){if(Math.abs(a.length-b.length)>max)return max+1;let prev=Array.from({length:b.length+1},(_,j)=>j);
+  for(let i=1;i<=a.length;i++){const cur=[i];let lo=i;for(let j=1;j<=b.length;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));lo=Math.min(lo,cur[j]);}if(lo>max)return max+1;prev=cur;}
+  return prev[b.length];}
+function sqFix(tok){if(tok.length<4||SQ_STOP.has(tok))return tok;const voc=sqVocab();if(voc.includes(tok))return tok;const max=tok.length>=7?2:1;let best=tok,bd=max+1;
+  for(const w of voc){const d=sqDist(tok,w,max);if(d<bd){bd=d;best=w;if(d===1&&max===1)break;}}return bd<=max?best:tok;}
+function sqSearch(q){const r=sqSearch0(q);if(r.length)return r;const qn=sqNorm(q);if(!qn)return r;
+  const fx=qn.split(' ').map(sqFix).join(' ');if(fx===qn)return r;const r2=sqSearch0(fx);r2.fixed=fx;return r2;}
 function adListItems(){
   const q=ad.q.trim().toLowerCase();let out='';
   if(q){const r=sqSearch(q);const row=p=>{const done=ad.log.some(x=>x.id===p.id);return '<div class="prow" onclick="adOpen(\''+p.id+'\')"><span class="pid">'+p.id+'</span><span class="ptit">'+q$(p.title)+'</span>'+(done?'<span style="color:var(--green)">✓</span>':'')+'</div>';};
-    if(r.length){const top=r[0].s,best=r.filter(x=>x.s>=top*0.35).slice(0,8);out+='<div class="cathead">'+L('Best matches','Mejores resultados')+'</div>'+best.map(x=>row(x.p)).join('');}
+    if(r.length){const top=r[0].s,best=r.filter(x=>x.s>=top*0.35).slice(0,8);out+='<div class="cathead">'+(r.fixed?L('Showing results for','Resultados para')+' “'+q$(r.fixed)+'”':L('Best matches','Mejores resultados'))+'</div>'+best.map(x=>row(x.p)).join('');}
     const l11=PR.find(p=>p.id==='L-11');out+='<div class="cathead">'+L('Not here?','¿No está?')+'</div>'+(l11?row(l11):'');
     return out;}
   Object.keys(CATS).forEach(c=>{
@@ -2491,7 +2557,7 @@ function adPatientInner(){
 }
 function gfTog(k){gFlags[k]=!gFlags[k];if(k==='female'){gFlags.sex=gFlags.female?'F':'';if(!gFlags.female){gFlags.preg=false;gFlags.lact=false;gFlags.lmp='';}}renderMain();renderNote();}
 /* Sex selector at the top of every protocol (v41): M / F. F opens LMP, pregnancy and lactation right there. */
-function gfSex(x){gFlags.sex=gFlags.sex===x?'':x;gFlags.female=gFlags.sex==='F';if(!gFlags.female){gFlags.preg=false;gFlags.lact=false;gFlags.lmp='';}renderMain();renderNote();}
+function gfSex(x){gFlags.sex=gFlags.sex===x?'':x;gFlags.female=gFlags.sex==='F';if(!gFlags.female){gFlags.preg=false;gFlags.lact=false;gFlags.lmp='';}if(ad.pid&&/^E-/.test(ad.pid)&&view==='tpl'){try{cur=protoTpl(ad.pid).tid;}catch(e){}}renderNav();renderMain();renderNote();}
 function sexRow(){const c=(x,t)=>'<span class="chip '+(gFlags.sex===x?'on':'')+'" onclick="gfSex(\''+x+'\')">'+t+'</span>';const ld=lmpDays();
   let h='<div class="field sexrow" style="padding:8px 12px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="min-width:42px">'+L('Sex','Sexo')+'</b>'+c('M',L('Male','Hombre'))+c('F',L('Female','Mujer'))+(gFlags.sex?'':'<span class="dim" style="font-size:.85em">'+L('tap one','elige uno')+'</span>')+'</div>';
   if(gFlags.female){h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px"><span class="mini" style="min-width:42px">LMP</span><input type="date" value="'+q$(gFlags.lmp)+'" onchange="gfSet(\'lmp\',this.value)" class="dateIn" style="max-width:170px"><span class="chip '+(gFlags.preg?'on':'')+'" onclick="gfTog(\'preg\')">'+L('Possible pregnancy','Posible embarazo')+'</span><span class="chip '+(gFlags.lact?'on':'')+'" onclick="gfTog(\'lact\')">'+L('Lactating','Lactando')+'</span></div>';
@@ -2520,11 +2586,12 @@ function adRfAll(){rfList(getP(ad.pid)).forEach(f=>{if(ad.rf[f]!=='pos')ad.rf[f]
   if(advOn()&&!rfList(getP(ad.pid)).some(f=>ad.rf[f]==='pos')){if(histComplete()){renderMain();renderNote();advScroll('.dpq:not(.clear):not(.fired)');return;}if(foldOn())foldCur.hist=true;renderMain();renderNote();advScroll('#fld_'+((state[cur]&&state[cur].focus)||(visFields(TPLS.find(x=>x.id===cur))[0]||{}).id)||'.hwrap');return;}
   renderMain();renderNote();}
 function adDPTog(i,j){const a=ad.dp[i]||(ad.dp[i]=[]);const k=a.indexOf(j);k<0?a.push(j):a.splice(k,1);ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();}
-function adDPNone(i){if(ad.dpOpen)delete ad.dpOpen[i];ad.dp[i]=[];ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();dpAdv();}
+function adDPNone(i,exam){(ad.peOk||(ad.peOk={}))[i]=!!exam;if(ad.dpOpen)delete ad.dpOpen[i];ad.dp[i]=[];ad.dpDone[i]=true;delete ad.out[i];tmMark('dp');renderMain();renderNote();dpAdv();}
 function dpAdv(){if(!advOn()||!ad.pid)return;const R=adEval(getP(ad.pid));if(R.final)advScroll('.resbox');else advScroll('.dpq:not(.clear):not(.fired)');}
 function adOut(i,o){ad.out[i]=o;renderMain();renderNote();}
+function dpHasPE(p,st){const T=(typeof NOTE_TAGS!=='undefined'&&NOTE_TAGS[p.id])||null;return !!(T&&st.items&&st.items.some(it=>T[it]&&T[it].k==='pe'&&T[it].n));}
 function adDPOpen(i){ad.dpOpen=ad.dpOpen||{};ad.dpOpen[i]=!ad.dpOpen[i];renderMain();}
-function adUndo(i){delete ad.dpDone[i];delete ad.out[i];delete ad.out['x'+i];renderMain();renderNote();}
+function adUndo(i){if(ad.peOk)delete ad.peOk[i];delete ad.dpDone[i];delete ad.out[i];delete ad.out['x'+i];renderMain();renderNote();}
 function adHeadHtml(p){
   let h='<h2 class="tpl ptitle"><button class="backb" onclick="adBack()" aria-label="Index">‹</button><span class="pid">'+p.id+'</span> '+q$(p.title)+'</h2>'+(foldOn()?'':'<p class="tpl-sub">Step 1: '+({quick:'reason for visit',focus:'focused history'}[hmode()]||'OPQRST / AMPLE interview')+' · Step 2: ADTMC screening · Step 3: decision and plan.</p>');
   h+=adLiveCard(p);
@@ -2538,6 +2605,7 @@ function adLiveCard(p){
   const go="var e=document.querySelector('.resbox')||[...document.querySelectorAll('.secbar')].pop();if(e)e.scrollIntoView({behavior:'smooth',block:'center'})";
   if(R.final){const lv=LV[R.final];let why=(R.esc.find(e=>e.lv===R.final)||{}).why;
     if(!why){const fired=[];let dn=0;p.flow.forEach((st,i)=>{if(st.items)dn++;const a=ad.dp[i];if(st.items&&a&&a.length)fired.push('DP'+dn+': '+a.map(j=>st.items[j]).filter(Boolean).join(', '));});why=fired.length?fired[fired.length-1]:('Protocol endpoint '+p.id);}
+    if(R.final!=='PN'&&nScr<rfs.length)why=L('Red flags not screened ','Banderas rojas sin revisar ')+nScr+'/'+rfs.length+' · '+why;
     if(foldOn())return '<div class="livecard lc1 lv-'+lv.c+'" onclick="'+go+'"><div class="lc-r"><b>'+L('Disposition','Disposición')+'</b><span class="lc-h">'+q$(lv.s)+'</span></div><div class="lc-m">'+q$(why)+'</div></div>';
     return '<div class="livecard lv-'+lv.c+'" onclick="'+go+'"><div class="lc-k">'+L('Suggested disposition','Disposición sugerida')+'<span>'+L('live','en vivo')+'</span></div><div class="lc-h">'+q$(lv.s)+'</div><div class="lc-m">'+q$(why)+' · '+L('see decision ↓','ver decisión ↓')+'</div></div>';}
   const pend=[];if(rfs.length&&nScr<rfs.length)pend.push(L('red flags','banderas rojas')+' '+nScr+'/'+rfs.length);
@@ -2705,7 +2773,7 @@ function adScreenHtml(p,R,opts){
     if(st.yes&&st.yes.a)h+='<div class="dpact">'+scrLink(st.yes.a)+'</div>';
     h+='<div class="chips">';
     st.items.forEach((it,j)=>h+='<span class="chip '+(sel.includes(j)?'rfp':(sug.includes(j)?'sug':''))+'" onclick="adDPTog('+i+','+j+')">'+(sel.includes(j)?'YES · ':'')+q$(it)+htBtn(it)+'</span>');
-    h+='</div><div class="algo-actions" style="margin-top:8px">'+(sug.length?'<button onclick="adDPUse('+i+')">✓ Use interview answers ('+sug.length+')</button>':'')+'<button class="ghost" onclick="adDPNone('+i+')">'+(st.none?'None':'None / next')+' ➜</button>'+(done?'<button class="ghost" onclick="adUndo('+i+')">↺ redo</button>':'')+'</div>';
+    h+='</div><div class="algo-actions" style="margin-top:8px">'+(sug.length?'<button onclick="adDPUse('+i+')">✓ Use interview answers ('+sug.length+')</button>':'')+(dpHasPE(p,st)?'<button class="ghost" onclick="adDPNone('+i+',true)">'+L('None — examined, normal','Ninguno — examinado, normal')+' ➜</button><button class="ghost" onclick="adDPNone('+i+')">'+L('None — not examined','Ninguno — no examinado')+' ➜</button>':'<button class="ghost" onclick="adDPNone('+i+')">'+(st.none?'None':'None / next')+' ➜</button>')+(done?'<button class="ghost" onclick="adUndo('+i+')">↺ redo</button>':'')+'</div>';
     if(done&&!fired&&st.lo)h+='<div class="fuq">'+q$(st.lo)+'</div>';
     if(done&&fired){
       const y=st.yes||{};
@@ -2728,18 +2796,20 @@ function adScreenHtml(p,R,opts){
 }
 function adDecisionHtml(p,R){
   let h=adResultCard(p,R);
-  if(R.final==='MCP'){
+  if(R.final==='MCP'||(R.final&&bnOK()&&refIsClinic(R.final))){
     const it=adPlanItems(p);
     if(!ad.planEdit){const on=[];it.meds.filter(x=>x.on).forEach(x=>on.push('💊 '+adMedLine(x)));const adv=it.adv.filter(x=>x.on).map(x=>x.t);if(adv.length)on.push('🩹 '+adv.join('; '));
       const act=it.act.filter(x=>x.on).map(x=>x.t);if(act.length)on.push('🏃 '+(it.dur.sel?it.dur.sel+': ':'')+act.join('; '));if(it.rtc.t&&it.rtc.on)on.push('↩ '+it.rtc.t);
       h+='<div class="field plansum"><div class="lab"><span class="tag">📋</span><span class="name">'+L('Plan','Plan')+'</span><span class="clr" onclick="ad.planEdit=true;renderMain()">✏️ '+L('Edit','Editar')+'</span></div>'+(on.length?'<div class="pls">'+on.map(x=>'<div>'+q$(x)+'</div>').join('')+'</div>':'<div class="dim">'+L('Nothing selected — tap Edit.','Nada seleccionado — toca Editar.')+'</div>');
       it.meds.filter(x=>x.on&&x.sf.w.length).forEach(x=>x.sf.w.forEach(w=>{h+='<div class="mw">⚠️ '+q$(x.t)+': '+q$(w)+'</div>';}));
+      h+=nkdaRow(it);
       h+='</div>';}
     else{
     h+='<div class="field"><div class="lab"><span class="tag">📋</span><span class="name">Plan — suggested from your answers</span><span class="clr" onclick="ad.planEdit=false;renderMain()">✓ '+L('Done','Listo')+'</span><span class="ask">green = on the note · tap to add/remove</span><span class="clr" onclick="adClrPlan()" title="Back to suggested plan">↺ reset</span></div>';
     const chip=(x,txt)=>'<span class="chip '+(x.on?'on':'')+'" onclick="adPlTog(\''+x.key+'\')">'+(x.on?'✓ ':'')+q$(txt)+'</span>';
     if(it.meds.length){h+='<div class="fuq">Meds (ADTMC App. C)</div><div class="chips">'+it.meds.map(x=>chip(x,adMedLine(x))).join('')+'</div>';
       it.meds.filter(x=>x.on||x.sf.w.length).forEach(x=>{x.sf.w.forEach(w=>{h+='<div class="mw">⚠️ '+q$(x.t)+': '+q$(w)+'</div>';});if(x.on&&x.m&&x.m.max)h+='<div class="mi">'+q$(x.m.n.replace(/\s+\d.*$/,''))+' max '+q$(x.m.max)+(x.m.rx?' · Rx — notify provider first':'')+'</div>';});}
+    h+=nkdaRow(it);
     if(it.adv.length)h+='<div class="fuq">Advice</div><div class="chips">'+it.adv.map(x=>chip(x,x.t)).join('')+'</div>';
     if(it.act.length){h+='<div class="fuq">Activity</div><div class="chips">'+it.act.map(x=>chip(x,x.t)).join('')+'</div>';
       if(it.act.some(x=>x.on)){h+='<div class="fuq">For how long? <span class="dim">(ADTMC gives no duration for most — pick the time you recommend)</span></div><div class="chips">'+DUR_OPTS.map(o=>'<span class="chip '+(it.dur.sel===o?'on':'')+'" onclick="adDurSet(\''+o+'\')">'+(it.dur.sel===o?'✓ ':'')+o+(o===it.dur.sug?' <span class="dim">· '+it.dur.src+'</span>':'')+'</span>').join('')+'</div>';}}
@@ -2770,7 +2840,7 @@ let manFrom=null,manLang=null;
    with the FM figures, by body area, and a QR so the Soldier gets the same program on their phone.
    Tarjetas de reacondicionamiento — basadas solo en el FM 7-22 cap. 6, con las figuras del FM, por zona, y QR para el soldado. */
 let exReg='',exFrom=null,exLvl=1;
-function exOpen(k){exReg=k||exReg||'knee';if(view!=='exercises')exFrom=view;goRef('exercises');}
+function exOpen(k){exReg=k||exReg||'knee';ad.exShown=true;if(view!=='exercises')exFrom=view;goRef('exercises');}
 function exBack(){goRef(exFrom&&exFrom!=='exercises'?exFrom:'adtmc');}
 function exRow(id){if(typeof EX_REG==='undefined')return '';const k=exRegFor(id);if(!k)return '';const r=EX_REG[k];
   return '<div class="exrow" role="button" onclick="exOpen(\''+k+'\')"><span>🏋️</span><b>'+L('Reconditioning (FM 7-22)','Reacondicionamiento (FM 7-22)')+' — '+L(r.t[0],r.t[1])+'</b><span class="fsum">'+r.drills.join(' + ')+' · '+L('QR for the Soldier','QR para el soldado')+'</span><span class="chev">›</span></div>';}
@@ -2931,6 +3001,7 @@ function medicAck(){settings.medicAck=Date.now();saveSettings();const o=document
 function adResultCard0(p,R){
   if(!R.final&&!R.tri.length)return R.cur===-1?'<div class="resbox lv-wait"><div class="resh">End of flow: this protocol does not assign a category by itself</div><div class="resn">Follow the actions listed above, consult the provider/AEM and document. The global rules (vitals, red flags, pain) still apply.</div></div>':'<div class="resbox lv-wait"><div class="resh">Answer the decision points to get the disposition</div></div>';
   let h='';
+  if(R.final&&R.final!=='PN'&&R.rfPend>0)h+='<div class="resbox lv-rfp"><div class="resk">🚩 '+L('RED FLAGS NOT SCREENED','BANDERAS ROJAS SIN REVISAR')+' · '+(R.rfN-R.rfPend)+'/'+R.rfN+'</div><div class="resn">'+L('This disposition is not final until every red flag is asked. Any positive → Provider now.','Esta disposición no es final hasta preguntar todas las banderas rojas. Cualquiera positiva → Provider now.')+'</div><div class="algo-actions" style="margin-top:8px"><button onclick="adRfAll()">'+L('All negative (asked)','Todas negativas (preguntadas)')+'</button><button onclick="var e=document.querySelector(\'.rf-head\');if(e)e.scrollIntoView({behavior:\'smooth\',block:\'center\'})">'+L('Go to red flags','Ir a banderas rojas')+'</button></div></div>';
   if(R.final){
     const lv=LV[R.final];
     const lf=R.final==='AEM'?(ouOn()?'SECOND LOOK — Soldier\'s unit Senior Medic today (ADTMC II)':settings.aemOn?aemRole().toUpperCase()+' NOW'+(aemWho()?' — see '+q$(aemWho()):'')+' (ADTMC II, AEM level)':'REFER TO CLINIC — AEM Now (ADTMC II) · no Senior Medic / AEM available'):lv.f;
@@ -3008,7 +3079,7 @@ function adNoteParts(){
   const hi=adHighest();
   const D={PN:'Sent to clinic — needs a provider now.',AEM:ouOn()?ouLine('AEM'):settings.aemOn?'Referred to '+aemTxt()+' (AEM level) — evaluation today.':'Sent to clinic — no Senior Medic / AEM available; supervising provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
   if(hi&&hi!=='MCP')out.dispo=D[hi]||LV[hi].s;
-  if(hi&&ad.ref&&ad.ref.bn&&refIsClinic(hi))out.dispo='ADTMC screening: '+(SD_CAT[hi]||LV[hi].s)+'. Evaluated in person'+(settings.aemOn?' with '+aemTxt():'')+(ad.prov.trim()?' / '+ad.prov.trim():'')+' — treated at BN, not referred to clinic.';
+  if(hi&&bnOK()&&refIsClinic(hi)){const r=ad.ref;out.dispo='ADTMC screening: '+(SD_CAT[hi]||LV[hi].s)+'. Evaluated in person; decision to treat at BN by '+({prov:'provider',aem:'Senior Medic/AEM'}[r.role]||r.role)+' '+r.who.trim()+' — reason: '+r.why.trim().replace(/\.$/,'')+'. Not referred to clinic.';}
   if(ouOn()&&hi!=='AEM'){const x=ouLine(hi);out.dispo=out.dispo?out.dispo+' '+x:x;}
   if(ad.prov.trim())out.assess.push('Clinic notified: '+ad.prov.trim()+'.');
   return out;
@@ -3019,7 +3090,8 @@ function adEntry(p,R){
   const anyV=Object.values(gVitals).some(x=>String(x).trim());const v=adVitals();
   if(anyV&&v.abn.length)bits.push('Abnormal vitals: '+v.abn.join('; ')+'.');
   if(pos.length)bits.push('RED FLAG present: '+pos.join('; ')+'.');
-  else if(neg.length)bits.push(neg.length===rfs.length?'No red flags.':'Denies '+neg.join(', ')+'.');
+  else if(neg.length)bits.push(neg.length===rfs.length?'No red flags.':'Denies '+neg.join(', ')+'; other red flags not screened.');
+  else if(rfs.length)bits.push('Red flags: not screened.');
   const pf=[];
   for(let i=0;i<p.flow.length;i++){
     const st=p.flow[i];
@@ -3031,7 +3103,7 @@ function adEntry(p,R){
   if(pf.length)bits.push('Positive: '+pf.join(', ')+'.');
   if(ad.ret)bits.push(ad.worse?'Return visit — worse / already seen by provider or AEM.':'Return visit for the same complaint.');
   const _tg=adTagLines(p);
-  return{id:p.id,title:p.title,level:R.final||null,pos,hpi:_tg.hpi,pe:_tg.pe,lines:adProtoLines(p,R),sumH:hTitle(p.title)+' (ADTMC '+p.id+')'+(hBits(bits).length?', '+hBits(bits).join('; '):'')+(R.final?' — '+hLvl(R.final):'')+'.',sum:p.title+' ('+p.id+')'+(bits.length||R.final?': ':'')+bits.join(' ')+(R.final?' → '+({PN:'Provider now.',AEM:'AEM today.',MCP:'Minor care.',SP:'Specialty referral.',APPT:'Appointment/referral.'}[R.final]||LV[R.final].s):''),plan:R.final==='MCP'?adPlanLines(adPlanItems(p)):[]};
+  return{id:p.id,title:p.title,level:R.final||null,pos,hpi:_tg.hpi,pe:_tg.pe,lines:adProtoLines(p,R),sumH:hTitle(p.title)+' (ADTMC '+p.id+')'+(hBits(bits).length?', '+hBits(bits).join('; '):'')+(R.final?' — '+hLvl(R.final):'')+'.',sum:p.title+' ('+p.id+')'+(bits.length||R.final?': ':'')+bits.join(' ')+(R.final?' → '+({PN:'Provider now.',AEM:'AEM today.',MCP:'Minor care.',SP:'Specialty referral.',APPT:'Appointment/referral.'}[R.final]||LV[R.final].s):''),plan:(R.final==='MCP'||(R.final&&bnOK()&&refIsClinic(R.final)))?adPlanLines(adPlanItems(p)):[]};
 }
 /* ---- suggestions inside the classic templates ---- */
 const CCMAP={
@@ -3211,8 +3283,13 @@ async function tryUnlock(){
 }
 function lockNow(){if(settings.pin){document.getElementById('lock').style.display='flex';}}
 function showLockIfNeeded(){if(settings.pin)document.getElementById('lock').style.display='flex';}
-const APP_VER='v43';
+const APP_VER='v44';
 function updateApp(b){
+  /* Only wipe the offline copy if the server answers — tapping this with no signal used to leave the app dead.
+     Solo borra la copia offline si el servidor responde. */
+  if(b&&!b.dataset.chk){b.disabled=true;b.textContent=L('Checking connection…','Revisando conexión…');
+    fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json();}).then(j=>{if(!j||!j.v)throw 0;b.dataset.chk='1';updateApp(b);})
+     .catch(()=>{b.disabled=false;b.textContent=L('Update app (load latest version)','Actualizar app (cargar la última versión)');alert(L('No connection — the app stays as it is. Try again with signal.','Sin conexión — la app se queda como está. Intenta otra vez con señal.'));});return;}
   if(b){b.disabled=true;b.textContent=L('Updating…','Actualizando…');}
   const go=()=>{location.href=location.pathname+'?u='+Date.now();};
   const ps=[];
@@ -3221,8 +3298,9 @@ function updateApp(b){
   Promise.all(ps).then(go,go);
 }
 function wipeAll(){
-  if(!confirm('Delete EVERYTHING on this device (saved notes, current note, protocols, settings)?'))return;
-  try{['sc_state','sc_saved','sc_ad','sc_settings','sc_fs'].forEach(k=>localStorage.removeItem(k));}catch(e){}
+  if(!confirm(L('Delete EVERYTHING on this device (saved notes, current note, protocols, QR check-in queue, timer log, settings)? Your app access stays.','¿Borrar TODO en este dispositivo (notas guardadas, nota actual, protocolos, cola de check-in QR, registro del cronómetro, ajustes)? Tu acceso a la app se queda.')))return;
+  try{['sc_state','sc_saved','sc_ad','sc_settings','sc_fs','sc_iq','sc_tm','sc_org'].forEach(k=>localStorage.removeItem(k));}catch(e){}
+  try{iqList=[];}catch(e){}
   TPLS.forEach(t=>resetState(t.id));resetVitals();adResetAll();patient='';
   settings.pin='';settings.purge=true;
   const pi=document.getElementById('ptIn');if(pi)pi.value='';
@@ -3485,6 +3563,7 @@ function prevHtml(){
    Auto-actualización: al abrir y al volver a la app revisa version.json; si hay versión nueva, guarda y recarga una vez. */
 let swReg=null;
 if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){try{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{swReg=r;}).catch(()=>{});}catch(e){}}
+function caseOpen(){try{return !!(ad.pid||ad.log.length||mace||editMode||manualNote||TPLS.some(t=>tplHasContent(t,state[t.id]))||(pra&&(pra.second!==null||pra.exert!==null||Object.keys(pra.nsi||{}).length)));}catch(e){return false;}}
 function autoUpd(){
   if(!/^https?:/.test(location.protocol)||!navigator.onLine)return;
   try{swReg&&swReg.update();}catch(e){}
@@ -3493,6 +3572,7 @@ function autoUpd(){
     let k='';try{k=sessionStorage.getItem('sc_upd')||'';}catch(e){}
     if(k===j.v)return; // already tried this version in this session — avoid loops
     const a=document.activeElement;if(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName))return; // don't interrupt typing
+    if(caseOpen()){if(window._updPend!==j.v){window._updPend=j.v;iqToast(L('Update ','Actualización ')+j.v+L(' ready — applies when you clear the patient.',' lista — se aplica al limpiar el paciente.'));}return;}
     try{sessionStorage.setItem('sc_upd',j.v);}catch(e){}
     try{persist();}catch(e){}
     iqToast(L('Updating to ','Actualizando a ')+j.v+'…');
@@ -3553,7 +3633,17 @@ restore();adRestore();
 document.body.style.fontSize=fsBase+'px';showLockIfNeeded();
 if(ad.pid&&getP(ad.pid)){const _m=protoTpl(ad.pid);cur=_m.tid;view='tpl';}else{ad.pid=null;view='adtmc';}
 iqHash();
-renderNav();renderMain();renderNote();
+/* Startup guard: if a saved case can't be drawn, drop it instead of leaving a blank screen.
+   Protección: si un caso guardado no se puede dibujar, se descarta en vez de dejar la pantalla en blanco. */
+try{renderNav();renderMain();renderNote();}catch(err){
+  console.error('startup render failed, clearing saved case',err);
+  try{['sc_ad','sc_state'].forEach(k=>localStorage.removeItem(k));}catch(e){}
+  try{TPLS.forEach(t=>resetState(t.id));resetVitals();adResetAll();}catch(e){}
+  ad.pid=null;view='adtmc';
+  try{renderNav();renderMain();renderNote();}catch(e){}
+}
+if(window._mnote){try{setNoteMode('manual');const el=document.getElementById('note');if(el)el.innerText=window._mnote;}catch(e){}window._mnote=null;}
+{const _ne=document.getElementById('note');if(_ne)_ne.addEventListener('input',()=>adPersist());}
 window.addEventListener('hashchange',()=>{if(/iq=/.test(location.hash)){iqHash();renderNav();renderMain();}else if(/(acc|areq|acert|aroot|ainv|apass)=/.test(location.hash))acHashCheck();});
 const _pi=document.getElementById('ptIn'); if(_pi)_pi.value=patient;
 setLang(LANG);

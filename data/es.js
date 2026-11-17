@@ -58,3 +58,26 @@ Object.assign(ES_DICT,{
 Object.assign(ES_DICT,{'⋯ More':'⋯ Más','⬇ Download .txt':'⬇ Descargar .txt','🖨 Print note':'🖨 Imprimir nota','📄 DA Form 5181':'📄 Formulario DA 5181','📄 DD Form 689':'📄 Formulario DD 689'});
 Object.assign(ES_DICT,{"Orange":"Naranja"});
 Object.assign(ES_DICT,{"Protocols":"Protocolos","Saved":"Guardados","More":"Más","Copy":"Copiar"});
+/* v44: strings that were still in English in Spanish mode / textos que seguían en inglés */
+Object.assign(ES_DICT,{
+"All negative":"Todas negativas",
+"PRESENT":"PRESENTE",
+"ER if: neuro deficits, bowel/bladder loss, sudden severe HA.":"ER si: déficit neurológico, pérdida de control de vejiga/intestino, dolor de cabeza súbito y severo.",
+"ER if: thunderclap (worst HA of life, sudden), fever + stiff neck, new neuro deficit, persistent vomiting, HA that wakes from sleep and worsens lying down.":"ER si: dolor de cabeza en trueno (el peor de su vida, súbito), fiebre + cuello rígido, déficit neurológico nuevo, vómito persistente, dolor que lo despierta y empeora acostado.",
+"ER if: SOB, CP, altered mental status, severe dehydration, bloody stool, persistent high fever.":"ER si: falta de aire, dolor de pecho, estado mental alterado, deshidratación severa, heces con sangre, fiebre alta persistente.",
+"⚠️ IMMEDIATE referral/escort to BH or ER if: SI/HI, hallucinations, unsafe behavior, acute crisis. Do not let them leave alone.":"⚠️ Referido/escolta INMEDIATA a BH o ER si: ideación suicida/homicida, alucinaciones, conducta insegura, crisis aguda. No lo dejes irse solo.",
+"ER if: SOB, airway compromise, tongue/lip swelling, anaphylaxis, systemic reaction.":"ER si: falta de aire, compromiso de vía aérea, hinchazón de lengua/labios, anafilaxia, reacción sistémica.",
+"ER if: severe abd pain, soaking >1 pad/hour, syncope, severe dizziness, pregnancy + pain/bleeding. Beyond OTC → ALWAYS refer to provider/OB-GYN.":"ER si: dolor abdominal severo, empapa >1 toalla por hora, desmayo, mareo severo, embarazo + dolor/sangrado. Más allá de OTC → SIEMPRE referir a proveedor/OB-GYN.",
+"ER if: severe vision loss, orbital trauma, abscess with fever, uncontrolled bleeding.":"ER si: pérdida severa de visión, trauma orbital, absceso con fiebre, sangrado que no para.",
+"Worsened or no improvement after OTC trial → referral. Red flags → ER.":"Empeoró o no mejora después de probar OTC → referido. Banderas rojas → ER.",
+"ER if: stridor, drooling or cannot swallow, airway swelling, stiff neck + fever, nosebleed >20 min uncontrolled, facial swelling + fever.":"ER si: estridor, babeo o no puede tragar, hinchazón de vía aérea, cuello rígido + fiebre, sangrado nasal >20 min sin parar, hinchazón facial + fiebre.",
+"ER if: sudden or severe vision loss, orbital trauma, chemical in the eye, penetrating injury, severe eye pain.":"ER si: pérdida de visión súbita o severa, trauma orbital, químico en el ojo, lesión penetrante, dolor de ojo severo.",
+"ER if: facial swelling + fever, trouble swallowing or breathing, uncontrolled bleeding after dental trauma.":"ER si: hinchazón facial + fiebre, dificultad para tragar o respirar, sangrado que no para después de trauma dental.",
+"REFER TO CLINIC — AEM Now (ADTMC II) · no Senior Medic / AEM available":"REFERIR A LA CLÍNICA — AEM Now (ADTMC II) · no hay Senior Medic / AEM disponible",
+"No AEM available in your unit (Settings) → per ADTMC Category II the Soldier is seen by the supervising privileged provider. Document OPQRST/AMPLE and send the patient to the clinic.":"No hay AEM en tu unidad (Ajustes) → según la Categoría II del ADTMC, al soldado lo ve el proveedor supervisor. Documenta OPQRST/AMPLE y manda al paciente a la clínica.",
+"Document OPQRST/AMPLE so the clinic has the full picture, and send the patient. Equipment, meds and a provider are there.":"Documenta OPQRST/AMPLE para que la clínica tenga el cuadro completo, y manda al paciente. Allá hay equipo, medicamentos y proveedor.",
+"DISPOSITION":"DISPOSICIÓN",
+"Decision point":"Punto de decisión",
+"redo":"rehacer",
+"Use interview answers":"Usar respuestas de la entrevista"
+});

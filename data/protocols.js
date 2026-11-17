@@ -269,7 +269,7 @@ P("C-7","c","Heartburn",{pg:63,
  flow:[
   DP(["Tachycardia","Sweating","Shoulder / jaw pain"],{d:"PN",a:"Oxygen, EKG, chewable aspirin (if no signs of bleeding); do not wait to start these before notifying the provider"}),
   DP([">2 weeks","History of ulcer","Unexplained weight loss","Anorexia, vomiting","Dysphagia","Odynophagia"],{d:"AEM"}),
-  DP(["Symptoms are NOT classic heartburn"],{tri:"Screen the other symptoms present"})
+  DP(["Symptoms are NOT classic heartburn"],{tri:["D-2","C-3","C-1","C-6"]})
  ],
  tx:["Medication: H2-blocker as needed (up to 2 doses in 24 hours). NOTE: ADTMC (2019) lists ranitidine, which was withdrawn from the U.S. market in 2020 — use the locally approved H2-blocker (e.g., famotidine) or antacid per pharmacy/provider.","Lifestyle modification: weight loss if indicated, smoking cessation, elevate head of bed, avoid chocolate/caffeine/spicy foods/alcohol."],
  rtc:"Return if any red flag or other symptoms develop, not improved with minor care, or taking the med more than once per week on average.",meds:["H2-blocker / antacid"]});

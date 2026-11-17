@@ -1,0 +1,22 @@
+# Runs on every pull request and push to main: data checks + a browser walk through all ADTMC protocols.
+# Corre en cada PR y push a main: revisión de datos + recorrido de todos los protocolos en el navegador.
+name: Check
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Data checks
+        run: node tools/check.js
+      - name: Install Playwright
+        run: npm i --no-save playwright@1.47.2 && npx playwright install --with-deps chromium
+      - name: Walk every protocol
+        run: node tools/walk.js
