@@ -2377,8 +2377,8 @@ function adPlanItems(p){
 function adPlTog(k){tmMark('plan');const p=getP(ad.pid);const it=adPlanItems(p);const all=[...it.adv,...it.meds,...it.act,it.rtc].find(x=>x.key===k);ad.pl[k]=!(all&&all.on);renderMain();renderNote();}
 function adMedLine(x){const m=x.m;if(!m)return x.t;return m.n.replace(/\s+\d.*$/,'')+' '+m.dose.charAt(0).toLowerCase()+m.dose.slice(1);}
 function pShort(x){return x
-  .replace(/FM 7-22 reconditioning shown \(QR given\): Shoulder Stability Drill per profile, 4C \+ HSD daily, Recovery Drill 20-30 s holds \(modified as needed\)/,'FM 7-22 recon (QR): SSD, 4C + HSD daily, RD 20–30 s')
-  .replace(/FM 7-22 reconditioning shown \(QR given\): 4C \+ HSD daily, Recovery Drill 20-30 s holds \(modified as needed\), within profile/,'FM 7-22 recon (QR): 4C + HSD daily, RD 20–30 s')
+  .replace(/FM 7-22 reconditioning shown \(QR given\): Shoulder Stability Drill per profile, 4C \+ HSD daily, Recovery Drill 20-30 s holds \(modified as needed\)/,'FM 7-22 home exercises (QR given): shoulder, core & hip drills daily; stretch after PT')
+  .replace(/FM 7-22 reconditioning shown \(QR given\): 4C \+ HSD daily, Recovery Drill 20-30 s holds \(modified as needed\), within profile/,'FM 7-22 home exercises (QR given): core & hip drills daily; stretch after PT')
   .replace(/\bReturn if\b/g,'RTC if').replace(/\breturn if\b/g,'RTC if').replace(/\bASAP if red flags\b/g,'ASAP if red flag')
   .replace(/(\d+)\s*days?\b/g,'$1d').replace(/(\d+)\s*weeks?\b/g,'$1 wk').replace(/(\d+)\s*hours?\b/g,'$1h').replace(/(\d+)\s*minutes?\b/g,'$1 min')
   .replace(/\bup to\s+/g,'≤').replace(/\bat least\s+/g,'≥').replace(/\bat own pace\b/g,'own pace').replace(/\bmile\b/g,'mi')
