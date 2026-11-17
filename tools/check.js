@@ -11,13 +11,13 @@ const bad = m => errs.push(m);
 
 // Load data files into one sandbox (they declare top-level consts).
 const ctx = vm.createContext({ console });
-const files = ['data/protocols.js', 'data/meds.js', 'data/plans.js', 'data/notetags.js', 'data/searchterms.js', 'data/exercises.js', 'data/whatsnew.js'];
+const files = ['data/protocols.js', 'data/meds.js', 'data/plans.js', 'data/notetags.js', 'data/searchterms.js', 'data/whatsnew.js'];
 let src = files.map(rd).join('\n;\n');
 const app = rd('app.js');
 const medre = (app.match(/const MEDRE=\[[\s\S]*?\]\];/) || [])[0];
 if (!medre) bad('app.js: MEDRE table not found');
 src += '\n' + (medre || 'const MEDRE=[];') + '\nfunction medLookup(n){for(const [re,k] of MEDRE)if(re.test(n))return ADMEDS.find(m=>m.k===k);return null;}';
-src += '\nthis.__ = {PR, ADMEDS, PLANS, NOTE_TAGS, MEDRE, medLookup, WHATSNEW: typeof WHATSNEW!=="undefined"?WHATSNEW:[], EX_IMG: typeof EX_IMG!=="undefined"?EX_IMG:"img/fm/"};';
+src += '\nthis.__ = {PR, ADMEDS, PLANS, NOTE_TAGS, MEDRE, medLookup, WHATSNEW: typeof WHATSNEW!=="undefined"?WHATSNEW:[]};';
 vm.runInContext(src, ctx, { filename: 'data-bundle.js' });
 const D = ctx.__;
 const IDS = new Set(D.PR.map(p => p.id));
@@ -69,8 +69,7 @@ Object.entries(D.NOTE_TAGS).forEach(([id, T]) => {
 const sw = rd('sw.js');
 const FILES = JSON.parse((sw.match(/const FILES=(\[[\s\S]*?\]);/) || [, '[]'])[1].replace(/'/g, '"'));
 FILES.forEach(f => { if (f !== './' && !fs.existsSync(path.join(ROOT, f))) bad('sw.js FILES: missing ' + f); });
-fs.readdirSync(path.join(ROOT, 'img/fm')).forEach(f => { if (!FILES.includes('img/fm/' + f)) bad('sw.js FILES: img/fm/' + f + ' not cached (offline Soldier page)'); });
-['exercises.html', 'intake.html'].forEach(h => { if (!FILES.includes(h)) bad('sw.js FILES: ' + h + ' not cached'); if (!/serviceWorker\.register/.test(rd(h))) bad(h + ': does not register the service worker'); });
+['intake.html'].forEach(h => { if (!FILES.includes(h)) bad('sw.js FILES: ' + h + ' not cached'); if (!/serviceWorker\.register/.test(rd(h))) bad(h + ': does not register the service worker'); });
 
 // 5. Versions agree
 const appVer = (app.match(/const APP_VER='([^']+)'/) || [])[1];
