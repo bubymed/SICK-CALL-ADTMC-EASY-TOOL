@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Home Exercises</title>
+<title>My PT Program</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="My PT">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/favicon-32.png">
 <meta name="theme-color" content="#000000">
 <meta name="robots" content="noindex">
 <!-- Soldier-facing page: opened by scanning the QR on the medic's phone. No patient data — only body area + language in the URL.
@@ -55,6 +61,8 @@ details.mod{margin-top:6px}details.mod summary{color:var(--acc);font-weight:600;
 .lvl{display:flex;gap:6px;margin:4px 0 10px}.lvl button{flex:1;border:0;border-radius:10px;padding:10px 6px;font:600 14px inherit;font-family:inherit;background:var(--card2);color:var(--txt)}.lvl button.on{background:var(--acc);color:var(--acc-t)}
 .week{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.week div{background:var(--card);border-radius:10px;padding:6px 3px;display:flex;flex-direction:column;gap:3px;text-align:center;font-size:12px}.week div.today{outline:2px solid var(--acc)}.week span{background:var(--card2);border-radius:5px;padding:2px}
 .w2r{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.w2r button{border:0;border-radius:10px;padding:8px;background:var(--card);color:var(--txt);font:13px inherit;font-family:inherit;text-align:left}.w2r button.on{outline:2px solid var(--acc)}
+.inst{background:var(--card);border:2px solid var(--acc);border-radius:14px;padding:12px 14px;margin:6px 0 10px;font-size:15px}.inst>b{display:block;margin-bottom:4px}.inst .x{margin-top:8px;border:0;border-radius:8px;padding:7px 14px;background:var(--acc);color:var(--acc-t);font:600 14px inherit;font-family:inherit}
+.pgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.pd{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--dim)}.pd.today span{color:var(--acc);font-weight:700}.pd i{display:block;width:100%;height:28px;border-radius:6px;background:linear-gradient(to top,var(--green) var(--p),var(--card2) var(--p))}.pd i.off{opacity:.35}
 .pick a{background:var(--card);color:var(--txt);text-decoration:none;padding:12px 16px;border-radius:22px}
 </style>
 </head>
@@ -64,6 +72,7 @@ details.mod{margin-top:6px}details.mod summary{color:var(--acc);font-weight:600;
 <script>
 (function(){
 var qs=new URLSearchParams(location.search);
+try{if(!qs.get('r')){var last=localStorage.getItem('ex_last');if(last){qs=new URLSearchParams(last);history.replaceState(null,'','?'+last);}}else localStorage.setItem('ex_last',location.search.slice(1));}catch(e){}
 var reg=qs.get('r')||'';
 var lvl=qs.get('s')==='2'?2:1;
 var lang=(qs.get('l')||(navigator.language||'en')).slice(0,2)==='es'?'es':'en';
@@ -73,13 +82,17 @@ function today(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-
 var KEY='ex_'+reg;
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){return {};}}
 function save(o){try{localStorage.setItem(KEY,JSON.stringify(o));}catch(e){}}
-var st=load();if(!st.days)st.days={};if(!st.crit)st.crit={};if(st.lvl&&!qs.get('s'))lvl=st.lvl;
+var st=load();if(!st.days)st.days={};if(!st.crit)st.crit={};if(!st.log)st.log={};if(!st.start)st.start=today();if(st.lvl&&!qs.get('s'))lvl=st.lvl;
 function doneSet(){return st.days[today()]||[];}
 var timer=null;
-function url(){return '?r='+reg+'&s='+lvl+'&l='+lang;}
+function url(){var u='r='+reg+'&s='+lvl+'&l='+lang;try{localStorage.setItem('ex_last',u);}catch(e){}return '?'+u;}
+function hhmm(){var d=new Date();return ('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2);}
+function standalone(){try{return window.navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;}catch(e){return false;}}
+function plat(){var u=navigator.userAgent||'';if(/iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&'ontouchend' in document))return 'ios';if(/Android/.test(u))return 'android';return 'other';}
+function dkey(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function secs(d){if(/\b1 minute\b/.test(d))return 60;var all=String(d).match(/(\d+)\s*[–-]\s*(\d+)\s*(s|min)\b/);if(all)return all[3]==='min'?0:+all[2];var m=String(d).match(/(\d+)\s*s\b/);return m?+m[1]:0;}
 function itemHtml(x,key,ds,rec){var dn=ds.indexOf(key)>=0,d=L(x.d,x.ds||x.d),s=secs(x.d);
-  return '<div class="ex'+(dn?' done':'')+'"><button class="ck" data-k="'+key+'" aria-label="done">✓</button><div class="bd"><div class="nm">'+esc(L(x.n,x.es||x.n))+'</div><div class="ds">'+esc(d)+'</div>'
+  var tm=(st.log[today()]||{})[key];return '<div class="ex'+(dn?' done':'')+'"><button class="ck" data-k="'+key+'" aria-label="done">✓</button><div class="bd"><div class="nm">'+esc(L(x.n,x.es||x.n))+'</div><div class="ds">'+esc(d)+(dn&&tm?' <span class="pg">· ✓ '+tm.slice(0,2)+':'+tm.slice(2)+'</span>':'')+'</div>'
    +(x.img?'<img class="fig" src="'+EX_IMG+x.img+'.jpg" alt="'+esc(x.n)+'" loading="lazy">':'')+'<div class="cue">'+esc(L(x.c,x.cs))+' <span class="pg">(FM 7-22, p. '+x.pg+')</span></div>'
    +(x.mod?'<details class="mod"'+(rec?' open':'')+'><summary>'+(rec?'★ ':'')+L('Modified version','Versión modificada')+'</summary>'+(x.mn?'<div class="cue">'+esc(L(x.mn,x.ms))+'</div>':'')+'<img class="fig" src="'+EX_IMG+x.mod+'.jpg" alt="modified" loading="lazy"></details>':'')
    +(s?'<button class="tm" data-s="'+s+'">⏱ '+s+' s</button>':'')+'</div></div>';}
@@ -92,7 +105,14 @@ function render(){
   var r=EX_REG[reg],S=EX_STAGES[lvl],wd=new Date().getDay(),weekend=(wd===0||wd===6),day=weekend?5:wd,toks=exTokens(reg,lvl,day),ds=doneSet();
   var items=[];toks.forEach(function(t){var D=EX_DRILLS[t];if(D)D.ex.forEach(function(x){items.push({k:x.id,x:x,g:t});});else items.push({k:t,x:exActById(t),g:'act'});});
   var n=items.filter(function(i){return ds.indexOf(i.k)>=0;}).length,nd=Object.keys(st.days).filter(function(k){return (st.days[k]||[]).length;}).length;
-  var h=top+'<h1>'+r.ic+' '+esc(L(r.t[0],r.t[1]))+'</h1>';
+  var h=top;
+  if(!standalone()&&!st.hideInstall){var p=plat();
+    h+='<div class="inst"><b>📲 '+L('Save this program to your home screen','Guarda este programa en tu pantalla principal')+'</b><div>'
+     +(p==='ios'?L('Open it in <b>Safari</b> → tap <b>Share</b> (square with the arrow ⬆️) → <b>Add to Home Screen</b> → <b>Add</b>.','Ábrelo en <b>Safari</b> → toca <b>Compartir</b> (el cuadro con la flecha ⬆️) → <b>Agregar a pantalla de inicio</b> → <b>Agregar</b>.')
+      :p==='android'?L('In <b>Chrome</b> tap the <b>⋮</b> menu (top right) → <b>Add to Home screen</b> (or <b>Install app</b>) → <b>Add</b>.','En <b>Chrome</b> toca el menú <b>⋮</b> (arriba a la derecha) → <b>Agregar a la pantalla principal</b> (o <b>Instalar app</b>) → <b>Agregar</b>.')
+      :L('iPhone: Safari → Share ⬆️ → Add to Home Screen. Android: Chrome → ⋮ → Add to Home screen.','iPhone: Safari → Compartir ⬆️ → Agregar a pantalla de inicio. Android: Chrome → ⋮ → Agregar a la pantalla principal.'))
+     +' '+L('The "My PT" icon opens your program, even without signal.','El ícono "My PT" abre tu programa, incluso sin señal.')+'</div><button class="x" id="instx">'+L('Got it','Entendido')+'</button></div>';}
+  h+='<h1>'+r.ic+' '+esc(L(r.t[0],r.t[1]))+'</h1>';
   h+='<div class="lvl">'+[1,2].map(function(x){return '<button class="'+(x===lvl?'on':'')+'" data-v="'+x+'">'+esc(L(EX_STAGES[x].t[0],EX_STAGES[x].t[1]))+'</button>';}).join('')+'</div>';
   h+='<p class="sub">'+esc(L(S.who[0],S.who[1]))+' '+L('Your profile always comes first.','Tu profile siempre va primero.')+'</p>';
   h+='<div class="prog"><div class="row"><span>'+(weekend?L('Weekend — repeat Friday or rest','Fin de semana — repite el viernes o descansa'):L('Today','Hoy')+' · '+L(EX_DAYS[wd][0],EX_DAYS[wd][1]))+'</span><span>'+n+' / '+items.length+'</span></div><div class="bar"><i style="width:'+(items.length?Math.round(100*n/items.length):0)+'%"></i></div><div class="days">'+L('Days with exercises done: ','Días con ejercicios hechos: ')+nd+'</div></div>';
@@ -103,6 +123,12 @@ function render(){
     h+='<div class="grp"><span>'+esc(title)+'</span><span>'+esc(when)+'</span></div><div class="list">'+list.map(function(it){return itemHtml(it.x,it.k,ds,(r.mods||[]).indexOf(it.k)>=0||(lvl===1&&t==='PD'));}).join('')+'</div>';
     if(t==='w2r'){var wk=st.w2r||1;h+='<div class="w2r">'+[1,2,3,4,5].map(function(w){var row=EX_W2R[w-1];return '<button class="'+(w===wk?'on':'')+'" data-w="'+w+'"><b>'+L('Week ','Semana ')+w+'</b><br>'+(row?L('walk ','camina ')+row[0]+' · '+L('jog ','trota ')+row[1]+' min ×'+row[2]:L('run 15 → 30 min','corre 15 → 30 min'))+'</button>';}).join('')+'</div><div class="foot" style="margin-top:6px">'+esc(L(EX_W2R_NOTE[0],EX_W2R_NOTE[1]))+'</div>';}
   });
+  // progress: last 14 days; each check saved with its time; only today can be marked
+  (function(){var cells='',done=0,full=0,streak=0;for(var i=13;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var k=dkey(d),wdd=d.getDay(),c=(st.days[k]||[]).length,need=(wdd===0||wdd===6)?0:exTokens(reg,lvl,wdd).reduce(function(a,t){return a+(EX_DRILLS[t]?EX_DRILLS[t].ex.length:1);},0);
+      var pct=need?Math.min(100,Math.round(100*c/need)):(c?100:-1);if(c)done++;if(pct>=100)full++;
+      cells+='<div class="pd'+(i===0?' today':'')+'" title="'+k+'"><span>'+L(EX_DAYS[wdd][0],EX_DAYS[wdd][1]).slice(0,2)+'</span><i style="--p:'+(pct<0?0:pct)+'%" class="'+(pct<0?'off':'')+'"></i><small>'+(pct<0?'—':pct+'%')+'</small></div>';}
+    for(var j=0;j<60;j++){var d2=new Date();d2.setDate(d2.getDate()-j);var w2=d2.getDay();if(w2===0||w2===6)continue;var c2=(st.days[dkey(d2)]||[]).length;if(j===0&&!c2)continue;if(c2)streak++;else break;}
+    h+='<div class="grp"><span>'+L('My progress — last 14 days','Mi progreso — últimos 14 días')+'</span><span>'+L('Started ','Empecé ')+esc(st.start)+'</span></div><div class="prog"><div class="pgrid">'+cells+'</div><div class="days">'+L('Days with exercise: ','Días con ejercicio: ')+done+' · '+L('Full sessions: ','Sesiones completas: ')+full+' · '+L('Training-day streak: ','Racha de días de entrenamiento: ')+streak+'</div><div class="foot" style="margin-top:6px">'+L('Each check is saved with the time you marked it, and only today can be marked. Show this screen at your follow-up — your medic or RPL confirms your progress with the FM 7-22 tests in person.','Cada marca se guarda con la hora en que la hiciste, y solo se puede marcar el día de hoy. Enseña esta pantalla en tu seguimiento — tu medic o RPL confirma tu progreso con las pruebas del FM 7-22 en persona.')+'</div></div>';})();
   // week overview
   h+='<div class="grp"><span>'+L('This week','Esta semana')+'</span><span>FM 7-22 '+(lvl===1?L('Table 6-1','Tabla 6-1'):L('Table 6-3','Tabla 6-3'))+'</span></div><div class="week">'+[1,2,3,4,5].map(function(d){return '<div class="'+(d===wd?'today':'')+'"><b>'+L(EX_DAYS[d][0],EX_DAYS[d][1])+'</b>'+exTokens(reg,lvl,d).map(function(t){var D=EX_DRILLS[t];if(D)return '<span>'+t+'</span>';var a=exActById(t);return '<span>'+esc(L(a.sh[0],a.sh[1]))+'</span>';}).join('')+'</div>';}).join('')+'</div>';
   // next level criteria (self-check)
@@ -110,7 +136,8 @@ function render(){
   h+='<div class="rules"><b>⚠️ '+L('Rules','Reglas')+'</b><ul>'+EX_RULES[lang].map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div>';
   h+='<div class="foot">'+L('From your unit sick call. Not a substitute for medical care — your profile always comes first. Source: ','De tu sick call de la unidad. No reemplaza la atención médica — tu profile siempre va primero. Fuente: ')+esc(EX_SRC)+'. '+L('Your check marks stay only on this phone.','Tus marcas se guardan solo en este teléfono.')+'</div>';
   app.innerHTML=h;bindLang();
-  Array.prototype.forEach.call(document.querySelectorAll('.ck:not(.cr)'),function(b){b.onclick=function(){var k=b.getAttribute('data-k'),t=today(),a=st.days[t]||[];var i=a.indexOf(k);if(i>=0)a.splice(i,1);else a.push(k);st.days[t]=a;save(st);render();};});
+  Array.prototype.forEach.call(document.querySelectorAll('.ck:not(.cr)'),function(b){b.onclick=function(){var k=b.getAttribute('data-k'),t=today(),a=st.days[t]||[];var i=a.indexOf(k);if(!st.log[t])st.log[t]={};if(i>=0){a.splice(i,1);delete st.log[t][k];}else{a.push(k);st.log[t][k]=hhmm();}st.days[t]=a;save(st);render();};});
+  var ix=document.getElementById('instx');if(ix)ix.onclick=function(){st.hideInstall=true;save(st);render();};
   Array.prototype.forEach.call(document.querySelectorAll('.ck.cr'),function(b){b.onclick=function(){var k=b.getAttribute('data-c');st.crit[k]=!st.crit[k];save(st);render();};});
   Array.prototype.forEach.call(document.querySelectorAll('.lvl button'),function(b){b.onclick=function(){lvl=+b.getAttribute('data-v');st.lvl=lvl;save(st);try{history.replaceState(null,'',url());}catch(e){}render();window.scrollTo(0,0);};});
   Array.prototype.forEach.call(document.querySelectorAll('.w2r button'),function(b){b.onclick=function(){st.w2r=+b.getAttribute('data-w');save(st);render();};});

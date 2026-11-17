@@ -2164,7 +2164,7 @@ const CATS={a:'A · ENT',b:'B · MSK',c:'C · GI',d:'D · Cardio/Resp',e:'E · G
 const gFlags={sex:'',female:false,lmp:'',preg:false,lact:false,aviation:false,mrc:''};
 let ad={pfb:'',pid:null,rf:{},rfDone:false,dp:{},dpDone:{},out:{},ret:false,worse:false,prov:'',vovr:false,sympBP:false,stBP:'',stHR:'',q:'',cat:'',prev:null,log:[],sel:{},ref:{dd:false,told:false},noAutoSoap:false};
 function adResetProto(){ad.dpOpen={};ad.planEdit=false;ad.dutyEdit=false;ad.iq=null;ad.hfull=false;ad.pid=null;ad.rf={};ad.rfDone=false;ad.dp={};ad.dpDone={};ad.out={};ad.sel={};ad.pl={};ad.dur=null;}
-function adResetAll(){adResetProto();ad.ou={on:false,unit:''};ad.ref={dd:false,told:false,bn:false};ad.fmt=null;ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
+function adResetAll(){adResetProto();ad.ou={on:false,unit:''};ad.ref={dd:false,told:false,bn:false};ad.fmt=null;ad.exChk=null;ad.noAutoSoap=false;ad.pfb='';ad.linked=[];ad.ret=false;ad.worse=false;ad.prov='';ad.vovr=false;ad.sympBP=false;ad.stBP='';ad.stHR='';ad.prev=null;ad.log=[];
   gFlags.sex='';gFlags.female=false;gFlags.lmp='';gFlags.preg=false;gFlags.lact=false;gFlags.mrc='';}
 /* Screening answers -> history / exam wording (data/notetags.js) */
 function adTagLines(p){
@@ -2789,6 +2789,18 @@ function exSched(k,lvl){const td=new Date().getDay();
   return '<div class="exsched">'+[1,2,3,4,5].map(d=>'<div class="exday'+(d===td?' today':'')+'"><b>'+L(EX_DAYS[d][0],EX_DAYS[d][1])+'</b>'+exTokens(k,lvl,d).map(t=>{const D=EX_DRILLS[t];if(D)return '<span>'+t+'</span>';const a=exActById(t);return '<span>'+L(a.sh[0],a.sh[1])+'</span>';}).join('')+'</div>').join('')+'</div>'
    +'<div class="dim" style="font-size:.82em;margin-top:4px">PD = Preparation Drill · HSD = Hip Stability Drill · 4C = 4 for the Core'+(EX_REG[k].drills.includes('SSD')?' · SSD = Shoulder Stability Drill':'')+' · RD = Recovery Drill</div>';}
 function exW2R(){return '<table class="exw2r"><tr><th>'+L('Week','Semana')+'</th><th>'+L('Walk','Caminar')+'</th><th>'+L('Jog','Trotar')+'</th><th>×</th></tr>'+EX_W2R.map((w,i)=>'<tr><td>'+(i+1)+'</td><td>'+w[0]+' min</td><td>'+w[1]+' min</td><td>'+w[2]+'</td></tr>').join('')+'<tr><td>5</td><td colspan="3">'+L('Run every other day, 15 → 30 min','Correr día por medio, 15 → 30 min')+'</td></tr></table><div class="dim" style="font-size:.85em;margin-top:4px">'+L(EX_W2R_NOTE[0],EX_W2R_NOTE[1])+'</div>';}
+/* In-person check at follow-up: the FM 7-22 criteria observed by the medic/RPL (Figures 6-2, 6-3). Goes into the note; nothing is stored about the patient.
+   Chequeo en persona en el seguimiento: los criterios del FM 7-22 observados por el medic/RPL. Va a la nota; no se guarda nada del paciente. */
+function exChkSet(i,v){if(!ad.exChk||ad.exChk.lvl!==exLvl)ad.exChk={lvl:exLvl,reg:exReg,r:{}};ad.exChk.reg=exReg;if(ad.exChk.r[i]===v)delete ad.exChk.r[i];else ad.exChk.r[i]=v;renderMain();renderNote();}
+function exChkLine(){const c=ad.exChk;if(!c||!Object.keys(c.r).length||typeof EX_STAGES==='undefined')return '';const S=EX_STAGES[c.lvl],crit=S.next.c;
+  const parts=crit.map((x,i)=>c.r[i]===undefined?null:x[0].toLowerCase()+(c.r[i]?' ✓':' ✗')).filter(Boolean);const all=crit.every((x,i)=>c.r[i]===true),any=crit.some((x,i)=>c.r[i]===false);
+  const res=all?(c.lvl===1?'met — move to Level II':'met — return to unit PRT'):any?(c.lvl===1?'not met — continue Level I':'not met — continue Level II'):'partial';
+  return 'FM 7-22 reconditioning check in person ('+(c.lvl===1?'Level II entry, Fig 6-2':'Level II exit, Fig 6-3')+'): '+parts.join(', ')+' — '+res+'.';}
+function exChkBox(){const S=EX_STAGES[exLvl],c=(ad.exChk&&ad.exChk.lvl===exLvl)?ad.exChk.r:{};
+  return '<div class="field"><div class="lab"><span class="tag">✅</span><span class="name">'+L('In-person check at follow-up','Chequeo en persona en el seguimiento')+'</span><span class="ask">'+L('goes into the note','va a la nota')+'</span></div>'
+   +'<div class="dim" style="font-size:.88em;margin-bottom:6px">'+L('Have the Soldier do each test in front of you. The checkmarks on their phone are self-reported; this is the objective check.','Pide al soldado que haga cada prueba frente a ti. Las marcas en su teléfono las pone él; esto es la verificación objetiva.')+'</div>'
+   +S.next.c.map((x,i)=>'<div class="exchk"><span>'+L(x[0],x[1])+' <span class="dim">· '+L(x[2],x[3])+'</span></span><span class="chips"><span class="chip '+(c[i]===true?'on':'')+'" onclick="exChkSet('+i+',true)">✓ '+L('Met','Cumple')+'</span><span class="chip '+(c[i]===false?'on':'')+'" onclick="exChkSet('+i+',false)">✗ '+L('Not met','No cumple')+'</span></span></div>').join('')
+   +(exChkLine()?'<div class="note-hint" style="margin-top:6px">'+q$(exChkLine())+'</div>':'')+'</div>';}
 function renderExercises(){if(typeof EX_REG==='undefined')return '';const k=EX_REG[exReg]?exReg:'knee',r=EX_REG[k],S=EX_STAGES[exLvl]||EX_STAGES[1];
   let h='<h2 class="tpl ptitle"><button class="backb" onclick="exBack()" aria-label="Back">‹</button>🏋️ '+L('Reconditioning · FM 7-22','Reacondicionamiento · FM 7-22')+'</h2>';
   h+='<div class="chips exreg">'+Object.keys(EX_REG).map(x=>'<span class="chip '+(x===k?'on':'')+'" onclick="exReg=\''+x+'\';renderMain()">'+EX_REG[x].ic+' '+L(EX_REG[x].t[0],EX_REG[x].t[1])+'</span>').join('')+'</div>';
@@ -2796,8 +2808,9 @@ function renderExercises(){if(typeof EX_REG==='undefined')return '';const k=EX_R
   h+=exQrBox(k);
   h+='<div class="note-hint exwhy"><b>'+L(S.t[0],S.t[1])+'</b> — '+L(S.who[0],S.who[1])+'<br><br>'+(exLvl===2&&r.l2?L(r.l2[0],r.l2[1]):L(r.why[0],r.why[1]))+'</div>';
   h+='<div class="field"><div class="lab"><span class="tag">📅</span><span class="name">'+L('Weekly schedule','Horario semanal')+'</span><span class="ask">FM 7-22 '+(exLvl===1?L('Table 6-1','Tabla 6-1'):L('Table 6-3','Tabla 6-3'))+'</span></div>'+exSched(k,exLvl)+'</div>';
+  h+=exChkBox();
   if(exLvl===2)h+='<div class="field"><div class="lab"><span class="tag">🏃</span><span class="name">'+L('Walk-to-run','Caminar a correr')+'</span><span class="ask">'+L('Table 6-4','Tabla 6-4')+'</span></div>'+exW2R()+'</div>';
-  h+='<div class="field"><div class="lab"><span class="tag">🎯</span><span class="name">'+L(S.next.t[0],S.next.t[1])+'</span></div>'+S.next.c.map(c=>'• <b>'+L(c[0],c[1])+':</b> '+L(c[2],c[3])).join('<br>')+'<div class="dim" style="font-size:.85em;margin-top:4px">'+L(S.next.f[0],S.next.f[1])+'</div></div>';
+  h+='<div class="dim" style="font-size:.85em;margin:-4px 2px 10px">'+L(S.next.f[0],S.next.f[1])+'</div>';
   h+='<div class="field exrules"><div class="lab"><span class="tag">⚠️</span><span class="name">'+L('Rules','Reglas')+'</span></div>'+L(EX_RULES.en,EX_RULES.es).map(x=>'• '+x).join('<br>')+'</div>';
   exLevelTokens(k,exLvl).forEach(t=>{const D=EX_DRILLS[t];if(D)h+='<div class="field"><div class="lab"><span class="tag">🪖</span><span class="name">'+L(D.n,D.es)+'</span><span class="ask">'+L(D.when[0],D.when[1])+'</span></div>'+D.ex.map((x,i)=>exItem(x,i+1,(r.mods||[]).includes(x.id)||(exLvl===1&&t==='PD'))).join('')+'</div>';});
   const acts=exLevelTokens(k,exLvl).filter(t=>!EX_DRILLS[t]).map(exActById);
@@ -2991,6 +3004,7 @@ function adNoteParts(){
   });
   if(ad.pfb&&typeof PFB!=='undefined'&&entries.some(e=>e.id==='J-3'))out.plan.push(pfbNote(ad.pfb));
   if(typeof h2fText==='function'){const ht=h2fText();if(ht&&entries.length)out.plan.push(ht);}
+  {const xl=typeof exChkLine==='function'?exChkLine():'';if(xl)out.plan.push(xl);}
   const hi=adHighest();
   const D={PN:'Sent to clinic — needs a provider now.',AEM:ouOn()?ouLine('AEM'):settings.aemOn?'Referred to '+aemTxt()+' (AEM level) — evaluation today.':'Sent to clinic — no Senior Medic / AEM available; supervising provider evaluation today.',MCP:'Minor care here.',SP:'Specialty referral requested.',APPT:'Appointment/referral requested at clinic.'};
   if(hi&&hi!=='MCP')out.dispo=D[hi]||LV[hi].s;
