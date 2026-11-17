@@ -1779,7 +1779,7 @@ function tplHasContent(t,s){
 }
 /* ===== History as one paragraph (v41) — faster to copy onto paper. Empty items are left out entirely.
    Historia en un párrafo — más rápido de copiar a papel. Lo que no se llenó no aparece. */
-function paraOn(){return settings.hpiPara!==false;}
+function paraOn(){return settings.hpiPara===true;} /* v43: structured (letter by letter) is the default again — medics found it faster to copy */
 /* Important items that were NOT done still show, in one short phrase (everything else that is empty is left out):
    vitals (which ones were not taken), allergies when a medication is recommended, LMP for female Soldiers.
    Lo importante que no se hizo sí aparece, en una frase corta. */
@@ -1813,7 +1813,7 @@ function hpiParaOld(t,s,skip){const out=[];const sv=sevSentence(s);let svDone=!s
     if(!x&&f.id==='a'&&medsRecommended())x='Allergies: not documented';if(!x)return;
     if(f.id==='a'&&/^Allergies: NKDA$/i.test(x))x='NKDA';if(f.id==='m'&&/^Meds: none$/i.test(x))x='No meds';out.push(x.replace(/\.$/,''));});
   if(!svDone)out.push(sv);return out.length?out.join('. ')+'.':'';}
-function hpiPara(t,s,skip){const fo0=t.fields.find(f=>f.id==='o');if(t.id==='fu'||(fo0&&!/^(Started|Symptoms) $/.test(fo0.prefix||'')))return hpiParaOld(t,s,skip);const out=[];const F=id=>t.fields.find(f=>f.id===id&&!(skip&&skip.includes(id)));const done=new Set(skip||[]);
+function hpiPara(t,s,skip,sideCC){const fo0=t.fields.find(f=>f.id==='o');if(t.id==='fu'||(fo0&&!/^(Started|Symptoms) $/.test(fo0.prefix||'')))return hpiParaOld(t,s,skip);const out=[];const F=id=>t.fields.find(f=>f.id===id&&!(skip&&skip.includes(id)));const done=new Set(skip||[]);
   // onset + events
   {const fo=F('o'),fe=F('e');let on='';const extra=[];
    if(fo){const {sel,den}=hSel(fo,s);if(sel.length){const pre=(fo.prefix||'Started ');const af=sel.filter(x=>/^after /.test(x)),ot=sel.filter(x=>!/^after /.test(x));on=pre+[ot.join(', '),af.join(', ')].filter(Boolean).join(' ');}
@@ -1824,7 +1824,7 @@ function hpiPara(t,s,skip){const fo0=t.fields.find(f=>f.id==='o');if(t.id==='fu'
      else extra.push(cap1(x));});}
    if(on)out.push(on);extra.forEach(x=>out.push(x));done.add('o');done.add('e');}
   // location (side already in the CC when it is just R/L/bilat) + radiation
-  {const fr=F('r');if(fr&&!hSide(t,s)){const v=joinSel(fr,s);if(v)out.push(cap1(v));}done.add('r');
+  {const fr=F('r');if(fr&&!(sideCC&&hSide(t,s))){const v=joinSel(fr,s);if(v)out.push(cap1(v));}done.add('r');
    const frr=F('rr');if(frr){const v=joinSel(frr,s);if(v)out.push(cap1(v));}done.add('rr');}
   // quality
   {const fq=F('q');if(fq){const {sel}=hSel(fq,s);if(sel.length)out.push(fq.name==='Quality'?'Describes it as '+sel.join(', '):cap1(sel.join(', ')));}done.add('q');}
@@ -1914,7 +1914,7 @@ function humanNote(stamp,soap){
   L.push('');
   // S
   const multi=active.length>1,hp=entries.filter(e=>e.hpi).map(e=>e.hpi.trim());let who=hWho(),first=true;
-  active.forEach(t=>{const s=state[t.id];let cc=hCC(t,s);if(!cc&&first&&entries.length)cc=entries.map(e=>hTitle(e.title).toLowerCase()).join(', ');let h=hpiPara(t,s,['exam','lmp']);
+  active.forEach(t=>{const s=state[t.id];let cc=hCC(t,s);if(!cc&&first&&entries.length)cc=entries.map(e=>hTitle(e.title).toLowerCase()).join(', ');let h=hpiPara(t,s,['exam','lmp'],true);
     const rfs=t.redFlags||[],neg=rfs.filter(f=>s.rf[f]==='neg');if(neg.length)h+=(h?' ':'')+(neg.length===rfs.length?'No red flags.':'Denies '+neg.join(', ')+'.');
     const lead=cc?(first?who+' c/o ':'Also c/o ')+cc+'.':(first&&gFlags.sex?who+'.':'');
     let line=[lead,h].filter(Boolean).join(' ');if(!multi&&hp.length)line+=(line?' ':'')+hp.join(' ');
@@ -2030,9 +2030,6 @@ function renderNote(){
     const _t=soapdNote(_st);
     if(_t){document.getElementById('note').textContent=_t;renderNav();return;}
   }
-  if(paraOn()){const _n=new Date(),_M=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-    const _st=String(_n.getDate()).padStart(2,'0')+' '+_M[_n.getMonth()]+' '+String(_n.getFullYear()).slice(2)+', '+String(_n.getHours()).padStart(2,'0')+String(_n.getMinutes()).padStart(2,'0');
-    const _t=humanNote(_st,false);if(_t){document.getElementById('note').textContent=_t;renderNav();return;}}
   const L=[];const A=adNoteParts();
   // header: date/time + patient
   const now=new Date();
@@ -3239,7 +3236,7 @@ function renderSettings(){
   h+='<div class="field"><div class="lab"><span class="tag">✎</span><span class="name">'+L('Note detail (screening)','Detalle de la nota (screening)')+'</span></div><div class="chips">'+[['minimal',L('Minimal — positives only','Mínimo — solo positivos')],['short',L('Short — skip red-flag negatives','Corto — sin negativos de banderas rojas')],['full',L('Full — every pertinent negative','Completo — todos los negativos')]].map(([v,l])=>'<span class="chip '+((settings.noteDetail||'short')===v?'on':'')+'" onclick="settings.noteDetail=\''+v+'\';saveSettings();renderMain();renderNote()">'+l+'</span>').join('')+'</div><div class="fuq">'+L('When all red flags are negative the note already says "No red flags." Short leaves out the long "Denies…" list of each red flag.','Si todas las banderas rojas son negativas, la nota ya dice "No red flags." Corto quita la lista larga de "Denies…" de cada bandera.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">▸</span><span class="name">'+L('Folded sections','Secciones plegadas')+'</span></div><div class="chips"><span class="chip '+(foldOn()?'on':'')+'" onclick="settings.fold=!foldOn();saveSettings();renderMain()">'+(foldOn()?L('ON — sections show as one line; tap to open','ENCENDIDO — cada sección es una línea; toca para abrir'):L('Off — everything open (classic)','Apagado — todo abierto (clásico)'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">≡</span><span class="name">'+L('Compact history','Historial compacto')+'</span></div><div class="chips"><span class="chip '+(settings.hcompact!==false?'on':'')+'" onclick="settings.hcompact=settings.hcompact===false;saveSettings();renderMain()">'+(settings.hcompact!==false?L('ON — answered letters fold up as you move on','ENCENDIDO — las letras respondidas se pliegan al avanzar'):L('Off — show every letter open','Apagado — todas las letras abiertas'))+'</span></div></div>';
-  h+='<div class="field"><div class="lab"><span class="tag">¶</span><span class="name">'+L('Note style','Estilo de la nota')+'</span></div><div class="chips"><span class="chip '+(settings.hpiPara!==false?'on':'')+'" onclick="settings.hpiPara=true;saveSettings();renderMain();renderNote()">'+L('Natural — reads like a medic wrote it (S/O/A/P)','Natural — como la escribe un medic (S/O/A/P)')+'</span><span class="chip '+(settings.hpiPara===false?'on':'')+'" onclick="settings.hpiPara=false;saveSettings();renderMain();renderNote()">'+L('Structured — one line per letter (O:, P:, Q:…)','Estructurada — una línea por letra (O:, P:, Q:…)')+'</span></div><div class="dim" style="font-size:.88em;margin-top:6px">'+L('Anything you did not fill in is left out of the note — no empty “__” fields to copy.','Lo que no llenaste no aparece en la nota — no hay campos vacíos “__” que copiar.')+'</div></div>';
+  h+='<div class="field"><div class="lab"><span class="tag">¶</span><span class="name">'+L('Note style','Estilo de la nota')+'</span></div><div class="chips"><span class="chip '+(settings.hpiPara!==true?'on':'')+'" onclick="settings.hpiPara=false;saveSettings();renderMain();renderNote()">'+L('Structured — one line per letter (O:, P:, Q:…)','Estructurada — una línea por letra (O:, P:, Q:…)')+'</span><span class="chip '+(settings.hpiPara===true?'on':'')+'" onclick="settings.hpiPara=true;saveSettings();renderMain();renderNote()">'+L('Paragraph — history as sentences','Párrafo — la historia en oraciones')+'</span></div><div class="dim" style="font-size:.88em;margin-top:6px">'+L('Anything you did not fill in is left out of the note — no empty “__” fields to copy.','Lo que no llenaste no aparece en la nota — no hay campos vacíos “__” que copiar.')+'</div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">⏭</span><span class="name">'+L('Auto-advance','Avance automático')+'</span></div><div class="chips"><span class="chip '+(settings.autoAdv!==false?'on':'')+'" onclick="settings.autoAdv=settings.autoAdv===false;saveSettings();renderMain()">'+(settings.autoAdv!==false?L('ON — red flags done → history → decision points → result','ENCENDIDO — banderas rojas → historia → puntos de decisión → resultado'):L('Off — scroll by hand','Apagado — bajar a mano'))+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">⏱</span><span class="name">'+L('Sick call timer','Contador de tiempo')+'</span></div><div class="chips"><span class="chip '+(settings.timer!==false?'on':'')+'" onclick="settings.timer=settings.timer===false;saveSettings();renderMain()">'+(settings.timer!==false?L('ON — measures time per patient on this phone only','ENCENDIDO — mide el tiempo por paciente solo en este teléfono'):L('Off','Apagado'))+'</span><span class="chip" onclick="goRef(\'times\')">'+L('See times ›','Ver tiempos ›')+'</span></div></div>';
   h+='<div class="field"><div class="lab"><span class="tag">🛡️</span><span class="name">Daily auto-delete</span></div><div class="chips"><span class="chip '+(settings.purge?'on':'')+'" onclick="togPurge()">'+(settings.purge?'ON — notes and data from previous days are deleted on open':'Off')+'</span></div><div class="fuq">Recommended: notes contain Soldier information (PII/PHI). Export what you need before the day ends.</div></div>';
