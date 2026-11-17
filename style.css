@@ -845,3 +845,26 @@ h2.tpl.ptitle{display:flex;align-items:center;gap:8px;font-size:24px}
 
 .oubox{padding:8px 12px!important}.oubox .chip{font-size:13px;padding:6px 12px}
 @media(max-width:760px){#peek .pk-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#peek .pk-t b,#peek .pk-t span{white-space:nowrap}}
+/* home exercise cards (v43) */
+.exrow{display:flex;align-items:center;gap:8px;padding:10px 12px;margin:8px 0;border:1px solid var(--line,#2a3a2a);border-radius:10px;cursor:pointer;background:var(--card,transparent)}
+.exrow b{white-space:nowrap}.exrow .fsum{flex:1;opacity:.7;font-size:.85em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.exrow .chev{opacity:.6;font-size:1.3em}
+.exreg{margin:4px 0 10px}
+.exwhy{margin-bottom:10px}
+.exi{padding:7px 0;border-top:1px solid var(--line,rgba(127,127,127,.18))}.exi:first-of-type{border-top:0}
+.exn{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.exnum{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:50%;font-size:.75em;background:var(--accent,#4c7);color:#000;font-weight:700}
+.exd{margin-left:auto;font-size:.85em;opacity:.8;white-space:nowrap}
+.exc{font-size:.88em;opacity:.85;margin:3px 0 0 28px;line-height:1.4}
+.exqrw{display:flex;gap:12px;align-items:center}.exqrc{width:110px;flex:none;background:#fff;padding:4px;border-radius:6px}.exqrc svg{width:100%;height:auto;display:block}
+.exreg .chip{padding:5px 10px;font-size:.86em;margin:3px 4px 3px 0}
+.exend{height:110px}
+.exqr{margin-bottom:10px}.exqrc{width:150px;cursor:zoom-in}
+.exqrov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.exqrbig{width:min(86vw,420px);background:#fff;padding:10px;border-radius:12px}.exqrbig svg{width:100%;height:auto;display:block}
+.exqrt{color:#fff;font-size:1.1em}
+
+.exfig{display:block;width:calc(100% - 28px);max-width:520px;height:auto;border-radius:8px;margin:6px 0 4px 28px;background:#fff}
+details.exmod{margin:4px 0 2px 28px}details.exmod summary{color:var(--accent);font-weight:600;font-size:.92em;cursor:pointer}details.exmod .exfig{margin-left:0;width:100%}details.exmod .exc{margin-left:0}
+.exlvl{margin:0 0 10px}
+.exsched{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.exday{background:rgba(127,127,127,.12);border-radius:8px;padding:6px 4px;font-size:.78em;display:flex;flex-direction:column;gap:3px;text-align:center}.exday b{font-size:1.05em}.exday.today{outline:2px solid var(--accent)}.exday span{background:rgba(127,127,127,.18);border-radius:5px;padding:2px 1px;line-height:1.2;overflow-wrap:anywhere}
+.exw2r{width:100%;border-collapse:collapse;font-size:.92em}.exw2r th,.exw2r td{border-bottom:1px solid rgba(127,127,127,.25);padding:5px 4px;text-align:left}
+.exchk{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;padding:6px 0;border-top:1px solid rgba(127,127,127,.18)}.exchk:first-of-type{border-top:0}.exchk .chips{margin:0}
