@@ -4,6 +4,61 @@ Bilingual summary of everything added or fixed, newest first. PR numbers refer t
 Resumen bilingüe de todo lo agregado o corregido, lo más nuevo primero. Los números de PR son de este repositorio.
 
 ## Unreleased / Próximo
+- **Safety & reliability review (v44):**
+  - **Fixes**
+    - C-7 "not classic heartburn" no longer blanks the app; it now links D-2, C-3, C-1, C-6.
+    - Startup guard: a saved case that can't be drawn is dropped instead of leaving a blank screen.
+  - **Red flags and disposition**
+    - "Treated here, not sent to clinic" now needs who decided (provider or Senior Medic), their name and a reason. With a positive red flag or abnormal vitals only a provider can decide.
+    - The plan editor opens when the case is treated here.
+    - The history severity slider now counts for the ADTMC pain rule (5–6 → AEM, 7–10 → Provider).
+    - A disposition with unscreened red flags shows an amber "red flags not screened" card with "All negative", and the note says "Red flags: not screened".
+  - **Plan and meds**
+    - The FM 7-22 plan line is only checked after the QR/exercise card was opened.
+    - Rx meds (Appendix C) are never pre-checked and print "(Rx — provider order)".
+    - Ranitidine is shown as famotidine (withdrawn 2020).
+    - Female with no LMP blocks pregnancy-unsafe meds.
+    - Typed allergies ("ibuprofen", "PCN") are checked.
+    - Ulcer/GI-bleed history is checked from any template (new chip in MSK/headache).
+    - One-tap NKDA when meds are on and allergies weren't asked.
+    - Lozenge and Analpram lookups fixed.
+  - **Offline**
+    - The Soldier exercise page and QR intake register the service worker and open offline (query string ignored).
+    - Network wait is capped at 2 s, then the cached copy.
+    - version.json is never cached; missing files return 503, not the medic app.
+    - "Update app" checks for signal first.
+    - MACE 2, PRA, profile builder, H2F and hand-edited notes survive a reload.
+    - Auto-update waits until the patient is cleared.
+  - **Accuracy**
+    - Vitals limits cited (ADTMC App. B note 2, p. 13: verified); a temperature under 50 is read as °C and converted.
+    - "None — examined, normal" vs "None — not examined": exam negatives are written only when examined.
+    - "No cough" unmarked no longer writes "Reports cough".
+    - GU protocols use the General illness template for male Soldiers.
+    - The ER line matches the complaint (ENT / eye / dental).
+  - **Minor**
+    - "Delete everything" also clears the QR queue, timer log and org data.
+    - More Spanish strings.
+    - Search tolerates typos ("diarhea" → diarrhea).
+    - New `tools/check.js` (data checks) and `tools/walk.js` (browser walk of all 86 protocols, 1,400+ paths), run by GitHub Actions on every PR.
+
+  **Revisión de seguridad y confiabilidad (v44):**
+  - C-7 ya no deja la app en blanco.
+  - "Tratado aquí" exige quién decidió, nombre y motivo; con bandera roja solo un proveedor.
+  - El dolor de la historia cuenta.
+  - Aviso de banderas rojas sin revisar.
+  - Plan:
+    - la línea FM 7-22 solo si se abrió el QR;
+    - Rx nunca marcados;
+    - famotidina;
+    - alergias escritas a mano;
+    - NKDA de un toque.
+  - Página del soldado y QR funcionan sin señal; con señal mala abre en 2 s.
+  - No se pierde el MACE ni la nota editada.
+  - Vitales con cita del ADTMC.
+  - "Ninguno — examinado / no examinado".
+  - Plantilla correcta para GU en hombres.
+  - Búsqueda con errores de tipeo.
+  - Pruebas automáticas en cada PR.
 - **Reconditioning by stage (v43):** Level I (Table 6-1: PD, 5-min ETM, HSD, 4C, ETM 20–30 min or STM 1–3×10, RD) and Level II (Table 6-3: PD, HSD/4C on alternate days, MMD1, walk-to-run, CD1, CL1, RD), SSD added for the shoulder. Medic card: area + level chips, Mon–Fri schedule (today highlighted), walk-to-run table (Table 6-4), FM progression guidance per injury (knee 6-78–6-85, foot/ankle 6-86–6-92, back 6-100–6-106, shoulder 6-107–6-113; general rule for hip/neck/arm), and move-up criteria (Figure 6-2 entry, Figure 6-3/Table 6-5 exit). Preparation Drill (10 exercises + modified versions, 20 FM figures) added. QR carries the level (`&s=1|2`). Soldier page: level switch, today's session in FM order (weekend = repeat Friday or rest), week overview, walk-to-run week picker, self-check criteria list, all stored only on the Soldier's phone.
   **Reacondicionamiento por etapas (v43):** Nivel I y Nivel II del FM 7-22 con horario, sesión del día, Preparation Drill con fotos, caminar a correr, guía por lesión y criterios para subir de nivel; el QR lleva el nivel.
 - **Soldier page — home screen & progress (v43):** iOS/Android "Add to Home Screen" instructions (hidden once installed or dismissed), home-screen meta tags ("My PT"), last program remembered for the icon. Checks are time-stamped, only today can be marked, 14-day progress grid (days with exercise, full sessions, streak). Marks are self-reported; the page says the medic/RPL confirms with the FM tests in person. **Medic in-person check:** Met / Not met per FM 7-22 criterion of the current level (Figure 6-2 / 6-3); the line is added to the note plan.

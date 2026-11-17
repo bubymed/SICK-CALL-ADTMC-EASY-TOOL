@@ -191,5 +191,7 @@ function draw(){
 document.documentElement.lang=IQ_ES?'es':'en';
 reset();
 </script>
+<script>/* Offline copy for this page (same service worker as the medic app). / Copia offline de esta página. */
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){try{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(function(){});}catch(e){}}</script>
 </body>
 </html>
