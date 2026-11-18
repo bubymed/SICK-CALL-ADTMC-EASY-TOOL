@@ -46,6 +46,10 @@ const URL = 'file://' + path.join(__dirname, '..', 'index.html');
     }, ids[k]);
     walks += r.n; errs.push(...r.bad);
   }
+  // Red-flag gate: history/decision points stay locked until the red flags are answered.
+  const gate = await p.evaluate(() => { resetAll(); tabGo('adtmc'); adOpen('B-8'); const locked = !!document.querySelector('.rfgate') && !document.querySelector('.hwrap'); adRfAll(); const open = !document.querySelector('.rfgate'); return { locked, open }; });
+  if (!gate.locked) errs.push('red-flag gate: page was not locked before answering');
+  if (!gate.open) errs.push('red-flag gate: page stayed locked after "None of them"');
   // Reload with a saved case must not blank the app.
   await p.evaluate(() => { resetAll(); adOpen('C-7'); adDPNone(0); adDPNone(1); adDPTog(2, 0); renderNote(); });
   await p.reload(); await p.waitForTimeout(600);

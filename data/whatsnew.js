@@ -3,6 +3,10 @@
    Add a new entry at the TOP for every feature release (same value as APP_VER). Keep it short: 1–3 items.
    go: optional button target — a tab/view name ('admeds', 'perfiles', 'more') or 'proto:J-3'. */
 const WHATSNEW=[
+ {v:'v46',items:[
+   {i:'🏥',en:'<b>"Provider Now" is now "Next level of care now".</b> Providers are often not available — the next level is the clinic, or a Senior Medic for guidance. Same ADTMC Category I, clearer wording.',es:'<b>"Provider Now" ahora dice "Siguiente nivel de atención ahora".</b> Muchas veces no hay provider — el siguiente nivel es la clínica, o un Senior Medic para guía. Es la misma Categoría I de ADTMC, con palabras más claras.'},
+   {i:'🔒',en:'<b>Red flags first.</b> In each protocol the history and decision points stay locked until you answer the red flags: switch on any that are present (next level of care) or tap "None of them — continue". One tap, and nobody skips the safety screen.',es:'<b>Primero las banderas rojas.</b> En cada protocolo la historia y los puntos de decisión no se abren hasta contestar las banderas rojas: enciende las que estén presentes (Provider Now) o toca "Ninguna — continuar". Un toque, y nadie se salta el tamizaje de seguridad.'}
+ ]},
  {v:'v45',items:[
    {i:'🧹',en:'<b>Home exercise program removed.</b> It was built only on FM 7-22 (a return-to-PRT program, not rehab) and did not work well for Soldiers. The plan for B protocols now says "Refer to H2F / PT for reconditioning" and the H2F slip is still there.',es:'<b>Se quitó el programa de ejercicios en casa.</b> Estaba basado solo en el FM 7-22 (un programa para volver al PRT, no de rehabilitación) y no funcionaba bien para los soldados. El plan de los protocolos B ahora dice "Refer to H2F / PT for reconditioning" y la hoja de H2F sigue ahí.'}
  ]},

@@ -285,7 +285,7 @@ P("D-1","d","Shortness of Breath",{pg:65,
   DP(["Cold-like symptoms","Allergy symptoms","History of panic attacks"],{},{none:{d:"AEM",l:"NONE of these → AEM Now"}})
  ],
  tx:["Cold or allergy symptoms: use A-3 minor-care protocol.","Panic-attack symptoms: check EKG; monitor pulse oximeter; supervised deep-breathing exercises. Refer to provider NOW if oxygenation decreases or symptoms do not resolve. Refer to behavioral health after dyspnea has resolved."],
- rtc:"Refer to provider now if oxygenation decreases or symptoms do not resolve.",meds:[]});
+ rtc:"Refer to the next level of care now if oxygenation decreases or symptoms do not resolve.",meds:[]});
 
 P("D-2","d","Chest Pain",{pg:67,
  ddx:["Myocardial infarction","Pulmonary embolism","Pneumonia, bronchitis","Anxiety","Heartburn","Musculoskeletal"],
@@ -296,7 +296,7 @@ P("D-2","d","Chest Pain",{pg:67,
   DP(["Productive cough >7 days","Elevated temperature","Symptoms >10 days"],{d:"AEM"}),
   DP(["Cold-like symptoms","Reproducible chest pain","Heartburn","History of panic attacks"],{},{none:{d:"AEM",l:"NONE of these → AEM Now"}})
  ],
- tx:["Cold-like symptoms: A-3 protocol. Heartburn: C-7 protocol.","Panic-attack symptoms: check EKG; monitor pulse ox; supervised deep breathing; refer to provider now if oxygenation decreases or symptoms do not resolve; refer to BH after dyspnea resolved.","Musculoskeletal: ibuprofen or acetaminophen for pain, analgesic balm for muscle/tendons. Temporary profile x3 days if needed. Must discuss with the supervising privileged provider before the Soldier leaves the screening area."],
+ tx:["Cold-like symptoms: A-3 protocol. Heartburn: C-7 protocol.","Panic-attack symptoms: check EKG; monitor pulse ox; supervised deep breathing; refer to the next level of care now if oxygenation decreases or symptoms do not resolve; refer to BH after dyspnea resolved.","Musculoskeletal: ibuprofen or acetaminophen for pain, analgesic balm for muscle/tendons. Temporary profile x3 days if needed. Must discuss with the supervising privileged provider before the Soldier leaves the screening area."],
  rtc:"Return if pain increases, not improved in 4 days, shortness of breath / dizziness / new symptoms develop.",meds:["Ibuprofen","Acetaminophen","Analgesic balm"]});
 
 /* ===== E. GENITOURINARY ===== */
@@ -853,7 +853,7 @@ P("L-2","l","Dental Problems",{pg:162,
  ddx:["Tooth cavity","Poor dental hygiene","Temporomandibular joint pain","Infection","Heart attack"],
  rf:["Exposed pulp","Avulsed tooth","Severe pain","Trauma","Chest pain / SOB"],act:"None",
  flow:[
-  DP(["Red flags","Loose tooth","Abscess / infection","Gingivitis, periodontitis"],{d:"PN",a:"Dentist or Provider Now."}),
+  DP(["Red flags","Loose tooth","Abscess / infection","Gingivitis, periodontitis"],{d:"PN",a:"Dentist or next level of care now."}),
   DP(["Broken tooth (pulp not showing)","Issue not listed above","Jaw pain not from trauma"],{d:"AEM",a:"Dentist or AEM Now."})
  ],
  tx:["Furry tongue: brush tongue with toothpaste and soft toothbrush 3 times per day.","White plaque (leukoplakia): counsel on surveillance during yearly dental exams; if indurated area, refer to dentist now.","Bad breath: screen for causes; refer to provider/dentist if indicated; otherwise counsel on oral hygiene (brush 3x/day, floss daily)."],
@@ -895,7 +895,7 @@ P("L-6","l","Needs an Immunization",{pg:168,
  ddx:["Routine / required immunization"],rf:["None"],act:"None",
  flow:[
   EX("Provide counseling.",[]),
-  DP(["Rabies","Immunization not required","Requested early","Contraindication for immunization","Medic not trained"],{d:"AEM",a:"Rabies → Provider Now."})
+  DP(["Rabies","Immunization not required","Requested early","Contraindication for immunization","Medic not trained"],{d:"AEM",a:"Rabies → next level of care now."})
  ],
  tx:["If the clinic does not have the immunization, refer to the appropriate location (readiness clinic, immunization clinic).","Obtain approval from the AEM. Counsel the patient; confirm no contraindications.","Provide the vaccine per package insert. Document in the required databases or per local policy."],
  rtc:"Return if redness/infection at site, rash, anaphylaxis, seizure, fever or any other serious symptom after the vaccine.",meds:[],
